@@ -136,7 +136,7 @@ class FerryApi:
             print(group_info)
 
     def generate_endpoints(self):
-        with open("/home/ltrestka/ferry/swagger.json", "r") as json_file:
+        with open("swagger.json", "r") as json_file:
             api_data = json.load(json_file)
             for path, data in api_data["paths"].items():
                 endpoint = path.replace("/","")
