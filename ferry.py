@@ -120,8 +120,8 @@ class FerryApi:
     def get_extras(self, endpoint, args):
         extra=None
         if endpoint == "createGroup" and "groupname" in vars(args).keys() and "gid" not in vars(args).keys():
-            extra = "gid=%s" % self.get_lowest_applicable_gid(vars(args).get("groupname", ""))
-        
+            # Do something
+            pass
             
     def get_all_groups(self):
         command = self.generate_command("https://ferry.fnal.gov:8445/getAllGroups")
@@ -132,22 +132,8 @@ class FerryApi:
     def get_group_info(self, group):
         group_json = self.get_all_groups()
         group_info = [entry for entry in group_json["ferry_output"] if entry["groupname"] == group]
-        print(group_info)
         if group_info:
             print(group_info)
-        
-                
-    def get_lowest_applicable_gid(self, experiment):
-        group_json = self.get_all_groups()
-        all_gids = [entry["gid"] for entry in group_json["ferry_output"]]
-        exp_gids = [entry["gid"] for entry in group_json["ferry_output"] if entry["grouptype"] == "UnixGroup" and experiment in entry["groupname"]]
-        if exp_gids:
-            highest_gid = max(exp_gids)
-        else:
-            highest_gid = 0
-        while highest_gid in all_gids:
-            highest_gid = highest_gid + 1
-        return highest_gid
 
     def generate_endpoints(self):
         with open("/home/ltrestka/ferry/swagger.json", "r") as json_file:
