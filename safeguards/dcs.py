@@ -1,4 +1,4 @@
-class safeguards:
+class SafeguardsDCS:
     def __init__(self):
         # TODO: Add more as needed
         # Format as: {"Endpoint": function (without brackets) }
