@@ -1,26 +1,17 @@
-import configparser
 import os
-import re
 
-class CustomConfigParser(configparser.ConfigParser):
-    def read(self, filenames, encoding=None):
-        os.environ['UID'] = str(os.getuid())
-        super().read(filenames, encoding)
+import toml
 
-        for section in self.sections():
-            for option in self.options(section):
-                value = self.get(section, option)
-                expanded_value = self._expand_env_variables(value)
-                self.set(section, option, expanded_value)
+class TConfig():
+    def __init__(self):
+        with open('config.toml', 'r') as file:
+            os.environ['UID'] = str(os.getuid())
+            file = file.read().format_map(os.environ)
+            self.config = toml.loads(file)
 
-    def _expand_env_variables(self, value):
-        # Replaces $VARIABLE or ${VARIABLE} with the environment variable value
-        pattern = r'\$\{(\w+)\}'
-        def replace_with_env(match):
-            variable_name = match.group(1)
-            return os.environ.get(variable_name, '')
-        result_string = re.sub(pattern, replace_with_env, value)
+    def get_from(self, section, field, default=None, check_path=False):
+        if section not in self.config:
+            raise KeyError(f"Section '{section}' not in config file")
+        retval = self.config[section].get(field, default)
+        return retval if not check_path or (check_path and os.path.exists(retval)) else default
     
-        return result_string.replace("\"", "")
-
-

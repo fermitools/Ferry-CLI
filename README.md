@@ -1,13 +1,18 @@
 # Ferry-CLI
 
+## Requirements
+* Python 3.6 or higher
+  * pip3 - requests
+  * pip3 - toml
+
 ## Usage  
 Currently, this program is compatible with all existing ferry api calls listed on the [Ferry Docs](https://ferry.fnal.gov:8445/docs#).
 
 To begin, simply clone the repo, and run python3 ferry.py inside the directory.
 
 ``` bash  
-$ python3 ferry.py  
-usage: ferry.py [-h] [--cert CERT] [--capath CAPATH] [-l] [-ep ENDPOINT_PARAMS] [-e ENDPOINT]
+$ python3 ferry.py
+usage: ferry.py [-h] [--cert CERT] [--capath CAPATH] [-l] [-q] [-ep ENDPOINT_PARAMS] [-e ENDPOINT [ENDPOINT_PARAMS]] 
 
 CLI for Ferry API endpoints
 
@@ -19,7 +24,8 @@ optional arguments:
   -ep ENDPOINT_PARAMS, --endpoint_params ENDPOINT_PARAMS
                         List parameters for the selected endpoint
   -e ENDPOINT, --endpoint ENDPOINT
-                        API endpoint and parameters  
+                        API endpoint and parameters
+  -q, --quiet           Hide output
 ```
 ---
 ## Safeguards

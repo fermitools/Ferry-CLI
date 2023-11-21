@@ -1,37 +1,25 @@
 import argparse
-import configparser
 import json
 import os
-import re
-import requests # Not a built-in library
 import textwrap
-import subprocess
 
-from helpers.customs import CustomConfigParser
+from helpers.customs import TConfig
 from helpers.api import FerryAPI
 from safeguards.dcs import SafeguardsDCS
-        
+
+def get_default_paths(config):
+    cert = config.get_from("Auth", "default_cert_path", check_path=True)
+    capath = config.get_from("Auth", "default_capath", check_path=True)
+    return cert, capath
+
 class FerryCLI:
     def __init__(self):
-        self.config = CustomConfigParser()
-        self.config.read("config.ini")
-        self.base_url = self.config.get("Ferry", "base_url")
+        self.config = TConfig()
+        self.base_url = self.config.get_from("Ferry", "base_url")
+        self.endpoints = self.generate_endpoints()
         self.safeguards = SafeguardsDCS()
-        self.endpoints = {}
-        self.generate_endpoints()
-        self.set_default_cert_path()
-        self.set_default_capath()
+        self.cert, self.capath = get_default_paths(self.config)
         self.parser = self.get_arg_parser()
-        
-    def set_default_cert_path(self):
-        self.cert = self.config.get("Kerberos", "default_cert_path")
-        if not os.path.exists(self.cert):
-            self.cert = None
-        
-    def set_default_capath(self):
-        self.capath = self.config.get("Kerberos", "default_capath")
-        if not os.path.exists(self.capath):
-            self.capath = None
         
     def get_arg_parser(self):
         parser = argparse.ArgumentParser(description="CLI for Ferry API endpoints")
@@ -72,21 +60,11 @@ class FerryCLI:
             print("Error: '%s' is not a valid endpoint. Run 'ferry -l' for a full list of available endpoints." % endpoint)
             print()
         else:
-            args, _ = subparser.parse_known_args(params)
-            url, response = self.ferry_api.generate_request(endpoint, args=args)
-
-    # Calling a workflow template
-    def run_workflow(self, workflow, args=None):
-        try:
-            print()
-            print(f"Running Custom Workflow: {workflow}")
-            from workflows.dcs_workflows import GetGroupInfo
-            response = GetGroupInfo(self.ferry_api, "mu2e").response
-            return response
-        except subprocess.CalledProcessError as e:
-            print("Error:", e)
+            params, _ = subparser.parse_known_args(params)
+            return self.ferry_api.call_endpoint(endpoint, params=params.__dict__)
 
     def generate_endpoints(self):
+        endpoints = {}
         with open("swagger.json", "r") as json_file:
             api_data = json.load(json_file)
             for path, data in api_data["paths"].items():
@@ -103,8 +81,8 @@ class FerryCLI:
                 for param in data[method].get("parameters", []):
                     param_description = self.parse_description("", param["description"], "%s%s" % (param["type"], ": required" if param.get("required",False) else ""))
                     endpoint_parser.add_argument(f"--{param['name']}", type=str, help=param_description, required=param.get("required",False))
-                self.endpoints[path.replace("/","")] = endpoint_parser
-
+                endpoints[path.replace("/","")] = endpoint_parser
+        return endpoints
         
     def parse_description(self,name, desc, method=None):
         description_lines = textwrap.wrap(desc, width=60)
@@ -129,7 +107,9 @@ class FerryCLI:
             endpoint_parser = self.endpoints.get(args.endpoint, None)
             if endpoint_parser:
                 self.ferry_api = FerryAPI(self.base_url, self.cert, self.capath, args.quiet)
-                return self.execute_endpoint(args.endpoint, endpoint_args)
+                json_result = self.execute_endpoint(args.endpoint, endpoint_args)
+                if not args.quiet:
+                    self.handle_output(json_result)
         elif args.list_endpoints:
             self.list_available_endpoints()
         elif args.endpoint_params:
@@ -138,6 +118,16 @@ class FerryCLI:
             self.get_endpoint_params(args.endpoint_params)
         else:
             self.parser.print_help()
+            
+    # TBD if we will use this at all
+    def handle_output(self, output):
+        # Don't print excessively long responses - just store them in the result.json file and point to it.
+        if len(output) < 1000:
+            print(f"\nResponse: {output}")
+        else:
+            with open("result.json","w") as file:
+                file.write(output)
+            print(f"\nResponse in file: {os.path.abspath(os.environ.get('PWD', ''))}/result.json")
             
 def main():
     ferry_api = FerryCLI()

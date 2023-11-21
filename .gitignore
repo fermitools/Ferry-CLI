@@ -1,2 +1,4 @@
 result.json
+.venv
+.git
 __pycache__

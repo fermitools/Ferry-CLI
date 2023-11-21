@@ -1,11 +1,11 @@
 [global]
-log.screen = False
+log.screen = false
 log.access_file = ""
 log.error_file = ""
 
 [Ferry]
 base_url = "https://ferry.fnal.gov:8445/"
 
-[Kerberos]
-default_cert_path = "/tmp/x509up_u${UID}"
+[Auth]
+default_cert_path = "/tmp/x509up_u{UID}"
 default_capath = "/etc/grid-security/certificates"
