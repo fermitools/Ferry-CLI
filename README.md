@@ -185,27 +185,27 @@ The workflow flags include:
         ...
 
     ```
-  * ex: 
-  ``` bash
-    python3 ferry.py -w getFilteredGroupInfo --groupname=mu2e
-    Called Endpoint: https://ferry.fnal.gov:8445/getAllGroups
-    Filtering by groupname: 'mu2e'
-    Response: [
-        {
-            "gid": 9914,
-            "groupname": "mu2e",
-            "grouptype": "UnixGroup"
-        },
-        {
-            "gid": 0,
-            "groupname": "mu2e",
-            "grouptype": "BatchSuperusers"
-        },
-        {
-            "gid": 0,
-            "groupname": "mu2e",
-            "grouptype": "WilsonCluster"
-        }
-    ]
-```
+  * example: 
+    ``` bash
+      python3 ferry.py -w getFilteredGroupInfo --groupname=mu2e
+      Called Endpoint: https://ferry.fnal.gov:8445/getAllGroups
+      Filtering by groupname: 'mu2e'
+      Response: [
+          {
+              "gid": 9914,
+              "groupname": "mu2e",
+              "grouptype": "UnixGroup"
+          },
+          {
+              "gid": 0,
+              "groupname": "mu2e",
+              "grouptype": "BatchSuperusers"
+          },
+          {
+              "gid": 0,
+              "groupname": "mu2e",
+              "grouptype": "WilsonCluster"
+          }
+      ]
+    ```
  
