@@ -5,26 +5,31 @@
   * pip3 - requests
   * pip3 - toml
 
-## Usage  
+## Usage - Base API  
 Currently, this program is compatible with all existing ferry api calls listed on the [Ferry Docs](https://ferry.fnal.gov:8445/docs#).
 
 To begin, simply clone the repo, and run python3 ferry.py inside the directory.
 
 ``` bash  
 $ python3 ferry.py
-usage: ferry.py [-h] [--cert CERT] [--capath CAPATH] [-l] [-q] [-ep ENDPOINT_PARAMS] [-e ENDPOINT [ENDPOINT_PARAMS]] 
+usage: ferry.py [-h] [--cert CERT] [--capath CAPATH] [-le] [-lw] [-ep ENDPOINT_PARAMS] [-e ENDPOINT] [-w WORKFLOW] [-q]
 
 CLI for Ferry API endpoints
 
 optional arguments:
   -h, --help            show this help message and exit
-  --cert CERT           Path to cert (default: /tmp/x509up_u$UID)
-  --capath CAPATH       Certificate authority path (default: /etc/grid-security/certificates)
-  -l, --list_endpoints  List all available endpoints
+  --cert CERT           Path to cert
+  --capath CAPATH       Certificate authority path
+  -le, --list_endpoints
+                        List all available endpoints
+  -lw, --list_workflows
+                        List all available custom workflows
   -ep ENDPOINT_PARAMS, --endpoint_params ENDPOINT_PARAMS
                         List parameters for the selected endpoint
   -e ENDPOINT, --endpoint ENDPOINT
                         API endpoint and parameters
+  -w WORKFLOW, --workflow WORKFLOW
+                        Execute supported workflows
   -q, --quiet           Hide output
 ```
 ---
@@ -115,4 +120,89 @@ Response: {
 }
 
 ```
-> Note: All responses are stored locally in results.json, longer responses will point to the file, rather than print them in the terminal.
+> Note: All responses are currently stored locally in results.json if the -q flag is not passed, for longer responses - stdout will point to the file, rather than print them in the terminal.
+
+
+## Usage - Custom Workflows
+Existing workflows are currently defined in workflows/supported_workflows.json
+These workflow definitions do not point to the functions they run themselves, rather - this file 
+enables us to convert them into argparsers. Each workflow within this file is a json object, with its name being the key, and consists of:
+* description: string
+* params: - an array of json objects, representing parameters and their features:
+  * name : string
+  * description: string
+  * type: string (friendly name for the data type to use)
+  * required: boolean
+A simple definition within the file may look like this:
+'''json
+  {
+    "getFilteredGroupInfo": {
+        "description":"Returns gid, groupname, and grouptype for all groups with 'groupname' variable in its name.",
+        "params": [
+                {
+                  "name":"groupname", 
+                  "description":"Name of the group", 
+                  "type":"string", 
+                  "required":true
+                },
+            ]
+      },
+  }
+ '''
+### Workflow Flags
+The workflow flags include:
+[-lw/--list_workflows] and [-w/--workflow], for each of these, ferry.py will:
+* [-lw/--list_workflows] (list all supported workflows):
+ * reads supported_workflows.json and uses it to initialize a list of Workflow objects, defined in ferry.py
+  > The Workflow class takes a json object as a parameter, and uses to create an argument parser - similar to how we generate endpoints from swagger.json
+
+* [-w/--workflow][name] [args] (run a workflow):
+  * read supported_workflows.json file and uses it to initialize a single workflow, which corresponds to the workflow name
+  * passes the arguments into the parser
+  * if valid, finds the corresponding function - which is indexed in WORKFLOW_FUNCTIONS (dictionary constant, defined in ferry.py)
+    ```python
+      WORKFLOW_FUNCTIONS = {
+          "getFilteredGroupInfo": GetFilteredGroupInfo
+      }
+
+    ```
+  * runs the corresponding workflow function, which is defined in dcs_workflows.py
+    ```python
+      # ferry.py
+      class Workflow:
+        # ... init and stuff
+
+        def run(self, ferry_api, args = {}):
+              WORKFLOW_FUNCTIONS[self.name](self, ferry_api, args)
+    
+      # dcs_workflows.py
+      def GetFilteredGroupInfo(self, api, args):
+        # (psuedo-code)
+        all_groups = api.call_endpoint("getAllGroups")
+        print(f"Filtering by groupname: '{args["groupname"]}'")
+        return [group for group in all_groups if group["groupname"] == args["groupname"]]
+        ...
+
+    ```
+  * ex: python3 ferry.py -w getFilteredGroupInfo --groupname=mu2e
+    > Called Endpoint: https://ferry.fnal.gov:8445/getAllGroups
+    > Recieved successful response'
+    > Filtering by groupname: 'mu2e'
+    > Response: [
+    >     {
+    >         "gid": 9914,
+    >         "groupname": "mu2e",
+    >         "grouptype": "UnixGroup"
+    >     },
+    >     {
+    >         "gid": 0,
+    >         "groupname": "mu2e",
+    >         "grouptype": "BatchSuperusers"
+    >     },
+    >     {
+    >         "gid": 0,
+    >         "groupname": "mu2e",
+    >         "grouptype": "WilsonCluster"
+    >     }
+    > ]
+ 

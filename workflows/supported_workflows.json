@@ -1,0 +1,13 @@
+{
+    "getGroupInfo": {
+        "description":"Returns gid, groupname, and grouptype for all groups with 'groupname' variable in its name.",
+        "params": [
+                {
+                    "name":"groupname", 
+                    "description":"Name of the group", 
+                    "type":"string", 
+                    "required":true
+                }
+            ]
+     }
+}

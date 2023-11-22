@@ -4,16 +4,15 @@ import os
 import requests
 
 class FerryAPI:
-    def __init__(self, base_url, cert, capath, quiet = False):
+    def __init__(self, base_url, cert, capath, quiet = False, is_workflow=False):
         self.base_url = base_url
         self.cert = cert
         self.capath = capath
         self.quiet = quiet
+        self.is_workflow = is_workflow
 
     def call_endpoint(self, endpoint, method='get', data={}, headers={}, params={}, extra={}):
         # Create a session object to persist certain parameters across requests
-        if not self.quiet:
-            print(f"\nCalling Endpoint: {self.base_url}{endpoint}")
         session = requests.Session()
         session.cert = self.cert
         session.verify = self.capath
@@ -29,9 +28,13 @@ class FerryAPI:
                 response = session.post(f"{self.base_url}{endpoint}", data=data, headers=headers)
             else:
                 raise ValueError("Unsupported HTTP method.")
+            if not self.quiet:
+                print(f"Called Endpoint: {response.request.url}")
             output = response.json()
+            if output.get("ferry_status", None) != "success":
+                exit(f"API Error: {output.get('ferry_error', 'Unknown Error')}")
             output["request_url"] = response.request.url
-            return json.dumps(output, indent=4)
+            return  output if self.is_workflow else json.dumps(output, indent=4)
         except BaseException as e:
             # How do we want to handle errors?
             raise e
