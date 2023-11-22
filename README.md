@@ -189,7 +189,6 @@ The workflow flags include:
   ``` bash
     python3 ferry.py -w getFilteredGroupInfo --groupname=mu2e
     Called Endpoint: https://ferry.fnal.gov:8445/getAllGroups
-    Recieved successful response'
     Filtering by groupname: 'mu2e'
     Response: [
         {
