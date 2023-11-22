@@ -134,8 +134,8 @@ enables us to convert them into argparsers. Each workflow within this file is a 
   * type: string (friendly name for the data type to use)
   * required: boolean
 A simple definition within the file may look like this:
-'''json
-  {
+```json
+{
     "getFilteredGroupInfo": {
         "description":"Returns gid, groupname, and grouptype for all groups with 'groupname' variable in its name.",
         "params": [
@@ -148,7 +148,9 @@ A simple definition within the file may look like this:
             ]
       },
   }
- '''
+
+```
+  
 ### Workflow Flags
 The workflow flags include:
 [-lw/--list_workflows] and [-w/--workflow], for each of these, ferry.py will:
