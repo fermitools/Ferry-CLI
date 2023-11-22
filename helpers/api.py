@@ -10,7 +10,7 @@ class FerryAPI:
         self.capath = capath
         self.quiet = quiet
 
-    def call_endpoint(self, endpoint, method='get', data=None, headers=None, params={}, extra={}):
+    def call_endpoint(self, endpoint, method='get', data={}, headers={}, params={}, extra={}):
         # Create a session object to persist certain parameters across requests
         if not self.quiet:
             print(f"\nCalling Endpoint: {self.base_url}{endpoint}")
