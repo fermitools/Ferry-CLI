@@ -152,21 +152,22 @@ A simple definition within the file may look like this:
 ### Workflow Flags
 The workflow flags include:
 [-lw/--list_workflows] and [-w/--workflow], for each of these, ferry.py will:
-* [-lw/--list_workflows] (list all supported workflows):
+* --list_workflows (list all supported workflows):
  * reads supported_workflows.json and uses it to initialize a list of Workflow objects, defined in ferry.py
   > The Workflow class takes a json object as a parameter, and uses to create an argument parser - similar to how we generate endpoints from swagger.json
 
-* [-w/--workflow][name] [args] (run a workflow):
+* --workflow (execute a custom workflow):
   * read supported_workflows.json file and uses it to initialize a single workflow, which corresponds to the workflow name
   * passes the arguments into the parser
-  * if valid, finds the corresponding function - which is indexed in WORKFLOW_FUNCTIONS (dictionary constant, defined in ferry.py)
+  * if valid, finds the corresponding function - which is indexed in WORKFLOW_FUNCTIONS (dictionary constant)
     ```python
+      # ferry.py
       WORKFLOW_FUNCTIONS = {
           "getFilteredGroupInfo": GetFilteredGroupInfo
       }
 
     ```
-  * runs the corresponding workflow function, which is defined in dcs_workflows.py
+  * runs the corresponding workflow function
     ```python
       # ferry.py
       class Workflow:
@@ -184,25 +185,28 @@ The workflow flags include:
         ...
 
     ```
-  * ex: python3 ferry.py -w getFilteredGroupInfo --groupname=mu2e
-    > Called Endpoint: https://ferry.fnal.gov:8445/getAllGroups
-    > Recieved successful response'
-    > Filtering by groupname: 'mu2e'
-    > Response: [
-    >     {
-    >         "gid": 9914,
-    >         "groupname": "mu2e",
-    >         "grouptype": "UnixGroup"
-    >     },
-    >     {
-    >         "gid": 0,
-    >         "groupname": "mu2e",
-    >         "grouptype": "BatchSuperusers"
-    >     },
-    >     {
-    >         "gid": 0,
-    >         "groupname": "mu2e",
-    >         "grouptype": "WilsonCluster"
-    >     }
-    > ]
+  * ex: 
+  ``` bash
+    python3 ferry.py -w getFilteredGroupInfo --groupname=mu2e
+    Called Endpoint: https://ferry.fnal.gov:8445/getAllGroups
+    Recieved successful response'
+    Filtering by groupname: 'mu2e'
+    Response: [
+        {
+            "gid": 9914,
+            "groupname": "mu2e",
+            "grouptype": "UnixGroup"
+        },
+        {
+            "gid": 0,
+            "groupname": "mu2e",
+            "grouptype": "BatchSuperusers"
+        },
+        {
+            "gid": 0,
+            "groupname": "mu2e",
+            "grouptype": "WilsonCluster"
+        }
+    ]
+```
  
