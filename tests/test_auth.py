@@ -20,16 +20,16 @@ def create_fake_credential(tmp_path):
 
 
 @pytest.mark.unit
-def test_get_default_token_location():
+def test_get_default_token_path():
     with unittest.mock.patch.object(auth, 'geteuid') as m:
         m.return_value = 42
-        assert auth.get_default_token_location()== f"/run/user/42/bt_u42"
+        assert auth.get_default_token_path()== f"/run/user/42/bt_u42"
 
 @pytest.mark.unit
-def test_get_default_cert_location():
+def test_get_default_cert_path():
     with unittest.mock.patch.object(auth, 'geteuid') as m:
         m.return_value = 42
-        assert auth.get_default_cert_location()== f"/tmp/x509up_u42"
+        assert auth.get_default_cert_path()== f"/tmp/x509up_u42"
 
 @pytest.mark.unit
 def test_AuthToken(create_fake_credential):
@@ -38,14 +38,33 @@ def test_AuthToken(create_fake_credential):
     auth_session = authorizer(s, create_fake_credential)
     assert auth_session.headers["Authorization"] == f"Bearer {FAKE_CREDENTIAL_DATA}"
 
+@pytest.mark.unit
+def test_AuthToken_bad():
+    s = Session()
+    authorizer = auth.AuthToken()
+    with pytest.raises(FileNotFoundError):
+        authorizer(s, token_path="thispathdoesntexist")
 
 @pytest.mark.unit
 def test_AuthCert(create_fake_credential):
     s = Session()
     authorizer = auth.AuthCert()
     fake_cert = create_fake_credential
-    auth_session = authorizer(s, cert_location=fake_cert)
+    auth_session = authorizer(s, cert_path=fake_cert)
     assert Path(auth_session.cert).read_text() == FAKE_CREDENTIAL_DATA
     assert auth_session.verify == auth.DEFAULT_CA_DIR 
 
+@pytest.mark.unit
+def test_AuthCert_bad():
+    s = Session()
+    authorizer = auth.AuthCert()
+    with pytest.raises(FileNotFoundError):
+        authorizer(s, cert_path="thispathdoesntexist")
 
+
+@pytest.mark.unit
+def test_AuthCert_capath_bad():
+    s = Session()
+    authorizer = auth.AuthCert()
+    with pytest.raises(FileNotFoundError):
+        authorizer(s, ca_path="thispathdoesntexist")
