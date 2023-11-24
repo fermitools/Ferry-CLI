@@ -36,39 +36,35 @@ class TestAuthToken():
     @pytest.mark.unit
     def test_AuthToken(self, create_fake_credential):
         s = Session()
-        authorizer = auth.AuthToken()
-        auth_session = authorizer(s, create_fake_credential)
+        authorizer = auth.AuthToken(create_fake_credential)
+        auth_session = authorizer(s)
         assert auth_session.headers["Authorization"] == f"Bearer {FAKE_CREDENTIAL_DATA}"
 
     @pytest.mark.unit
     def test_AuthToken_bad(self):
         s = Session()
-        authorizer = auth.AuthToken()
         with pytest.raises(FileNotFoundError):
-            authorizer(s, token_path="thispathdoesntexist")
+            auth.AuthToken(token_path="thispathdoesntexist")
 
 
 class TestAuthCert():
     @pytest.mark.unit
     def test_AuthCert(self, create_fake_credential):
         s = Session()
-        authorizer = auth.AuthCert()
-        fake_cert = create_fake_credential
-        auth_session = authorizer(s, cert_path=fake_cert)
+        authorizer = auth.AuthCert(cert_path=create_fake_credential)
+        auth_session = authorizer(s)
         assert Path(auth_session.cert).read_text() == FAKE_CREDENTIAL_DATA
         assert auth_session.verify == auth.DEFAULT_CA_DIR 
 
     @pytest.mark.unit
     def test_AuthCert_bad(self):
         s = Session()
-        authorizer = auth.AuthCert()
         with pytest.raises(FileNotFoundError):
-            authorizer(s, cert_path="thispathdoesntexist")
+            auth.AuthCert(cert_path="thispathdoesntexist")
 
 
     @pytest.mark.unit
     def test_AuthCert_capath_bad(self):
         s = Session()
-        authorizer = auth.AuthCert()
         with pytest.raises(FileNotFoundError):
-            authorizer(s, ca_path="thispathdoesntexist")
+            auth.AuthCert(ca_path="thispathdoesntexist")

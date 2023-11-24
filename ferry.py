@@ -3,11 +3,11 @@ import json
 import os
 import sys
 import textwrap
-from typing import Dict
+from typing import Type
 
 from helpers.customs import TConfig
-from helpers.api import FerryAPI, SUPPORTED_AUTH_METHODS
-from helpers.auth import get_default_cert_path, get_default_token_path, DEFAULT_CA_DIR
+from helpers.api import FerryAPI
+from helpers.auth import *
 from safeguards.dcs import SafeguardsDCS
 
 
@@ -16,21 +16,16 @@ def get_default_paths(config):
     capath = config.get_from("Auth", "default_capath", check_path=True)
     return cert, capath
 
-def set_auth_kwargs(auth_method, token_path, cert_path, ca_path: str) -> Dict[str, str]:
-    """Set the auth keyword arguments to be passed to the FerryAPI"""
-    auth_kwargs: Dict = {}
+def set_auth_from_args(auth_method, token_path, cert_path, ca_path: str) -> Type[object]:
+    """Set the auth class based on the given arguments"""
     if auth_method == 'token':
         print("Using token auth")
-        if token_path: 
-            auth_kwargs['token_path'] = token_path
-        return auth_kwargs
+        return AuthToken(token_path)
     elif auth_method == 'cert' or auth_method == 'certificate':
         print("Using cert auth")
-        if cert_path:
-            auth_kwargs['cert_path'] = cert_path
-        if ca_path:
-            auth_kwargs['ca_path'] = ca_path
-        return auth_kwargs
+        return AuthCert(cert_path, ca_path)
+    else:
+        raise ValueError("Unsupported auth method!  Please use one of the following auth methods: ['token', 'cert', 'certificate']")
 
 
 class FerryCLI:
@@ -148,14 +143,14 @@ class FerryCLI:
         args, endpoint_args = self.parser.parse_known_args()
 
         if args.endpoint:
-            auth_kwargs = set_auth_kwargs(args.auth_method, args.token_path, args.cert_path, args.ca_path)
+            authorizer = set_auth_from_args(args.auth_method, args.token_path, args.cert_path, args.ca_path)
 
             # Prevent DCS from running this endpoint if necessary, and print proper steps to take instead.
             self.safeguards.verify(args.endpoint)
             endpoint_parser = self.endpoints.get(args.endpoint, None)
             if endpoint_parser:
                 try:
-                    self.ferry_api = FerryAPI(base_url=self.base_url, auth_method=args.auth_method, auth_kwargs=auth_kwargs, quiet=args.quiet)
+                    self.ferry_api = FerryAPI(base_url=self.base_url, authorizer=authorizer, quiet=args.quiet)
                 except Exception as e:
                     print(f"Exception initializing FerryAPI: {e}")
                     raise

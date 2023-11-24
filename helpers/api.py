@@ -1,24 +1,18 @@
 import json
-import os
-from typing import Dict, Type
 
 import requests
 
-from .auth import AuthToken, AuthCert
-
-
-SUPPORTED_AUTH_METHODS: Dict[str, Type[object]] = {
-    "token": AuthToken, 
-    "cert": AuthCert,
-    "certificate": AuthCert
-}
-
 
 class FerryAPI:
-    def __init__(self, base_url, auth_method='token', auth_kwargs: Dict[str, str] = {} , quiet = False):
+    def __init__(self, base_url, authorizer=lambda s: s, quiet = False):
+        """
+        Parameters:
+            base_url (str):  The root URL from which all FERRY API URLs are constructed
+            authorizer (Callable[[requests.Session, requests.Session]): A function that prepares the requests session by adding any necessary auth data 
+            quiet (bool):  Whether or not output should be suppressed
+        """
         self.base_url = base_url
-        self.authorizer = self._map_auth_method_to_authorizer(auth_method) 
-        self.auth_kwargs = auth_kwargs
+        self.authorizer = authorizer 
         self.quiet = quiet
 
     def call_endpoint(
@@ -29,7 +23,7 @@ class FerryAPI:
             print(f"\nCalling Endpoint: {self.base_url}{endpoint}")
 
         _session = requests.Session()
-        session = self.authorizer(_session, **self.auth_kwargs) # Handles auth for session
+        session = self.authorizer(_session) # Handles auth for session
 
         if extra:
             for attribute_name, attribute_value in extra:
@@ -53,15 +47,3 @@ class FerryAPI:
         except BaseException as e:
             # How do we want to handle errors?
             raise e
-
-    def _map_auth_method_to_authorizer(self: 'FerryAPI', auth_method: str = 'token') -> Type[object]:
-        try:
-            authorizer = SUPPORTED_AUTH_METHODS[auth_method]()
-            return authorizer
-        except KeyError:
-            raise ValueError(f"Unsupported auth method given {auth_method}.  Supported auth methods are {list(SUPPORTED_AUTH_METHODS.keys())}")
-            
-
-
-            
-        
