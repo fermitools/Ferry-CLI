@@ -18,13 +18,19 @@ DEFAULT_CA_DIR = "/etc/grid-security/certificates"
 
 
 def get_default_token_path() -> str:
-    """Get the default path where htgettoken stores bearer tokens"""
+    """Get the default path where htgettoken stores bearer tokens.  If $BEARER_TOKEN_FILE is set, use that first"""
+    env_location = os.environ.get("BEARER_TOKEN_FILE")
+    if env_location is not None:
+        return env_location
     uid = str(geteuid())
     return f"/run/user/{uid}/bt_u{uid}"
 
 
 def get_default_cert_path() -> str:
-    """Get the default path where cigetcert stores x509 certificates"""
+    """Get the default path where cigetcert stores x509 certificates.  If $X509_USER_PROXY is set, use that first"""
+    env_location = os.environ.get("X509_USER_PROXY")
+    if env_location is not None:
+        return env_location
     uid = str(geteuid())
     return f"/tmp/x509up_u{uid}"
 
