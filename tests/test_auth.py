@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-import unittest.mock
 
 import pytest
 from requests import Session
@@ -20,17 +19,27 @@ def create_fake_credential(tmp_path):
     return t.absolute()
 
 
-@pytest.mark.unit
-def test_get_default_token_path():
-    with unittest.mock.patch.object(auth, "geteuid") as m:
-        m.return_value = 42
+class TestGetDefaultTokenPath:
+    @pytest.mark.unit
+    def test_get_default_token_path_env(self, monkeypatch):
+        monkeypatch.setenv("BEARER_TOKEN_FILE", "randompathtotoken")
+        assert auth.get_default_token_path() == "randompathtotoken"
+
+    @pytest.mark.unit
+    def test_get_default_token_path(self, monkeypatch):
+        monkeypatch.setattr(auth, "geteuid", lambda: 42)
         assert auth.get_default_token_path() == f"/run/user/42/bt_u42"
 
 
-@pytest.mark.unit
-def test_get_default_cert_path():
-    with unittest.mock.patch.object(auth, "geteuid") as m:
-        m.return_value = 42
+class TestGetDefaultCertPath:
+    @pytest.mark.unit
+    def test_get_default_cert_path_env(self, monkeypatch):
+        monkeypatch.setenv("X509_USER_PROXY", "randompathtocert")
+        assert auth.get_default_cert_path() == "randompathtocert"
+
+    @pytest.mark.unit
+    def test_get_default_cert_path(self, monkeypatch):
+        monkeypatch.setattr(auth, "geteuid", lambda: 42)
         assert auth.get_default_cert_path() == f"/tmp/x509up_u42"
 
 
