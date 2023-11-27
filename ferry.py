@@ -16,16 +16,21 @@ def get_default_paths(config):
     capath = config.get_from("Auth", "default_capath", check_path=True)
     return cert, capath
 
-def set_auth_from_args(auth_method, token_path, cert_path, ca_path: str) -> Type[object]:
+
+def set_auth_from_args(
+    auth_method, token_path, cert_path, ca_path: str
+) -> Type[object]:
     """Set the auth class based on the given arguments"""
-    if auth_method == 'token':
+    if auth_method == "token":
         print("Using token auth")
         return AuthToken(token_path)
-    elif auth_method == 'cert' or auth_method == 'certificate':
+    elif auth_method == "cert" or auth_method == "certificate":
         print("Using cert auth")
         return AuthCert(cert_path, ca_path)
     else:
-        raise ValueError("Unsupported auth method!  Please use one of the following auth methods: ['token', 'cert', 'certificate']")
+        raise ValueError(
+            "Unsupported auth method!  Please use one of the following auth methods: ['token', 'cert', 'certificate']"
+        )
 
 
 class FerryCLI:
@@ -38,16 +43,35 @@ class FerryCLI:
 
     def get_arg_parser(self):
         parser = argparse.ArgumentParser(description="CLI for Ferry API endpoints")
-        parser.add_argument("-a", "--auth-method", default='token', help="Auth method for FERRY request")
-        parser.add_argument('--ca-path', default=DEFAULT_CA_DIR, help="Certificate authority path")
-        parser.add_argument('-l', '--list_endpoints', action='store_true', help="List all available endpoints")
-        parser.add_argument('-ep', '--endpoint_params', help="List parameters for the selected endpoint")
-        parser.add_argument('-e', '--endpoint', help="API endpoint and parameters")
-        parser.add_argument('-q', '--quiet', action='store_true', default=False, help="Hide output")
+        parser.add_argument(
+            "-a", "--auth-method", default="token", help="Auth method for FERRY request"
+        )
+        parser.add_argument(
+            "--ca-path", default=DEFAULT_CA_DIR, help="Certificate authority path"
+        )
+        parser.add_argument(
+            "-l",
+            "--list_endpoints",
+            action="store_true",
+            help="List all available endpoints",
+        )
+        parser.add_argument(
+            "-ep", "--endpoint_params", help="List parameters for the selected endpoint"
+        )
+        parser.add_argument("-e", "--endpoint", help="API endpoint and parameters")
+        parser.add_argument(
+            "-q", "--quiet", action="store_true", default=False, help="Hide output"
+        )
 
         auth_group = parser.add_mutually_exclusive_group(required=False)
-        auth_group.add_argument("--cert-path", default=get_default_cert_path(), help="Path to cert")
-        auth_group.add_argument("--token-path", default=get_default_token_path(), help="Path to bearer token")
+        auth_group.add_argument(
+            "--cert-path", default=get_default_cert_path(), help="Path to cert"
+        )
+        auth_group.add_argument(
+            "--token-path",
+            default=get_default_token_path(),
+            help="Path to bearer token",
+        )
 
         return parser
 
@@ -143,14 +167,18 @@ class FerryCLI:
         args, endpoint_args = self.parser.parse_known_args()
 
         if args.endpoint:
-            authorizer = set_auth_from_args(args.auth_method, args.token_path, args.cert_path, args.ca_path)
+            authorizer = set_auth_from_args(
+                args.auth_method, args.token_path, args.cert_path, args.ca_path
+            )
 
             # Prevent DCS from running this endpoint if necessary, and print proper steps to take instead.
             self.safeguards.verify(args.endpoint)
             endpoint_parser = self.endpoints.get(args.endpoint, None)
             if endpoint_parser:
                 try:
-                    self.ferry_api = FerryAPI(base_url=self.base_url, authorizer=authorizer, quiet=args.quiet)
+                    self.ferry_api = FerryAPI(
+                        base_url=self.base_url, authorizer=authorizer, quiet=args.quiet
+                    )
                 except Exception as e:
                     print(f"Exception initializing FerryAPI: {e}")
                     raise
@@ -186,6 +214,7 @@ def main():
     except Exception as e:  # TODO Eventually we want to handle a certain set of exceptions, but this will do for now
         print(f"There was an error querying the FERRY API: {e}")
         sys.exit(1)
-            
+
+
 if __name__ == "__main__":
     main()

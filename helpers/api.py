@@ -4,15 +4,15 @@ import requests
 
 
 class FerryAPI:
-    def __init__(self, base_url, authorizer=lambda s: s, quiet = False):
+    def __init__(self, base_url, authorizer=lambda s: s, quiet=False):
         """
         Parameters:
             base_url (str):  The root URL from which all FERRY API URLs are constructed
-            authorizer (Callable[[requests.Session, requests.Session]): A function that prepares the requests session by adding any necessary auth data 
+            authorizer (Callable[[requests.Session, requests.Session]): A function that prepares the requests session by adding any necessary auth data
             quiet (bool):  Whether or not output should be suppressed
         """
         self.base_url = base_url
-        self.authorizer = authorizer 
+        self.authorizer = authorizer
         self.quiet = quiet
 
     def call_endpoint(
@@ -23,7 +23,7 @@ class FerryAPI:
             print(f"\nCalling Endpoint: {self.base_url}{endpoint}")
 
         _session = requests.Session()
-        session = self.authorizer(_session) # Handles auth for session
+        session = self.authorizer(_session)  # Handles auth for session
 
         if extra:
             for attribute_name, attribute_value in extra:

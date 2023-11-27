@@ -7,7 +7,8 @@ from requests import Session
 
 from helpers import auth
 
-FAKE_CREDENTIAL_DATA = 'fakecredential'
+FAKE_CREDENTIAL_DATA = "fakecredential"
+
 
 @pytest.fixture
 def create_fake_credential(tmp_path):
@@ -21,18 +22,19 @@ def create_fake_credential(tmp_path):
 
 @pytest.mark.unit
 def test_get_default_token_path():
-    with unittest.mock.patch.object(auth, 'geteuid') as m:
+    with unittest.mock.patch.object(auth, "geteuid") as m:
         m.return_value = 42
-        assert auth.get_default_token_path()== f"/run/user/42/bt_u42"
+        assert auth.get_default_token_path() == f"/run/user/42/bt_u42"
+
 
 @pytest.mark.unit
 def test_get_default_cert_path():
-    with unittest.mock.patch.object(auth, 'geteuid') as m:
+    with unittest.mock.patch.object(auth, "geteuid") as m:
         m.return_value = 42
-        assert auth.get_default_cert_path()== f"/tmp/x509up_u42"
+        assert auth.get_default_cert_path() == f"/tmp/x509up_u42"
 
 
-class TestAuthToken():
+class TestAuthToken:
     @pytest.mark.unit
     def test_AuthToken(self, create_fake_credential):
         s = Session()
@@ -47,21 +49,20 @@ class TestAuthToken():
             auth.AuthToken(token_path="thispathdoesntexist")
 
 
-class TestAuthCert():
+class TestAuthCert:
     @pytest.mark.unit
     def test_AuthCert(self, create_fake_credential):
         s = Session()
         authorizer = auth.AuthCert(cert_path=create_fake_credential)
         auth_session = authorizer(s)
         assert Path(auth_session.cert).read_text() == FAKE_CREDENTIAL_DATA
-        assert auth_session.verify == auth.DEFAULT_CA_DIR 
+        assert auth_session.verify == auth.DEFAULT_CA_DIR
 
     @pytest.mark.unit
     def test_AuthCert_bad(self):
         s = Session()
         with pytest.raises(FileNotFoundError):
             auth.AuthCert(cert_path="thispathdoesntexist")
-
 
     @pytest.mark.unit
     def test_AuthCert_capath_bad(self):
