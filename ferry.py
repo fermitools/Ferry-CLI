@@ -165,12 +165,11 @@ class FerryCLI:
 
     def run(self):
         args, endpoint_args = self.parser.parse_known_args()
+        authorizer = set_auth_from_args(
+            args.auth_method, args.token_path, args.cert_path, args.ca_path
+        )
 
         if args.endpoint:
-            authorizer = set_auth_from_args(
-                args.auth_method, args.token_path, args.cert_path, args.ca_path
-            )
-
             # Prevent DCS from running this endpoint if necessary, and print proper steps to take instead.
             self.safeguards.verify(args.endpoint)
             endpoint_parser = self.endpoints.get(args.endpoint, None)
@@ -211,7 +210,9 @@ def main():
     ferry_api = FerryCLI()
     try:
         ferry_api.run()
-    except Exception as e:  # TODO Eventually we want to handle a certain set of exceptions, but this will do for now
+    except (
+        Exception
+    ) as e:  # TODO Eventually we want to handle a certain set of exceptions, but this will do for now
         print(f"There was an error querying the FERRY API: {e}")
         sys.exit(1)
 
