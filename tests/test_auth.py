@@ -27,6 +27,7 @@ class TestGetDefaultTokenPath:
 
     @pytest.mark.unit
     def test_get_default_token_path(self, monkeypatch):
+        monkeypatch.delenv("BEARER_TOKEN_FILE", raising=False)
         monkeypatch.setattr(auth, "geteuid", lambda: 42)
         assert auth.get_default_token_path() == f"/run/user/42/bt_u42"
 
@@ -39,6 +40,7 @@ class TestGetDefaultCertPath:
 
     @pytest.mark.unit
     def test_get_default_cert_path(self, monkeypatch):
+        monkeypatch.delenv("X509_USER_PROXY", raising=False)
         monkeypatch.setattr(auth, "geteuid", lambda: 42)
         assert auth.get_default_cert_path() == f"/tmp/x509up_u42"
 
