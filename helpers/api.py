@@ -1,14 +1,18 @@
 import json
-import os
 
 import requests
 
 
 class FerryAPI:
-    def __init__(self, base_url, cert, capath, quiet=False):
+    def __init__(self, base_url, authorizer=lambda s: s, quiet=False):
+        """
+        Parameters:
+            base_url (str):  The root URL from which all FERRY API URLs are constructed
+            authorizer (Callable[[requests.Session, requests.Session]): A function that prepares the requests session by adding any necessary auth data
+            quiet (bool):  Whether or not output should be suppressed
+        """
         self.base_url = base_url
-        self.cert = cert
-        self.capath = capath
+        self.authorizer = authorizer
         self.quiet = quiet
 
     def call_endpoint(
@@ -17,9 +21,10 @@ class FerryAPI:
         # Create a session object to persist certain parameters across requests
         if not self.quiet:
             print(f"\nCalling Endpoint: {self.base_url}{endpoint}")
-        session = requests.Session()
-        session.cert = self.cert
-        session.verify = self.capath
+
+        _session = requests.Session()
+        session = self.authorizer(_session)  # Handles auth for session
+
         if extra:
             for attribute_name, attribute_value in extra:
                 if attribute_name not in params:
