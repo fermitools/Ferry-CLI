@@ -5,14 +5,14 @@
   * pip3 - requests
   * pip3 - toml
 
-## Usage  
+## Usage
 Currently, this program is compatible with all existing ferry api calls listed on the [Ferry Docs](https://ferry.fnal.gov:8445/docs#).
 
 To begin, simply clone the repo, and run python3 ferry.py inside the directory.
 
-``` bash  
+``` bash
 $ python3 ferry.py
-usage: ferry.py [-h] [--cert CERT] [--capath CAPATH] [-l] [-q] [-ep ENDPOINT_PARAMS] [-e ENDPOINT [ENDPOINT_PARAMS]] 
+usage: ferry.py [-h] [--cert CERT] [--capath CAPATH] [-l] [-q] [-ep ENDPOINT_PARAMS] [-e ENDPOINT [ENDPOINT_PARAMS]]
 
 CLI for Ferry API endpoints
 
@@ -36,7 +36,7 @@ Not all ferry endpoints should be used by DCS, or other groups that may be using
 $ python3 ferry.py -e createUser
 
               SAFEGUARDED: DCS Should NOT be using this call.
-              
+
               Use this form to get a UID/GID if needed: (LINK_TO_FORM)
               Then do whatever you needed to do.
 
