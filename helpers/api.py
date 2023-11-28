@@ -1,10 +1,18 @@
 import json
+from typing import Any, Callable, Dict
 
 import requests
 
+from . import auth
+
 
 class FerryAPI:
-    def __init__(self, base_url, authorizer=lambda s: s, quiet=False):
+    def __init__(
+        self: "FerryAPI",
+        base_url: str,
+        authorizer: auth.Auth = auth.Auth(),
+        quiet: bool = False,
+    ) -> None:
         """
         Parameters:
             base_url (str):  The root URL from which all FERRY API URLs are constructed
@@ -16,8 +24,14 @@ class FerryAPI:
         self.quiet = quiet
 
     def call_endpoint(
-        self, endpoint, method="get", data={}, headers={}, params={}, extra={}
-    ):
+        self: "FerryAPI",
+        endpoint: str,
+        method: str = "get",
+        data: Dict[Any, Any] = {},
+        headers: Dict[str, Any] = {},
+        params: Dict[Any, Any] = {},
+        extra: Dict[Any, Any] = {},
+    ) -> str:
         # Create a session object to persist certain parameters across requests
         if not self.quiet:
             print(f"\nCalling Endpoint: {self.base_url}{endpoint}")

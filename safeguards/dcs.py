@@ -1,12 +1,12 @@
 class SafeguardsDCS:
-    def __init__(self):
+    def __init__(self) -> None:
         # TODO: Add more as needed
         # Format as: {"Endpoint": function (without brackets) }
         self.endpoint_safeguards = {"createUser": self.createUser}
 
     # Checks "endpoint_safeguards" dictionary to see if endpoint is safeguarded
     # Calls the associated function
-    def verify(self, endpoint):
+    def verify(self, endpoint: str) -> None:
         if endpoint in self.endpoint_safeguards:
             self.endpoint_safeguards[endpoint]()
             # Prevent the program from continuing
@@ -14,7 +14,7 @@ class SafeguardsDCS:
 
     # Below are the functions to run for information related to safeguarded endpoints.
     # Rather than calling the endpoint, we will print out the proper steps to take, forms to fill out, etc..
-    def createUser(self):
+    def createUser(self) -> None:
         print(
             """
               SAFEGUARDED: DCS Should NOT be using this call.

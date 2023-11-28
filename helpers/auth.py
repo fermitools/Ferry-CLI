@@ -1,3 +1,4 @@
+from abc import ABC
 from os import geteuid
 import os.path
 import sys
@@ -7,6 +8,7 @@ import requests.auth
 
 
 __all__ = [
+    "Auth",
     "DEFAULT_CA_DIR",
     "get_default_token_path",
     "get_default_cert_path",
@@ -35,7 +37,14 @@ def get_default_cert_path() -> str:
     return f"/tmp/x509up_u{uid}"
 
 
-class AuthToken(object):
+class Auth(ABC):
+    """This is the base class on which all Auth classes should build"""
+
+    def __call__(self: "Auth", s: requests.Session) -> requests.Session:
+        return s
+
+
+class AuthToken(Auth):
     """This is a callable class that modifies a requests.Session object to add token
     auth"""
 
@@ -50,14 +59,14 @@ class AuthToken(object):
     # Thanks to https://github.com/fermitools/jobsub_lite/blob/master/lib/tarfiles.py for this tidbit
     def _read_in_token(
         self: "AuthToken", token_path: str = get_default_token_path()
-    ) -> None:
+    ) -> str:
         """Read the contents of a token file from a given token path"""
         with open(token_path, "r", encoding="UTF-8") as f:
             _token_string = f.read()
             return _token_string.strip()  # Drop \n at end of token_string
 
 
-class AuthCert(object):
+class AuthCert(Auth):
     """This is a callable class that modifies a requests.Session object to add X509 Certificate
     auth"""
 
