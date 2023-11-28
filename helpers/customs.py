@@ -1,16 +1,23 @@
 import os
+from typing import Optional, Any
 
 import toml
 
 
 class TConfig:
-    def __init__(self):
+    def __init__(self) -> None:
         with open("config.toml", "r") as file:
             os.environ["UID"] = str(os.getuid())
-            file = file.read().format_map(os.environ)
-            self.config = toml.loads(file)
+            file_mapped = file.read().format_map(os.environ)
+            self.config = toml.loads(file_mapped)
 
-    def get_from(self, section, field, default=None, check_path=False):
+    def get_from(
+        self,
+        section: str,
+        field: str,
+        default: Optional[Any] = None,
+        check_path: bool = False,
+    ) -> Any:
         if section not in self.config:
             raise KeyError(f"Section '{section}' not in config file")
         retval = self.config[section].get(field, default)

@@ -1,10 +1,13 @@
-from ferry import FerryApi, get_default_cert_path, get_default_capath
 from argparse import Namespace, ArgumentParser
 import json
 
+from helpers.api import FerryAPI
+from helpers.auth import *
+
 
 cert = get_default_cert_path()
-capath = get_default_capath()
+capath = DEFAULT_CA_DIR
+base_url = "https://ferry.fnal.gov:8445/"  # TODO This was just put in there to make the mypy tests pass.  LTrestka is currently working on a large refactor of workflows
 
 parser = ArgumentParser(
     description="Custom Ferry function to create, and add a group to a unit, and add resources to it"
@@ -34,7 +37,7 @@ parser.add_argument(
     default=None,
 )
 parser.add_argument("-u", "--unitname", help="Affiliation to associate the group with")
-ferry_api = FerryApi()
+ferry_api = FerryAPI(base_url=base_url)
 args = parser.parse_args()
 
 # TODO: This is incomplete
@@ -43,10 +46,11 @@ if args.resources is not None:
     for key, val in vars(args).items():
         print(f"\t{key}: {val}")
     for resource in args.resources:
+        # This is type-ignored, since LTrestka plans on refactoring this anyway
         resp = eval(
-            ferry_api.execute_endpoint(
+            ferry_api.call_endpoint(
                 "getPasswdFile",
-                [
+                [  # type: ignore
                     f"--groupname={args.groupname}",
                     f"--unitname={args.unitname}",
                     f"--resourcename={resource}",
@@ -60,10 +64,11 @@ if args.resources is not None:
                 and resource in output[args.unitname]["resources"]
             ):
                 for user in output[args.unitname]["resources"][resource]:
+                    # This is type-ignored, since LTrestka plans on refactoring this anyway
                     resp = json.loads(
-                        ferry_api.execute_endpoint(
+                        ferry_api.call_endpoint(
                             "setUserAccessToComputeResource",
-                            [
+                            [  # type: ignore
                                 f"--groupname={args.groupname}",
                                 f"--homedir={user.get('homedir', None)}",
                                 f"--resourcename={resource}",
