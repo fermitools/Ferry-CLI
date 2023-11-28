@@ -14,3 +14,6 @@ repos:
     rev: 22.8.0
     hooks:
     -   id: black
+ci:
+  autoupdate_branch: 'pre-commit.ci-autoupdate'
+  autoupdate_schedule: 'quarterly'
