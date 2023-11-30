@@ -840,7 +840,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "default = capabilitySetName set to “none” if no ldap vaultstoragekey should be set",
+                        "description": "default = capabilitySetName set to \u201cnone\u201d if no ldap vaultstoragekey should be set",
                         "name": "vaultstoragekey",
                         "in": "query"
                     }
@@ -1236,7 +1236,7 @@
                     },
                     {
                         "type": "boolean",
-                        "description": "true is this is a group account - default is false",
+                        "description": "true if this is a group account - default is false",
                         "name": "groupaccount",
                         "in": "query",
                         "required": false
@@ -1287,7 +1287,7 @@
         },
         "/dropCapabilitySet": {
             "post": {
-                "description": "Deletes a cabillity set from both FERRY’s database and LDAP. FERRY will not delete a capability set that is in\nuse. (See removeCapabilitySetFromFQAN.)",
+                "description": "Deletes a cabillity set from both FERRY\u2019s database and LDAP. FERRY will not delete a capability set that is in\nuse. (See removeCapabilitySetFromFQAN.)",
                 "consumes": [
                     "text/html"
                 ],
@@ -1297,7 +1297,7 @@
                 "tags": [
                     "LDAP"
                 ],
-                "summary": "Deletes a cabillity set from both FERRY’s database and LDAP.",
+                "summary": "Deletes a cabillity set from both FERRY\u2019s database and LDAP.",
                 "parameters": [
                     {
                         "type": "string",
@@ -4300,7 +4300,7 @@
         },
         "/removeScopeFromCapabilitySet": {
             "put": {
-                "description": "Removes, deletes, a scope record from its capability set both in FERRY’s DB and in LDAP.",
+                "description": "Removes, deletes, a scope record from its capability set both in FERRY\u2019s DB and in LDAP.",
                 "consumes": [
                     "text/html"
                 ],
@@ -4310,7 +4310,7 @@
                 "tags": [
                     "LDAP"
                 ],
-                "summary": "Removes, deletes, a scope record from its capability set both in FERRY’s DB and in LDAP.",
+                "summary": "Removes, deletes, a scope record from its capability set both in FERRY\u2019s DB and in LDAP.",
                 "parameters": [
                     {
                         "type": "string",
@@ -4351,7 +4351,7 @@
         },
         "/removeUserAccessFromResource": {
             "put": {
-                "description": "Removes the user’s interactive access from a group on a resource.  If the group is a primary group for the\nresources and user doesn’t belong to any other group on this resource, the user will no longer show up in the\npassword file for the resource. If the group is not primary group then the user will not be listed in resource\ngroup file for this group.",
+                "description": "Removes the user\u2019s interactive access from a group on a resource.  If the group is a primary group for the\nresources and user doesn\u2019t belong to any other group on this resource, the user will no longer show up in the\npassword file for the resource. If the group is not primary group then the user will not be listed in resource\ngroup file for this group.",
                 "consumes": [
                     "text/html"
                 ],
@@ -4361,7 +4361,7 @@
                 "tags": [
                     "Groups"
                 ],
-                "summary": "Removes the user’s interactive access from a group on a resource.",
+                "summary": "Removes the user\u2019s interactive access from a group on a resource.",
                 "parameters": [
                     {
                         "type": "string",
@@ -4803,7 +4803,7 @@
         },
         "/setCapabilitySetAttributes": {
             "put": {
-                "description": "Alters attributes of a capability set in both FERRY’s DB and LDAP.  Due to the LDAP/FERRY associations, you cannot\nchange the name of a CS.  Create a new one and delete the existing one.",
+                "description": "Alters attributes of a capability set in both FERRY\u2019s DB and LDAP.  Due to the LDAP/FERRY associations, you cannot\nchange the name of a CS.  Create a new one and delete the existing one.",
                 "consumes": [
                     "text/html"
                 ],
@@ -4813,7 +4813,7 @@
                 "tags": [
                     "LDAP"
                 ],
-                "summary": "Alters attributes of a capability set in both FERRY’s DB and LDAP.",
+                "summary": "Alters attributes of a capability set in both FERRY\u2019s DB and LDAP.",
                 "parameters": [
                     {
                         "type": "string",
@@ -5286,7 +5286,7 @@
         },
         "/setStorageQuota": {
             "put": {
-                "description": "Sets the storage quota assigned for a user or group when “groupaccount” is true.",
+                "description": "Sets the storage quota assigned for a user or group when \u201cgroupaccount\u201d is true.",
                 "consumes": [
                     "text/html"
                 ],
@@ -5296,7 +5296,7 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Sets the storage quota assigned for a user or group when “groupaccount” is true.",
+                "summary": "Sets the storage quota assigned for a user or group when \u201cgroupaccount\u201d is true.",
                 "parameters": [
                     {
                         "type": "string",
@@ -5733,7 +5733,7 @@
                     },
                     {
                         "type": "boolean",
-                        "description": "true is this is a group account - default is false",
+                        "description": "true if this is a group account - default is false",
                         "name": "groupaccount",
                         "in": "query"
                     },
@@ -5933,7 +5933,7 @@
         },
         "/updateLdapForAffiliation": {
             "put": {
-                "description": "Verifies and where necessary updates the LDAP records of every member in the affiliation to conform to what is\nin FERRY’s database.  Be aware, affiliation simply provides the list of people.   However all their LDAP records will be\nupdated, include those in other affiliations.",
+                "description": "Verifies and where necessary updates the LDAP records of every member in the affiliation to conform to what is\nin FERRY\u2019s database.  Be aware, affiliation simply provides the list of people.   However all their LDAP records will be\nupdated, include those in other affiliations.",
                 "consumes": [
                     "text/html"
                 ],
@@ -5943,7 +5943,7 @@
                 "tags": [
                     "LDAP"
                 ],
-                "summary": "Verifies and where necessary updates the LDAP records of every member in the affiliation to conform to what is in FERRY’s database.",
+                "summary": "Verifies and where necessary updates the LDAP records of every member in the affiliation to conform to what is in FERRY\u2019s database.",
                 "parameters": [
                     {
                         "type": "string",
@@ -5977,7 +5977,7 @@
         },
         "/updateLdapForCapabilitySet": {
             "put": {
-                "description": "Verifies and where necessary updates the LDAP records of every user who has the FQAN associaited with the capability set\nto what is in in FERRY’s database.  Be aware, the setname simply provides the list of people.   However all their LDAP\nrecords will be updated, include those in other capability sets.",
+                "description": "Verifies and where necessary updates the LDAP records of every user who has the FQAN associaited with the capability set\nto what is in in FERRY\u2019s database.  Be aware, the setname simply provides the list of people.   However all their LDAP\nrecords will be updated, include those in other capability sets.",
                 "consumes": [
                     "text/html"
                 ],
@@ -5993,6 +5993,115 @@
                         "type": "string",
                         "description": "setname to use for obtaining the list of members to update",
                         "name": "setname",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    }
+                }
+            }
+        },
+        "/removeUserFromExperiment": {
+            "put": {
+                "description": "Removes a user from an experiment. Specifically, this removes the user's relationships to the experiment's resources, FQANs, certificates and storage quotas from the specified user. NOTE: API is unable to remove the user from groups as a group may be connected to multiple affiliations.",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Removes a user from an experiment.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "name of the experiment to remove the user from",
+                        "name": "unitname",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "user name of the user to remove from the experiment",
+                        "name": "username",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    }
+                }
+            }
+        },
+        "/removeGroupLeader": {
+            "put": {
+                "description": "Removes the group leadership privilege from a user.  The user's association with the group is not altered.",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Removes the group leadership privilege from a user.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "name of group",
+                        "name": "groupname",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "type of group",
+                        "name": "grouptype",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name of user to remove leadership privilege from",
+                        "name": "username",
                         "in": "query",
                         "required": true
                     }

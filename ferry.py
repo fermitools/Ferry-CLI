@@ -65,6 +65,7 @@ class FerryCLI:
         parser.add_argument('-ep', '--endpoint_params', help="List parameters for the selected endpoint")
         parser.add_argument('-e', '--endpoint', help="API endpoint and parameters")
         parser.add_argument('-w', '--workflow', help="Execute supported workflows")
+        parser.add_argument('--get_swagger', action='store_true', help="Get the latest official swagger.json file")
         parser.add_argument('-q', '--quiet', action='store_true', default=False, help="Hide output")
         return parser
     
@@ -141,12 +142,16 @@ class FerryCLI:
             endpoint_description += f"{'':<50} | {line}\n"
         return endpoint_description
 
+    
     def run(self):
         
         args, endpoint_args = self.parser.parse_known_args()
         
         self.cert = args.cert
         self.capath = args.capath
+        if args.get_swagger:
+            self.ferry_api = FerryAPI(self.base_url, self.cert, self.capath, args.quiet)
+            return self.ferry_api.get_latest_swagger_file()
         if args.endpoint:
             # Prevent DCS from running this endpoint if necessary, and print proper steps to take instead.
             self.safeguards.verify(args.endpoint)
@@ -167,7 +172,7 @@ class FerryCLI:
                 params, _ = workflow.parser.parse_known_args(endpoint_args)
                 json_result = workflow.run(self.ferry_api, params.__dict__)
                 if not args.quiet:
-                    self.handle_output(json.dumps(json_result, indent=4))
+                    self.handle_output(json_result)
             else:
                 print(f"Error: '{self.base_url}{args.endpoint}' is not an existing Ferry endpoint.")
                 exit(1)
