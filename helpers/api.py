@@ -4,12 +4,11 @@ import os
 import requests
 
 class FerryAPI:
-    def __init__(self, base_url, cert, capath, quiet = False, is_workflow=False):
+    def __init__(self, base_url, cert, capath, quiet = False):
         self.base_url = base_url
         self.cert = cert
         self.capath = capath
         self.quiet = quiet
-        self.is_workflow = is_workflow
 
     def call_endpoint(self, endpoint, method='get', data={}, headers={}, params={}, extra={}):
         # Create a session object to persist certain parameters across requests

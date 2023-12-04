@@ -110,7 +110,7 @@ class FerryCLI:
                 # Finds workflow inherited class in dictionary if exists, and initializes it.
                 workflow = SUPPORTED_WORKFLOWS[args.workflow]()
                 workflow.init_parser()
-                self.ferry_api = FerryAPI(self.base_url, self.cert, self.capath, args.quiet, is_workflow=True)
+                self.ferry_api = FerryAPI(self.base_url, self.cert, self.capath, args.quiet)
                 params, _ = workflow.parser.parse_known_args(endpoint_args)
                 json_result = workflow.run(self.ferry_api, vars(params))
                 if not args.quiet:
