@@ -1,4 +1,5 @@
 result.json
 .venv
 .git
+/tmp/*
 __pycache__
