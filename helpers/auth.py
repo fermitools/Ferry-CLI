@@ -41,7 +41,6 @@ def default_token_file_name() -> str:
     return f"bt_u{uid}"
 
 
-# TODO Test this by passing in "blahblah\n" into a temp file, read it, make sure we get the right result
 # Thanks to https://github.com/fermitools/jobsub_lite/blob/master/lib/tarfiles.py for this tidbit
 def read_in_token(token_path: str) -> str:
     """Read the contents of a token file from a given token path"""

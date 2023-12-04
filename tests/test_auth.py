@@ -26,6 +26,11 @@ def token_file_name(monkeypatch):
     return auth.default_token_file_name()
 
 
+@pytest.mark.unit
+def test_read_in_token(create_fake_credential):
+    assert auth.read_in_token(create_fake_credential) == FAKE_CREDENTIAL_DATA.strip()
+
+
 class TestGetDefaultTokenString:
     @pytest.mark.unit
     def test_get_default_token_string_bearer_token_val(self, monkeypatch):
@@ -36,6 +41,7 @@ class TestGetDefaultTokenString:
     def test_get_default_token_string_bearer_token_file(
         self, create_fake_credential, monkeypatch
     ):
+        monkeypatch.delenv("BEARER_TOKEN", raising=False)
         monkeypatch.setenv("BEARER_TOKEN_FILE", create_fake_credential)
         assert auth.get_default_token_string() == FAKE_CREDENTIAL_DATA.strip()
 
@@ -46,6 +52,8 @@ class TestGetDefaultTokenString:
         fake_credential = create_fake_credential
         fake_cred_dir = str(Path(fake_credential).parent)
         copyfile(fake_credential, f"{fake_cred_dir}/{token_file_name}")
+        monkeypatch.delenv("BEARER_TOKEN", raising=False)
+        monkeypatch.delenv("BEARER_TOKEN_FILE", raising=False)
         monkeypatch.setenv("XDG_RUNTIME_DIR", fake_cred_dir)
         assert auth.get_default_token_string() == FAKE_CREDENTIAL_DATA.strip()
 
