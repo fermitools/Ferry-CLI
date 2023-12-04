@@ -34,7 +34,7 @@ class FerryAPI:
             if output.get("ferry_status", None) != "success":
                 exit(f"API Error: {output.get('ferry_error', 'Unknown Error')}")
             output["request_url"] = response.request.url
-            return  output if self.is_workflow else json.dumps(output, indent=4)
+            return  output
         except BaseException as e:
             # How do we want to handle errors?
             raise e

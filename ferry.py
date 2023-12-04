@@ -143,11 +143,11 @@ class FerryCLI:
     # TBD if we will use this at all
     def handle_output(self, output):
         # Don't print excessively long responses - just store them in the result.json file and point to it.
-        if len(output) < 1000:
-            print(f"Response: {output}")
+        if len(str(output)) < 1000:
+            print(f"Response: {json.dumps(output, indent=4)}")
         else:
             with open("result.json","w") as file:
-                file.write(output)
+                file.write(json.dumps(output, indent=4))
             print(f"Response in file: {os.path.abspath(os.environ.get('PWD', ''))}/result.json")
             
 def main():
