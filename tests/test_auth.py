@@ -26,14 +26,6 @@ def token_file_name(monkeypatch):
     return auth.default_token_file_name()
 
 
-"""
-1.  BEARER_TOKEN value
-2. BEARER_TOKEN_FILE file
-3. XDG_RUNTIME_DIR/bt_u$(id -u) file
-4. /tmp/bt_u$(id -u)
-"""
-
-
 class TestGetDefaultTokenString:
     @pytest.mark.unit
     def test_get_default_token_string_bearer_token_val(self, monkeypatch):

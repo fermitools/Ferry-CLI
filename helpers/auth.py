@@ -10,7 +10,7 @@ import requests.auth
 __all__ = [
     "Auth",
     "DEFAULT_CA_DIR",
-    "get_default_token_path",
+    "get_default_token_string",
     "get_default_cert_path",
     "AuthToken",
     "AuthCert",
