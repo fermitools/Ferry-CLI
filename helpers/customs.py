@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from typing import Optional, Any
+from typing import Optional, Any, List, Dict
 import textwrap
 
 import toml
@@ -34,9 +34,6 @@ class TConfig:
 
 class Workflow(ABC):
     """Abstracted Workflow object that as the baseline for our custom workflows
-
-    Args:
-        ABC (_type_): _description_
     """
     def __init__(self, supported_workflow:'Workflow' = None) -> 'Workflow':
         self.name = supported_workflow.name if supported_workflow else None
@@ -69,11 +66,16 @@ class FerryParser(argparse.ArgumentParser):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         
-    def set_arguments(self, params:list):
+    def set_arguments(self, params:List[Dict[str, Any]]) -> None:
+        """Initializes arguments for the parser from the 
+
+        Args:
+            params (list): An array of Dictionary objects representing a parameter option
+        """
         for param in params:
             req = "required" if param.get("required", False) else "optional"
             self.add_argument(
-                f"--{param['name']}", 
+                f"--{param['name']}",
                 type=str, 
                 help=FerryParser.parse_description(
                     name="", 
@@ -85,13 +87,13 @@ class FerryParser(argparse.ArgumentParser):
     
     @staticmethod
     def create(description:str) -> 'FerryParser':
-        """Create a FerryParser instance.
+        f"""Creates a FerryParser instance.
 
         Args:
-            description (_type_): _description_
+            description (string): Name of the FerryParser.
 
         Returns:
-            FerryParser: _description_
+            FerryParser
         """
         return FerryParser(description=description)
     
@@ -100,32 +102,32 @@ class FerryParser(argparse.ArgumentParser):
         """Create a Ferry Parser Instance from a Supported Workflow
 
         Args:
-            workflow (Workflow): _description_
+            workflow (Workflow): Workflow subclass
 
         Raises:
-            TypeError: _description_
+            TypeError: Passed object must be a Workflow subclass
 
         Returns:
-            FerryParser: _description_
+            FerryParser
         """
         if not isinstance(workflow, Workflow):
-            raise TypeError("workflow must be an instance of a class that inherits from Workflow")
+            raise TypeError("workflow must be a Workflow subclass")
 
         parser = FerryParser.create_subparser(name=workflow.name, description=workflow.description, method=workflow.method)
         parser.set_arguments(workflow.params)
         return parser
     
     @staticmethod
-    def create_subparser(name:str, description:str, method:str=None) -> 'FerryParser':
+    def create_subparser(name:str, description:str, method:str="GET") -> 'FerryParser':
         """Create a FerryParser subparser.
 
         Args:
-            name (str): _description_
-            description (str): _description_
-            method (str, optional): _description_. Defaults to None.
+            name (str): Name of subparser
+            description (str): What does this subparser do?
+            method (str, optional): API Method Type. Defaults to GET.
 
         Returns:
-            FerryParser: _description_
+            FerryParser
         """
         description = FerryParser.parse_description(name, method, description)
         return FerryParser(description=description)
