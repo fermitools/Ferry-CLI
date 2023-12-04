@@ -1,19 +1,11 @@
-import argparse
 import json
 import os
-import textwrap
 
-from helpers.customs import TConfig
+from helpers.customs import TConfig, FerryParser
 from helpers.api import FerryAPI
 from safeguards.dcs import SafeguardsDCS
-from workflows.dcs_workflows import *
 
-WORKFLOW_FUNCTIONS = {
-    "getGroupInfo": GetGroupInfo
-}
-with open("workflows/supported_workflows.json", 'r') as file:
-    SUPPORTED_WORKFLOWS = json.load(file)
-
+from helpers.supported_workflows import SUPPORTED_WORKFLOWS
 
 def get_default_paths(config):
     cert = config.get_from("Auth", "default_cert_path", check_path=True)
@@ -30,79 +22,46 @@ class FerryCLI:
         self.cert, self.capath = get_default_paths(self.config)
         self.parser = self.get_arg_parser()
         
-    class Workflow:
-        """_summary_
-        describer: pointer to the description parser
-        workflow_name: The name of the workflow (string)
-        ferry_api: FerryAPI object, used for generating and facilitating requests to actual ferry endpoints 
-        """ 
-        def __init__(self, parse_description, workflow_name):
-            if workflow_name not in SUPPORTED_WORKFLOWS:
-                raise NotImplementedError(f"'{workflow_name}' is not a supported workflow.")
-            self.name = workflow_name
-            self.description = SUPPORTED_WORKFLOWS[workflow_name]["description"]
-            self.params = SUPPORTED_WORKFLOWS[workflow_name]["params"]
-            self.parser = self.init_parser(parse_description)
-            
-        def init_parser(self, parse_description):
-            endpoint_description = parse_description(self.name, self.description, "Workflow")
-            endpoint_parser = argparse.ArgumentParser(description=endpoint_description)
-            for param in self.params:
-                req = ": required" if param["required"] else ""
-                param_description = parse_description("", param["description"], f"{param['type']}{req}")
-                endpoint_parser.add_argument(f"--{param['name']}", type=str, help=param_description, required=param['required'])
-            return endpoint_parser
-        
-        def run(self, ferry_api, params = {}):
-            return WORKFLOW_FUNCTIONS[self.name](ferry_api, params)
-        
     def get_arg_parser(self):
-        parser = argparse.ArgumentParser(description="CLI for Ferry API endpoints")
+        parser = FerryParser.create(description="CLI for Ferry API endpoints")
         parser.add_argument('--cert', required=(self.cert is None), default=self.cert, help="Path to cert")
         parser.add_argument('--capath', required=(self.capath is None), default=self.capath, help="Certificate authority path")
         parser.add_argument('-le', '--list_endpoints', action='store_true', help="List all available endpoints")
-        parser.add_argument('-lw', '--list_workflows', action='store_true', help="List all available custom workflows")
-        parser.add_argument('-ep', '--endpoint_params', help="List parameters for the selected endpoint")
+        parser.add_argument('-lw', '--list_workflows', action='store_true', help="List all supported custom workflows")
+        parser.add_argument('-ep', '--endpoint_params', help="List parameters for the specified endpoint")
+        parser.add_argument('-wp', '--workflow_params', help="List parameters for the supported workflow")
         parser.add_argument('-e', '--endpoint', help="API endpoint and parameters")
         parser.add_argument('-w', '--workflow', help="Execute supported workflows")
         parser.add_argument('-q', '--quiet', action='store_true', default=False, help="Hide output")
         return parser
     
     def list_available_endpoints(self):
-        print()
-        print("Listing all available endpoints:")
-        print()
+        print("""
+              Listing all available endpoints:
+              """)
         for subparser in self.endpoints.values():
             print(subparser.description)
-            print()
     
     def get_endpoint_params(self, endpoint):
-        print()
-        print("Listing parameters for endpoint: %s%s" % (self.base_url,endpoint))
-        print()
+        print("""
+              Listing parameters for endpoint: %s%s" 
+              """ % (self.base_url,endpoint))
         subparser = self.endpoints.get(endpoint, None)
         if not subparser:
-            print()
-            print("Error: '%s' is not a valid endpoint. Run 'ferry -l' for a full list of available endpoints." % endpoint)
-            print()
+            print("""
+                  Error: '%s' is not a valid endpoint. Run 'ferry -l' for a full list of available endpoints.
+                  """ % endpoint)
         else:
-            print(subparser.format_help())
-            print()
-
-    def list_supported_workflows(self):
-        for json_workflow in SUPPORTED_WORKFLOWS.keys():
-            workflow = self.Workflow(self.parse_description, json_workflow)
-            print(workflow.parser.description)
-            print()
-    
-        
+            print(f"""{subparser.format_help()}
+                  """)
+            
         
     def execute_endpoint(self, endpoint, params):
         subparser = self.endpoints.get(endpoint, None)
         if not subparser:
-            print()
-            print("Error: '%s' is not a valid endpoint. Run 'ferry -l' for a full list of available endpoints." % endpoint)
-            print()
+            print("""
+                  Error: '%s' is not a valid endpoint. Run 'ferry -l' for a full list of available endpoints.
+                  """% endpoint)
         else:
             # Here we take the additional args that a user passes for an endpoint, and we generate a request to the endpoint with the parameters provided.
             # We do not bother with verifying passed arguments at this point since ferry will do it for us. 
@@ -121,25 +80,12 @@ class FerryCLI:
                     method = "post"
                 elif "put" in data:
                     method = "put"
-                description = data[method]["description"]
-                endpoint_description = self.parse_description(endpoint, description, method.upper())
-                endpoint_parser = argparse.ArgumentParser(description=endpoint_description)
-                for param in data[method].get("parameters", []):
-                    param_description = self.parse_description("", param["description"], "%s%s" % (param["type"], ": required" if param.get("required",False) else ""))
-                    endpoint_parser.add_argument(f"--{param['name']}", type=str, help=param_description, required=param.get("required",False))
+                    
+                endpoint_parser = FerryParser.create_subparser(endpoint, method=method.upper(), description=data[method]["description"])
+                endpoint_parser.set_arguments(data[method].get("parameters", [])) 
                 endpoints[path.replace("/","")] = endpoint_parser
         return endpoints
         
-    def parse_description(self, name, desc, method=None):
-        description_lines = textwrap.wrap(desc, width=60)
-        first_line = description_lines[0]
-        rest_lines = description_lines[1:]
-        endpoint_description = "%s" % (name.replace("/", ""))
-        method_char_count = 49 - len("(%s)" % method)
-        endpoint_description = f"{endpoint_description:<{method_char_count}} ({method}) | {first_line}\n"
-        for line in rest_lines:
-            endpoint_description += f"{'':<50} | {line}\n"
-        return endpoint_description
 
     def run(self):
         
@@ -161,24 +107,36 @@ class FerryCLI:
                 exit(1)
         elif args.workflow:
             if args.workflow in SUPPORTED_WORKFLOWS:
-                workflow = self.Workflow(self.parse_description, args.workflow)
-            if workflow and workflow.parser:
+                # Finds workflow inherited class in dictionary if exists, and initializes it.
+                workflow = SUPPORTED_WORKFLOWS[args.workflow]()
+                workflow.init_parser()
                 self.ferry_api = FerryAPI(self.base_url, self.cert, self.capath, args.quiet, is_workflow=True)
                 params, _ = workflow.parser.parse_known_args(endpoint_args)
                 json_result = workflow.run(self.ferry_api, params.__dict__)
                 if not args.quiet:
                     self.handle_output(json.dumps(json_result, indent=4))
             else:
-                print(f"Error: '{self.base_url}{args.endpoint}' is not an existing Ferry endpoint.")
+                print(f"Error: '{args.workflow}' is not a supported workflow.")
                 exit(1)
         elif args.list_endpoints:
             self.list_available_endpoints()
         elif args.list_workflows:
-            self.list_supported_workflows()
+            print("\nListing all supported workflows: \n")
+            for workflow in SUPPORTED_WORKFLOWS.values():
+                workflow().get_description()
         elif args.endpoint_params:
             # Prevent DCS from running this endpoint if necessary, and print proper steps to take instead.
             self.safeguards.verify(args.endpoint_params)
             self.get_endpoint_params(args.endpoint_params)
+        elif args.workflow_params:
+            if args.workflow_params in SUPPORTED_WORKFLOWS:
+                # Finds workflow inherited class in dictionary if exists, and initializes it.
+                workflow = SUPPORTED_WORKFLOWS[args.workflow_params]()
+                workflow.init_parser()
+                workflow.get_info()
+            else:
+                print(f"Error: '{args.workflow_params}' is not a supported workflow.")
+                exit(1)
         else:
             self.parser.print_help()
             
