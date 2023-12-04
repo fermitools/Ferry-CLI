@@ -1,7 +1,7 @@
 from abc import ABC
 from os import geteuid
 import os.path
-import sys
+from typing import Optional
 
 import requests
 import requests.auth
@@ -19,13 +19,35 @@ __all__ = [
 DEFAULT_CA_DIR = "/etc/grid-security/certificates"
 
 
-def get_default_token_path() -> str:
-    """Get the default path where htgettoken stores bearer tokens.  If $BEARER_TOKEN_FILE is set, use that first"""
-    env_location = os.environ.get("BEARER_TOKEN_FILE")
-    if env_location is not None:
-        return env_location
-    uid = str(geteuid())
-    return f"/run/user/{uid}/bt_u{uid}"
+def get_default_token_string() -> str:
+    """Follow the WLCG Bearer Token Discovery standard to get the token string.
+    The standard is here:  https://zenodo.org/records/3937438"""
+    bearer_token_str = os.environ.get("BEARER_TOKEN")
+    if bearer_token_str is not None:
+        return bearer_token_str
+    bearer_token_file = os.environ.get("BEARER_TOKEN_FILE")
+    if bearer_token_file is not None:
+        return read_in_token(bearer_token_file)
+    xdg_runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
+    if xdg_runtime_dir is not None:
+        token_file = f"{xdg_runtime_dir}/{default_token_file_name()}"
+        return read_in_token(token_file)
+    return read_in_token(f"/tmp/{default_token_file_name()}")
+
+
+def default_token_file_name() -> str:
+    """Returns the filename (basename) of a bearer token, following the WLCG Bearer Token Discovery standard"""
+    uid = os.geteuid()
+    return f"bt_u{uid}"
+
+
+# TODO Test this by passing in "blahblah\n" into a temp file, read it, make sure we get the right result
+# Thanks to https://github.com/fermitools/jobsub_lite/blob/master/lib/tarfiles.py for this tidbit
+def read_in_token(token_path: str) -> str:
+    """Read the contents of a token file from a given token path"""
+    with open(token_path, "r", encoding="UTF-8") as f:
+        _token_string = f.read()
+        return _token_string.strip()  # Drop \n at end of token_string
 
 
 def get_default_cert_path() -> str:
@@ -48,22 +70,17 @@ class AuthToken(Auth):
     """This is a callable class that modifies a requests.Session object to add token
     auth"""
 
-    def __init__(self: "AuthToken", token_path: str = get_default_token_path()) -> None:
-        self.token_string = self._read_in_token(token_path)
+    def __init__(self: "AuthToken", token_path: Optional[str] = None) -> None:
+        self.token_string = (
+            get_default_token_string()
+            if token_path is None
+            else read_in_token(token_path)
+        )
 
     def __call__(self: "AuthToken", s: requests.Session) -> requests.Session:
         """Modify the passed in session to add token auth"""
         s.headers["Authorization"] = f"Bearer {self.token_string}"
         return s
-
-    # Thanks to https://github.com/fermitools/jobsub_lite/blob/master/lib/tarfiles.py for this tidbit
-    def _read_in_token(
-        self: "AuthToken", token_path: str = get_default_token_path()
-    ) -> str:
-        """Read the contents of a token file from a given token path"""
-        with open(token_path, "r", encoding="UTF-8") as f:
-            _token_string = f.read()
-            return _token_string.strip()  # Drop \n at end of token_string
 
 
 class AuthCert(Auth):
