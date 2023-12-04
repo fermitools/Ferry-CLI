@@ -66,7 +66,7 @@ class FerryCLI:
             # Here we take the additional args that a user passes for an endpoint, and we generate a request to the endpoint with the parameters provided.
             # We do not bother with verifying passed arguments at this point since ferry will do it for us. 
             params, _ = subparser.parse_known_args(params)
-            return self.ferry_api.call_endpoint(endpoint, params=params.__dict__)
+            return self.ferry_api.call_endpoint(endpoint, params=vars(params))
 
     def generate_endpoints(self):
         endpoints = {}
@@ -101,7 +101,7 @@ class FerryCLI:
                 self.ferry_api = FerryAPI(self.base_url, self.cert, self.capath, args.quiet)
                 json_result = self.execute_endpoint(args.endpoint, endpoint_args)
                 if not args.quiet:
-                    self.handle_output(json_result)
+                    self.handle_output(json.dumps(json_result, indent=4))
             else:
                 print(f"Error: '{self.base_url}{args.endpoint}' is not an existing Ferry endpoint.")
                 exit(1)
@@ -112,7 +112,7 @@ class FerryCLI:
                 workflow.init_parser()
                 self.ferry_api = FerryAPI(self.base_url, self.cert, self.capath, args.quiet, is_workflow=True)
                 params, _ = workflow.parser.parse_known_args(endpoint_args)
-                json_result = workflow.run(self.ferry_api, params.__dict__)
+                json_result = workflow.run(self.ferry_api, vars(params))
                 if not args.quiet:
                     self.handle_output(json.dumps(json_result, indent=4))
             else:
@@ -143,11 +143,11 @@ class FerryCLI:
     # TBD if we will use this at all
     def handle_output(self, output):
         # Don't print excessively long responses - just store them in the result.json file and point to it.
-        if len(str(output)) < 1000:
-            print(f"Response: {json.dumps(output, indent=4)}")
+        if len(output) < 1000:
+            print(f"Response: {output}")
         else:
             with open("result.json","w") as file:
-                file.write(json.dumps(output, indent=4))
+                file.write(output)
             print(f"Response in file: {os.path.abspath(os.environ.get('PWD', ''))}/result.json")
             
 def main():
