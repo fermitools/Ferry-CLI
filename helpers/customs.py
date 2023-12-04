@@ -5,6 +5,7 @@ import textwrap
 import toml
 
 from abc import ABC, abstractmethod
+from helpers.api import FerryAPI
 
 class TConfig():
     def __init__(self):
@@ -46,7 +47,7 @@ class Workflow(ABC):
         print(self.parser.description)
     
     @abstractmethod
-    def run(self):
+    def run(self, api:FerryAPI, *args):
         # This method should be implemented by all subclasses
         pass
     

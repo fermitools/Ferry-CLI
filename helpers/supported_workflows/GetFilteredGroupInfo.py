@@ -21,7 +21,7 @@ class GetFilteredGroupInfo(Workflow):
         if not group_json:
             print(f"Failed'")
             exit(1)
-        print(f"Recieved successful response'")
+        print(f"Recieved successful response")
         print(f"Filtering by groupname: '{args['groupname']}'")
         group_info = [entry for entry in group_json["ferry_output"] if entry["groupname"] == args["groupname"]]
         return group_info
