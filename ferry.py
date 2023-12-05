@@ -184,8 +184,8 @@ class FerryCLI:
                 json_result = workflow.run(self.ferry_api, vars(workflow_params))
                 if not args.quiet:
                     self.handle_output(json.dumps(json_result, indent=4))
-            except Exception as e:
-                    raise Exception(f"Error: '{args.workflow}' is not a supported workflow.")
+            except KeyError as e:
+                    raise KeyError(f"Error: '{args.workflow}' is not a supported workflow.")
         elif args.list_endpoints:
             self.list_available_endpoints()
         elif args.list_workflows:
