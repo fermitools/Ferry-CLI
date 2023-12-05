@@ -18,7 +18,7 @@ def get_default_paths(config: TConfig) -> Tuple[str, str]:
 
 
 def set_auth_from_args(
-    auth_method: str, token_path: str, cert_path: str, ca_path: str
+    auth_method: str, token_path: Optional[str], cert_path: str, ca_path: str
 ) -> Auth:
     """Set the auth class based on the given arguments"""
     if auth_method == "token":
@@ -49,7 +49,6 @@ class FerryCLI:
         auth_group = parser.add_mutually_exclusive_group(required=False)
         auth_group.add_argument(
             "--token-path",
-            default=get_default_token_path(),
             help="Path to bearer token",
         )
         auth_group.add_argument(
