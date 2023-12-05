@@ -1,9 +1,9 @@
-import json
 from typing import Any, Callable, Dict
 
 import requests
 
 from . import auth
+
 
 
 class FerryAPI:
@@ -32,6 +32,7 @@ class FerryAPI:
         params: Dict[Any, Any] = {},
         extra: Dict[Any, Any] = {},
     ) -> str:
+        
         # Create a session object to persist certain parameters across requests
         if not self.quiet:
             print(f"\nCalling Endpoint: {self.base_url}{endpoint}")
@@ -55,9 +56,12 @@ class FerryAPI:
                 )
             else:
                 raise ValueError("Unsupported HTTP method.")
+            if not self.quiet:
+                print(f"Called Endpoint: {response.request.url}")
             output = response.json()
+            
             output["request_url"] = response.request.url
-            return json.dumps(output, indent=4)
+            return output
         except BaseException as e:
             # How do we want to handle errors?
             raise e

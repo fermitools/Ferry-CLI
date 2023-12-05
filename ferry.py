@@ -1,11 +1,11 @@
-import argparse
 import json
 import os
 import sys
 import textwrap
 from typing import Any, Dict, Optional, List, Tuple, Type
 
-from helpers.customs import TConfig
+from helpers.customs import TConfig, FerryParser
+from helpers.supported_workflows import SUPPORTED_WORKFLOWS
 from helpers.api import FerryAPI
 from helpers.auth import *
 from safeguards.dcs import SafeguardsDCS
@@ -40,61 +40,73 @@ class FerryCLI:
         self.endpoints = self.generate_endpoints()
         self.safeguards = SafeguardsDCS()
         self.parser = self.get_arg_parser()
-
-    def get_arg_parser(self: "FerryCLI") -> argparse.ArgumentParser:
-        parser = argparse.ArgumentParser(description="CLI for Ferry API endpoints")
+        
+    def get_arg_parser(self: "FerryCLI") -> FerryParser:
+        parser = FerryParser.create(description="CLI for Ferry API endpoints")
         parser.add_argument(
             "-a", "--auth-method", default="token", help="Auth method for FERRY request"
         )
-        parser.add_argument(
-            "--ca-path", default=DEFAULT_CA_DIR, help="Certificate authority path"
-        )
-        parser.add_argument(
-            "-l",
-            "--list_endpoints",
-            action="store_true",
-            help="List all available endpoints",
-        )
-        parser.add_argument(
-            "-ep", "--endpoint_params", help="List parameters for the selected endpoint"
-        )
-        parser.add_argument("-e", "--endpoint", help="API endpoint and parameters")
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", default=False, help="Hide output"
-        )
-
         auth_group = parser.add_mutually_exclusive_group(required=False)
-        auth_group.add_argument(
-            "--cert-path", default=get_default_cert_path(), help="Path to cert"
-        )
         auth_group.add_argument(
             "--token-path",
             default=get_default_token_path(),
             help="Path to bearer token",
         )
-
+        auth_group.add_argument(
+            "--cert-path", default=get_default_cert_path(), help="Path to cert"
+        )
+        parser.add_argument(
+            "--ca-path", default=DEFAULT_CA_DIR, help="Certificate authority path"
+        )
+        parser.add_argument(
+            "-le",
+            "--list_endpoints",
+            action="store_true",
+            help="List all available endpoints",
+        )
+        parser.add_argument(
+            '-lw', 
+            '--list_workflows', 
+            action='store_true', 
+            help="List all supported custom workflows"
+        )
+        parser.add_argument(
+            '-ep', 
+            '--endpoint_params', 
+            help="List parameters for the selected endpoint"
+        )
+        parser.add_argument(
+            '-wp', 
+            '--workflow_params', 
+            help="List parameters for the supported workflow"
+        )
+        parser.add_argument(
+            '-e', '--endpoint', help="API endpoint and parameters"
+        )
+        parser.add_argument(
+            '-w', '--workflow', help="Execute supported workflows"
+            )
+        parser.add_argument(
+            '-q', '--quiet', action='store_true', default=False, help="Hide output"
+        )
         return parser
-
+    
     def list_available_endpoints(self: "FerryCLI") -> None:
-        print()
-        print("Listing all available endpoints:")
-        print()
+        print("""
+              Listing all available endpoints:
+              """)
         for subparser in self.endpoints.values():
             print(subparser.description)
-            print()
-
+    
     def get_endpoint_params(self: "FerryCLI", endpoint: str) -> None:
-        print()
-        print("Listing parameters for endpoint: %s%s" % (self.base_url, endpoint))
-        print()
+        print("""
+              Listing parameters for endpoint: %s%s" 
+              """ % (self.base_url,endpoint))
         subparser = self.endpoints.get(endpoint, None)
         if not subparser:
-            print()
-            print(
-                "Error: '%s' is not a valid endpoint. Run 'ferry -l' for a full list of available endpoints."
-                % endpoint
-            )
-            print()
+            print("""
+                  Error: '%s' is not a valid endpoint. Run 'ferry -l' for a full list of available endpoints.
+                  """ % endpoint)
         else:
             print(subparser.format_help())
             print()
@@ -108,9 +120,9 @@ class FerryCLI:
             )
         else:
             params_args, _ = subparser.parse_known_args(params)
-            return self.ferry_api.call_endpoint(endpoint, params=params_args.__dict__)
+            return self.ferry_api.call_endpoint(endpoint, params=vars(params_args))
 
-    def generate_endpoints(self: "FerryCLI") -> Dict[str, argparse.ArgumentParser]:
+    def generate_endpoints(self: "FerryCLI") -> Dict[str, FerryParser]:
         endpoints = {}
         with open("swagger.json", "r") as json_file:
             api_data = json.load(json_file)
@@ -122,30 +134,10 @@ class FerryCLI:
                     method = "post"
                 elif "put" in data:
                     method = "put"
-                description = data[method]["description"]
-                endpoint_description = self.parse_description(
-                    endpoint, description, method.upper()
-                )
-                endpoint_parser = argparse.ArgumentParser(
-                    description=endpoint_description
-                )
-                for param in data[method].get("parameters", []):
-                    param_description = self.parse_description(
-                        "",
-                        param["description"],
-                        "%s%s"
-                        % (
-                            param["type"],
-                            ": required" if param.get("required", False) else "",
-                        ),
-                    )
-                    endpoint_parser.add_argument(
-                        f"--{param['name']}",
-                        type=str,
-                        help=param_description,
-                        required=param.get("required", False),
-                    )
-                endpoints[path.replace("/", "")] = endpoint_parser
+                    
+                endpoint_parser = FerryParser.create_subparser(endpoint, method=method.upper(), description=data[method]["description"])
+                endpoint_parser.set_arguments(data[method].get("parameters", [])) 
+                endpoints[path.replace("/","")] = endpoint_parser
         return endpoints
 
     def parse_description(
@@ -168,7 +160,6 @@ class FerryCLI:
         authorizer = set_auth_from_args(
             args.auth_method, args.token_path, args.cert_path, args.ca_path
         )
-
         if args.endpoint:
             # Prevent DCS from running this endpoint if necessary, and print proper steps to take instead.
             self.safeguards.verify(args.endpoint)
@@ -176,18 +167,43 @@ class FerryCLI:
                 self.ferry_api = FerryAPI(
                     base_url=self.base_url, authorizer=authorizer, quiet=args.quiet
                 )
+                json_result = self.execute_endpoint(args.endpoint, endpoint_args)
             except Exception as e:
-                print(f"Exception initializing FerryAPI: {e}")
-                raise
-            json_result = self.execute_endpoint(args.endpoint, endpoint_args)
+                raise Exception(f"{e}")
             if not args.quiet:
-                self.handle_output(json_result)
+                self.handle_output(json.dumps(json_result, indent=4))
+        elif args.workflow:
+            try:
+                # Finds workflow inherited class in dictionary if exists, and initializes it.
+                workflow = SUPPORTED_WORKFLOWS[args.workflow]()
+                workflow.init_parser()
+                self.ferry_api = FerryAPI(
+                        base_url=self.base_url, authorizer=authorizer, quiet=args.quiet
+                    )
+                workflow_params, _ = workflow.parser.parse_known_args(endpoint_args)
+                json_result = workflow.run(self.ferry_api, vars(workflow_params))
+                if not args.quiet:
+                    self.handle_output(json.dumps(json_result, indent=4))
+            except KeyError as e:
+                    raise KeyError(f"Error: '{args.workflow}' is not a supported workflow.")
         elif args.list_endpoints:
             self.list_available_endpoints()
+        elif args.list_workflows:
+            print("\nListing all supported workflows: \n")
+            for workflow in SUPPORTED_WORKFLOWS.values():
+                workflow().get_description()
         elif args.endpoint_params:
             # Prevent DCS from running this endpoint if necessary, and print proper steps to take instead.
             self.safeguards.verify(args.endpoint_params)
             self.get_endpoint_params(args.endpoint_params)
+        elif args.workflow_params:
+            try:
+                # Finds workflow inherited class in dictionary if exists, and initializes it.
+                workflow = SUPPORTED_WORKFLOWS[args.workflow_params]()
+                workflow.init_parser()
+                workflow.get_info()
+            except KeyError as e:
+                raise KeyError(f"Error: '{args.workflow_params}' is not a supported workflow.")
         else:
             self.parser.print_help()
 
@@ -195,7 +211,7 @@ class FerryCLI:
     def handle_output(self: "FerryCLI", output: str) -> None:
         # Don't print excessively long responses - just store them in the result.json file and point to it.
         if len(output) < 1000:
-            print(f"\nResponse: {output}")
+            print(f"Response: {output}")
         else:
             with open("result.json", "w") as file:
                 file.write(output)
