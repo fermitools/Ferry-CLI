@@ -1,4 +1,4 @@
-from helpers.customs import Workflow
+from helpers.workflows import Workflow
 
 class GetFilteredGroupInfo(Workflow):
     def __init__(self):
@@ -14,7 +14,6 @@ class GetFilteredGroupInfo(Workflow):
                 }
             ]
         super().__init__(self)
-        
 
     def run(self, api, args):
         group_json = api.call_endpoint("getAllGroups")
