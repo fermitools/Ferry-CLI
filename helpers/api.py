@@ -5,7 +5,6 @@ import requests
 from . import auth
 
 
-
 class FerryAPI:
     def __init__(
         self: "FerryAPI",
@@ -31,8 +30,7 @@ class FerryAPI:
         headers: Dict[str, Any] = {},
         params: Dict[Any, Any] = {},
         extra: Dict[Any, Any] = {},
-    ) -> str:
-        
+    ) -> Any:
         # Create a session object to persist certain parameters across requests
         if not self.quiet:
             print(f"\nCalling Endpoint: {self.base_url}{endpoint}")
@@ -59,7 +57,7 @@ class FerryAPI:
             if not self.quiet:
                 print(f"Called Endpoint: {response.request.url}")
             output = response.json()
-            
+
             output["request_url"] = response.request.url
             return output
         except BaseException as e:

@@ -6,6 +6,7 @@ import textwrap
 
 import toml
 
+
 class TConfig:
     def __init__(self) -> None:
         with open("config.toml", "r") as file:
@@ -28,15 +29,16 @@ class TConfig:
             if not check_path or (check_path and os.path.exists(retval))
             else default
         )
-    
+
+
 class FerryParser(argparse.ArgumentParser):
-    """Custom ArgumentParser used for parsing Ferry's swagger.json file and custom workflows into CLI arguments and objects
-    """
-    def __init__(self, **kwargs) -> None:
+    """Custom ArgumentParser used for parsing Ferry's swagger.json file and custom workflows into CLI arguments and objects"""
+
+    def __init__(self: "FerryParser", **kwargs) -> None:  # type: ignore
         super().__init__(**kwargs)
-        
-    def set_arguments(self, params:List[Dict[str, Any]]) -> None:
-        """Initializes arguments for the parser from the 
+
+    def set_arguments(self, params: List[Dict[str, Any]]) -> None:
+        """Initializes arguments for the parser from the
 
         Args:
             params (list): An array of Dictionary objects representing a parameter option
@@ -45,17 +47,17 @@ class FerryParser(argparse.ArgumentParser):
             req = "required" if param.get("required", False) else "optional"
             self.add_argument(
                 f"--{param['name']}",
-                type=str, 
+                type=str,
                 help=FerryParser.parse_description(
-                    name="", 
+                    name="",
                     description=param["description"],
-                    method=f"{param['type']}: {req}"
-                ), 
-                required=param.get("required", False)
+                    method=f"{param['type']}: {req}",
+                ),
+                required=param.get("required", False),
             )
-    
+
     @staticmethod
-    def create(description:str) -> 'FerryParser':
+    def create(description: str) -> "FerryParser":
         f"""Creates a FerryParser instance.
 
         Args:
@@ -65,9 +67,11 @@ class FerryParser(argparse.ArgumentParser):
             FerryParser
         """
         return FerryParser(description=description)
-    
+
     @staticmethod
-    def create_subparser(name:str, description:str, method:str="GET") -> 'FerryParser':
+    def create_subparser(
+        name: str, description: str, method: str = "GET"
+    ) -> "FerryParser":
         """Create a FerryParser subparser.
 
         Args:
@@ -80,21 +84,24 @@ class FerryParser(argparse.ArgumentParser):
         """
         description = FerryParser.parse_description(name, method, description)
         return FerryParser(description=description)
-    
+
     @staticmethod
-    def parse_description(name:str="Endpoint", method:str=None, description:str=None) -> str:
+    def parse_description(
+        name: str = "Endpoint", method: str = "", description: str = ""
+    ) -> str:
         description_lines = textwrap.wrap(description, width=60)
         first_line = description_lines[0]
         rest_lines = description_lines[1:]
         endpoint_description = "%s" % (name.replace("/", ""))
-        
+
         if len("(%s)" % method) <= 49:
             method_char_count = 49 - len("(%s)" % method)
         else:
             method_char_count = 0
 
-        endpoint_description = f"{endpoint_description:<{method_char_count}} ({method}) | {first_line}\n"
+        endpoint_description = (
+            f"{endpoint_description:<{method_char_count}} ({method}) | {first_line}\n"
+        )
         for line in rest_lines:
             endpoint_description += f"{'':<50} | {line}\n"
         return endpoint_description
-
