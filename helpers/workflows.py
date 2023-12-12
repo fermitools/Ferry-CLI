@@ -21,13 +21,9 @@ class Workflow(ABC):
         self.parser.set_arguments(self.params)
 
     def get_info(self) -> None:
-        if not self.parser:
-            self.init_parser()
         self.parser.print_help()
 
     def get_description(self) -> None:
-        if not self.parser:
-            self.init_parser()
         print(self.parser.description)
 
     @abstractmethod
