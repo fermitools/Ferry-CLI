@@ -105,6 +105,7 @@ class FerryCLI:
                 )
                 for subparser in endpoints.values():
                     print(subparser.description)
+                sys.exit(0)
 
         return _ListEndpoints
 
@@ -120,6 +121,7 @@ class FerryCLI:
                 )
                 for workflow in SUPPORTED_WORKFLOWS.values():
                     workflow().get_description()
+                sys.exit(0)
 
         return _ListWorkflows
 
@@ -134,6 +136,7 @@ class FerryCLI:
                 # Prevent DCS from running this endpoint if necessary, and print proper steps to take instead.
                 safeguards.verify(values)
                 ferrycli_get_endpoint_params(values)
+                sys.exit(0)
 
         return _GetEndpointParams
 
@@ -147,6 +150,7 @@ class FerryCLI:
                     workflow = SUPPORTED_WORKFLOWS[values]()
                     workflow.init_parser()
                     workflow.get_info()
+                    sys.exit(0)
                 except KeyError as e:
                     raise KeyError(f"Error: '{values}' is not a supported workflow.")
 
