@@ -9,7 +9,7 @@ import toml
 
 class TConfig:
     def __init__(self) -> None:
-        with open("config.toml", "r") as file:
+        with open("config/config.toml", "r") as file:
             os.environ["UID"] = str(os.getuid())
             file_mapped = file.read().format_map(os.environ)
             self.config = toml.loads(file_mapped)

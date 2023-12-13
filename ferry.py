@@ -1,10 +1,10 @@
 import argparse
+from argparse import Namespace
 import json
 import os
 import sys
 import textwrap
 from typing import Any, Dict, Optional, List, Tuple
-from helpers.auth import authorize
 
 from helpers.customs import TConfig, FerryParser
 from helpers.supported_workflows import SUPPORTED_WORKFLOWS
@@ -33,37 +33,38 @@ def set_auth_from_args(
         raise ValueError(
             "Unsupported auth method!  Please use one of the following auth methods: ['token', 'cert', 'certificate']"
         )
-
-@authorize()
-def generate_endpoints() -> None:
-    endpoints = {}
-    with open("config/swagger.json", "r") as json_file:
-        api_data = json.load(json_file)
-        for path, data in api_data["paths"].items():
-            endpoint = path.replace("/", "")
-            if "get" in data:
-                method = "get"
-            elif "post" in data:
-                method = "post"
-            elif "put" in data:
-                method = "put"
-
-            endpoint_parser = FerryParser.create_subparser(
-                endpoint,
-                method=method.upper(),
-                description=data[method]["description"],
-            )
-            endpoint_parser.set_arguments(data[method].get("parameters", []))
-            endpoints[path.replace("/", "")] = endpoint_parser
-    return endpoints
-
+        
 class FerryCLI:
     def __init__(self: "FerryCLI") -> None:
         self.config = TConfig()
         self.base_url = self.config.get_from("Ferry", "base_url")
         self.safeguards = SafeguardsDCS()
-        self.endpoints = generate_endpoints()
+        self.endpoints = self.generate_endpoints()
         self.parser = self.get_arg_parser()
+        
+        
+    def generate_endpoints(self: "FerryCLI") -> Dict[str, FerryParser]:
+        endpoints = {}
+        if os.path.exists("config/swagger.json"):
+            with open("config/swagger.json", "r") as json_file:
+                api_data = json.load(json_file)
+                for path, data in api_data["paths"].items():
+                    endpoint = path.replace("/", "")
+                    if "get" in data:
+                        method = "get"
+                    elif "post" in data:
+                        method = "post"
+                    elif "put" in data:
+                        method = "put"
+
+                    endpoint_parser = FerryParser.create_subparser(
+                        endpoint,
+                        method=method.upper(),
+                        description=data[method]["description"],
+                    )
+                    endpoint_parser.set_arguments(data[method].get("parameters", []))
+                    endpoints[path.replace("/", "")] = endpoint_parser
+        return endpoints
 
     def get_arg_parser(self: "FerryCLI") -> FerryParser:
         parser = FerryParser.create(description="CLI for Ferry API endpoints")
@@ -119,7 +120,7 @@ class FerryCLI:
         )
 
         return parser
-        
+
     def list_available_endpoints_action(self: "FerryCLI"):  # type: ignore
         endpoints = self.endpoints
 
@@ -226,10 +227,18 @@ class FerryCLI:
             endpoint_description += f"{'':<50} | {line}\n"
         return endpoint_description
     
-    @authorize()
     def run(self: "FerryCLI", **kwargs) -> None:
         args, endpoint_args = self.parser.parse_known_args()
-         
+        authorizer = set_auth_from_args(
+            args.auth_method, args.token_path, args.cert_path, args.ca_path
+        )
+        if not self.endpoints or not os.path.exists("config/swagger.json") or args.update:
+            self.ferry_api = FerryAPI(
+                    base_url=self.base_url, authorizer=authorizer, quiet=args.quiet
+                )
+            if not self.ferry_api.get_latest_swagger_file() or args.update:
+                return
+            self.endpoints = self.generate_endpoints()
         if args.endpoint:
             # Prevent DCS from running this endpoint if necessary, and print proper steps to take instead.
             self.safeguards.verify(args.endpoint)
