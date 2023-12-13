@@ -1,5 +1,4 @@
 import argparse
-from argparse import Namespace
 import json
 import os
 import sys
@@ -41,30 +40,6 @@ class FerryCLI:
         self.safeguards = SafeguardsDCS()
         self.endpoints = self.generate_endpoints()
         self.parser = self.get_arg_parser()
-        
-        
-    def generate_endpoints(self: "FerryCLI") -> Dict[str, FerryParser]:
-        endpoints = {}
-        if os.path.exists("config/swagger.json"):
-            with open("config/swagger.json", "r") as json_file:
-                api_data = json.load(json_file)
-                for path, data in api_data["paths"].items():
-                    endpoint = path.replace("/", "")
-                    if "get" in data:
-                        method = "get"
-                    elif "post" in data:
-                        method = "post"
-                    elif "put" in data:
-                        method = "put"
-
-                    endpoint_parser = FerryParser.create_subparser(
-                        endpoint,
-                        method=method.upper(),
-                        description=data[method]["description"],
-                    )
-                    endpoint_parser.set_arguments(data[method].get("parameters", []))
-                    endpoints[path.replace("/", "")] = endpoint_parser
-        return endpoints
 
     def get_arg_parser(self: "FerryCLI") -> FerryParser:
         parser = FerryParser.create(description="CLI for Ferry API endpoints")
@@ -215,6 +190,29 @@ class FerryCLI:
         else:
             params_args, _ = subparser.parse_known_args(params)
             return self.ferry_api.call_endpoint(endpoint, params=vars(params_args))
+        
+    def generate_endpoints(self: "FerryCLI") -> Dict[str, FerryParser]:
+        endpoints = {}
+        if os.path.exists("config/swagger.json"):
+            with open("config/swagger.json", "r") as json_file:
+                api_data = json.load(json_file)
+                for path, data in api_data["paths"].items():
+                    endpoint = path.replace("/", "")
+                    if "get" in data:
+                        method = "get"
+                    elif "post" in data:
+                        method = "post"
+                    elif "put" in data:
+                        method = "put"
+
+                    endpoint_parser = FerryParser.create_subparser(
+                        endpoint,
+                        method=method.upper(),
+                        description=data[method]["description"],
+                    )
+                    endpoint_parser.set_arguments(data[method].get("parameters", []))
+                    endpoints[path.replace("/", "")] = endpoint_parser
+        return endpoints
 
     def parse_description(
         self: "FerryCLI", name: str, desc: str, method: Optional[str] = None
@@ -248,7 +246,7 @@ class FerryCLI:
             self.safeguards.verify(args.endpoint)
             try:
                 self.ferry_api = FerryAPI(
-                    base_url=self.base_url, authorizer=kwargs["authorizer"], quiet=args.quiet
+                    base_url=self.base_url, authorizer=authorizer, quiet=args.quiet
                 )
                 json_result = self.execute_endpoint(args.endpoint, endpoint_args)
             except Exception as e:
@@ -261,7 +259,7 @@ class FerryCLI:
                 workflow = SUPPORTED_WORKFLOWS[args.workflow]()
                 workflow.init_parser()
                 self.ferry_api = FerryAPI(
-                    base_url=self.base_url, authorizer=kwargs["authorizer"], quiet=args.quiet
+                    base_url=self.base_url, authorizer=authorizer, quiet=args.quiet
                 )
                 workflow_params, _ = workflow.parser.parse_known_args(endpoint_args)
                 json_result = workflow.run(self.ferry_api, vars(workflow_params))  # type: ignore

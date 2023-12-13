@@ -3,14 +3,14 @@ from typing import Any, Callable, Dict
 
 import requests
 
-from helpers.auth import Auth
+from . import auth
 
 
 class FerryAPI:
     def __init__(
         self: "FerryAPI",
         base_url: str,
-        authorizer: Auth,
+        authorizer: auth.Auth = auth.Auth(),
         quiet: bool = False,
     ) -> None:
         """
