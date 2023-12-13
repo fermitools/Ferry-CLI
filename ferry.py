@@ -229,7 +229,7 @@ class FerryCLI:
             endpoint_description += f"{'':<50} | {line}\n"
         return endpoint_description
     
-    def run(self: "FerryCLI", **kwargs) -> None:
+    def run(self: "FerryCLI") -> None:
         args, endpoint_args = self.parser.parse_known_args()
         authorizer = set_auth_from_args(
             args.auth_method, args.token_path, args.cert_path, args.ca_path
