@@ -3,7 +3,7 @@ name: Ferry CLI tests
 on: 
   push:
     branches: [ master ]
-  pull:
+  pull_request:
     branches: [ master ]
 
 jobs:
