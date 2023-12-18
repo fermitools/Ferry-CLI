@@ -104,7 +104,10 @@ class TestAuthCert:
     @pytest.fixture(autouse=True)
     def mock_DEFAULT_CA_DIR_as_cwd(self, monkeypatch, tmp_path):
         monkeypatch.setattr(auth, "DEFAULT_CA_DIR", str(tmp_path))
-        importlib.reload(auth)
+        monkeypatch.setattr(
+            "helpers.auth.AuthCert.__init__.__defaults__",
+            (auth.get_default_cert_path(), str(tmp_path)),
+        )
 
     @pytest.mark.unit
     def test_AuthCert(self, create_fake_credential):
