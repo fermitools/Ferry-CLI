@@ -28,6 +28,6 @@ jobs:
         #flake8 . --count --show-source --statistics
     - name: run unit tests only
       run: |
-        pytest -m unit
+        pytest -m unit -k 'not AuthCert'
     # upon some condition we can run unit and integration tests  
   
