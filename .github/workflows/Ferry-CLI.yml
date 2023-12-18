@@ -1,0 +1,33 @@
+name: Ferry CLI tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    #- name: lint python with flake8;
+      # can adjust flake8 parameters see: https://flake8.pycqa.org/en/latest/user/error-codes.html
+      #run: |
+        #flake8 . --count --show-source --statistics
+    - name: run unit tests only
+      run: |
+        pytest -m unit -k 'not AuthCert'
+    # upon some condition we can run unit and integration tests  
+  
