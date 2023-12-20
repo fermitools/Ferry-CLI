@@ -50,7 +50,11 @@ class FerryAPI:
                 )
             elif method.lower() == "post":
                 response = session.post(
-                    f"{self.base_url}{endpoint}", data=data, headers=headers
+                    f"{self.base_url}{endpoint}", params=params, headers=headers
+                )
+            elif method.lower() == "put":
+                response = session.put(
+                    f"{self.base_url}{endpoint}", params=params, headers=headers
                 )
             else:
                 raise ValueError("Unsupported HTTP method.")

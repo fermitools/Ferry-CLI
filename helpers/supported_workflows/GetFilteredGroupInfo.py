@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from helpers.api import FerryAPI
 from helpers.workflows import Workflow
@@ -19,7 +19,7 @@ class GetFilteredGroupInfo(Workflow):
         ]
         super().__init__()
 
-    def run(self, api, args):  # type: ignore
+    def run(self, api: "FerryAPI", args: Any) -> Any:  # type: ignore
         group_json = api.call_endpoint("getAllGroups")
         if not group_json:
             print(f"Failed'")
