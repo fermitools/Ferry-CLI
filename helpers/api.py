@@ -65,15 +65,6 @@ class FerryAPI:
             # How do we want to handle errors?
             raise e
         
-    def get_latest_swagger_file(self: 'FerryAPI') -> None:
-        response = self.call_endpoint("docs/swagger.json")
-        if response:
-            with open("config/swagger.json", "w") as file:
-                file.write(json.dumps(response, indent=4))
-            return True
-        else:
-            print(f"Failed to fetch swagger.json file")
-            return False
-
+    
         
 

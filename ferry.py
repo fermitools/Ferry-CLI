@@ -5,6 +5,7 @@ import sys
 import textwrap
 from typing import Any, Dict, Optional, List, Tuple
 
+from helpers.prepare import Queue
 from helpers.customs import TConfig, FerryParser
 from helpers.supported_workflows import SUPPORTED_WORKFLOWS
 from helpers.api import FerryAPI
@@ -17,7 +18,7 @@ def get_default_paths(config: TConfig) -> Tuple[str, str]:
     capath = config.get_from("Auth", "default_capath", check_path=True)
     return cert, capath
 
-
+@Queue.authorize
 def set_auth_from_args(
     auth_method: str,
     token_path: Optional[str],
@@ -38,6 +39,7 @@ def set_auth_from_args(
         )
         
 class FerryCLI:
+        
     def __init__(self: "FerryCLI") -> None:
         self.config = TConfig()
         self.base_url = self.config.get_from("Ferry", "base_url")
@@ -104,6 +106,7 @@ class FerryCLI:
         )
         return parser
 
+    @Queue.ready
     def list_available_endpoints_action(self: "FerryCLI"):  # type: ignore
         endpoints = self.endpoints
 
@@ -198,11 +201,13 @@ class FerryCLI:
         else:
             params_args, _ = subparser.parse_known_args(params)
             return self.ferry_api.call_endpoint(endpoint, params=vars(params_args))
-        
+    
+    @Queue.ready
     def generate_endpoints(self: "FerryCLI") -> Dict[str, FerryParser]:
         endpoints = {}
-        if os.path.exists("config/swagger.json"):
+        try:
             with open("config/swagger.json", "r") as json_file:
+                Queue.swagger_exists = True
                 api_data = json.load(json_file)
                 for path, data in api_data["paths"].items():
                     endpoint = path.replace("/", "")
@@ -220,6 +225,8 @@ class FerryCLI:
                     )
                     endpoint_parser.set_arguments(data[method].get("parameters", []))
                     endpoints[path.replace("/", "")] = endpoint_parser
+        except FileNotFoundError:
+            Queue.swagger_exists = False
         return endpoints
 
     def parse_description(
@@ -244,7 +251,8 @@ class FerryCLI:
         authorizer = set_auth_from_args(
             args.auth_method, args.token_path, args.cert_path, args.ca_path, args.debug
         )
-        if not self.endpoints or not os.path.exists("config/swagger.json") or args.update:
+        Queue.set(authorizer=authorizer, base_url = self.base_url, quiet=args.quiet)
+        if args.update:
             self.ferry_api = FerryAPI(
                     base_url=self.base_url, authorizer=authorizer, quiet=args.quiet
                 )
