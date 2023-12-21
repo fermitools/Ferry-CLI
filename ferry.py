@@ -19,15 +19,19 @@ def get_default_paths(config: TConfig) -> Tuple[str, str]:
 
 
 def set_auth_from_args(
-    auth_method: str, token_path: Optional[str], cert_path: str, ca_path: str
+    auth_method: str,
+    token_path: Optional[str],
+    cert_path: str,
+    ca_path: str,
+    debug: bool = False,
 ) -> Auth:
     """Set the auth class based on the given arguments"""
     if auth_method == "token":
-        print("Using token auth")
-        return AuthToken(token_path)
+        print("\nUsing token auth")
+        return AuthToken(token_path, debug)
     elif auth_method == "cert" or auth_method == "certificate":
-        print("Using cert auth")
-        return AuthCert(cert_path, ca_path)
+        print("\nUsing cert auth")
+        return AuthCert(cert_path, ca_path, debug)
     else:
         raise ValueError(
             "Unsupported auth method!  Please use one of the following auth methods: ['token', 'cert', 'certificate']"
@@ -52,9 +56,7 @@ class FerryCLI:
             "--token-path",
             help="Path to bearer token",
         )
-        auth_group.add_argument(
-            "--cert-path", default=get_default_cert_path(), help="Path to cert"
-        )
+        auth_group.add_argument("--cert-path", help="Path to cert")
         parser.add_argument(
             "--ca-path", default=DEFAULT_CA_DIR, help="Certificate authority path"
         )
@@ -88,6 +90,13 @@ class FerryCLI:
         parser.add_argument("-w", "--workflow", help="Execute supported workflows")
         parser.add_argument(
             "-q", "--quiet", action="store_true", default=False, help="Hide output"
+        )
+        parser.add_argument(
+            "-d",
+            "--debug",
+            action="store_true",
+            default=False,
+            help="Turn on debugging",
         )
         return parser
 
@@ -225,8 +234,10 @@ class FerryCLI:
 
     def run(self: "FerryCLI") -> None:
         args, endpoint_args = self.parser.parse_known_args()
+        if args.debug:
+            print(f"Args:  {vars(args)}\n" f"Endpoint Args:  {endpoint_args}")
         authorizer = set_auth_from_args(
-            args.auth_method, args.token_path, args.cert_path, args.ca_path
+            args.auth_method, args.token_path, args.cert_path, args.ca_path, args.debug
         )
         if args.endpoint:
             # Prevent DCS from running this endpoint if necessary, and print proper steps to take instead.
