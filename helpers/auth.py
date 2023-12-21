@@ -88,7 +88,8 @@ class AuthToken(Auth):
     """This is a callable class that modifies a requests.Session object to add token
     auth"""
 
-    def __init__(self: "AuthToken", token_path: Optional[str] = None) -> None:
+    def __init__(self: "AuthToken", token_path: Optional[str] = None, debug: bool = False) -> None:
+        self.debug = debug
         try:
             self.token_string = (
                     get_default_token_string()
