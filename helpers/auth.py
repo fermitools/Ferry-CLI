@@ -130,7 +130,7 @@ class AuthCert(Auth):
             )
         if not os.path.exists(ca_path):
             raise FileNotFoundError(
-                f"CA dir {ca_path} does not exist. Please check the given path and try again.
+                f"CA dir {ca_path} does not exist. Please check the given path and try again."
             )
         else:
             self.ca_path = ca_path
