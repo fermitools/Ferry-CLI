@@ -88,15 +88,18 @@ class AuthToken(Auth):
     """This is a callable class that modifies a requests.Session object to add token
     auth"""
 
-    def __init__(
-        self: "AuthToken", token_path: Optional[str] = None, debug: bool = False
-    ) -> None:
+    def __init__(self: "AuthToken", token_path: Optional[str] = None, debug: bool = False) -> None:
         self.debug = debug
-        self.token_string = (
-            get_default_token_string(self.debug)
-            if token_path is None
-            else read_in_token(token_path)
-        )
+        try:
+            self.token_string = (
+                    get_default_token_string()
+                    if token_path is None
+                    else read_in_token(token_path)
+                )
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                        f"Bearer token file not found. Please verify that you have a valid token in the specified, or default path: /tmp/{default_token_file_name()}, or run 'htgettoken -i htvaultprod.fnal.gov -i fermilab'"
+                    )
 
     def __call__(self: "AuthToken", s: requests.Session) -> requests.Session:
         """Modify the passed in session to add token auth"""
@@ -123,11 +126,12 @@ class AuthCert(Auth):
         )
         if not os.path.exists(self.cert_path):
             raise FileNotFoundError(
-                f"Cert file {self.cert_path} does not exist.  Please check the given path and try again."
+                f"Cert file {cert_path} does not exist. Please check the given path and try again. Make sure you have Kerberos ticket, then run kx509"
+
             )
         if not os.path.exists(ca_path):
             raise FileNotFoundError(
-                f"CA dir {ca_path} does not exist.  Please check the given path and try again."
+                f"CA dir {ca_path} does not exist. Please check the given path and try again."
             )
         else:
             self.ca_path = ca_path
