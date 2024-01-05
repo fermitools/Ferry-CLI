@@ -1,15 +1,15 @@
 import argparse
 import os
-
-from typing import Optional, Any, List, Dict
 import textwrap
+from typing import Optional, Any, List, Dict
 
-import toml
+import toml  # pylint: disable=import-error
 
 
 class TConfig:
+    # pylint: disable=too-few-public-methods
     def __init__(self) -> None:
-        with open("config.toml", "r") as file:
+        with open("config.toml", "r") as file:  # pylint: disable=unspecified-encoding
             os.environ["UID"] = str(os.getuid())
             file_mapped = file.read().format_map(os.environ)
             self.config = toml.loads(file_mapped)
@@ -58,7 +58,7 @@ class FerryParser(argparse.ArgumentParser):
 
     @staticmethod
     def create(description: str) -> "FerryParser":
-        f"""Creates a FerryParser instance.
+        """Creates a FerryParser instance.
 
         Args:
             description (string): Name of the FerryParser.
@@ -92,10 +92,10 @@ class FerryParser(argparse.ArgumentParser):
         description_lines = textwrap.wrap(description, width=60)
         first_line = description_lines[0]
         rest_lines = description_lines[1:]
-        endpoint_description = "%s" % (name.replace("/", ""))
+        endpoint_description = name.replace("/", "")
 
-        if len("(%s)" % method) <= 49:
-            method_char_count = 49 - len("(%s)" % method)
+        if len(f"({method})") <= 49:
+            method_char_count = 49 - len(f"({method})")
         else:
             method_char_count = 0
 
