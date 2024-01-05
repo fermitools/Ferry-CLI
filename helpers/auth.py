@@ -78,7 +78,6 @@ def get_default_cert_path(debug: bool = False) -> str:
     return fallback_location
 
 
-# pylint: disable=too-few-public-methods
 class Auth(ABC):
     """This is the base class on which all Auth classes should build"""
 
@@ -86,7 +85,6 @@ class Auth(ABC):
         return s
 
 
-# pylint: disable=too-few-public-methods
 class AuthToken(Auth):
     """This is a callable class that modifies a requests.Session object to add token
     auth"""

@@ -7,9 +7,8 @@ import toml  # pylint: disable=import-error
 
 
 class TConfig:
-    # pylint: disable=too-few-public-methods
     def __init__(self) -> None:
-        with open("config.toml", "r") as file:  # pylint: disable=unspecified-encoding
+        with open("config.toml", "r") as file:
             os.environ["UID"] = str(os.getuid())
             file_mapped = file.read().format_map(os.environ)
             self.config = toml.loads(file_mapped)

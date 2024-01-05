@@ -1,4 +1,3 @@
-# pylint: disable=raise-missing-from,unspecified-encoding
 import argparse
 import json
 import os
@@ -100,7 +99,7 @@ class FerryCLI:
         )
         return parser
 
-    def list_available_endpoints_action(self: "FerryCLI"):  # type: ignore # pylint: disable=no-self-use
+    def list_available_endpoints_action(self: "FerryCLI"):  # type: ignore
         endpoints = self.endpoints
 
         class _ListEndpoints(argparse.Action):
@@ -118,7 +117,7 @@ class FerryCLI:
 
         return _ListEndpoints
 
-    def list_workflows_action(self):  # type: ignore # pylint: disable=no-self-use
+    def list_workflows_action(self):  # type: ignore
         class _ListWorkflows(argparse.Action):
             def __call__(  # type: ignore
                 self: "_ListWorkflows", parser, args, values, option_string=None
@@ -134,7 +133,7 @@ class FerryCLI:
 
         return _ListWorkflows
 
-    def get_endpoint_params_action(self):  # type: ignore # pylint: disable=no-self-use
+    def get_endpoint_params_action(self):  # type: ignore
         safeguards = self.safeguards
         ferrycli_get_endpoint_params = self.get_endpoint_params
 
@@ -149,7 +148,7 @@ class FerryCLI:
 
         return _GetEndpointParams
 
-    def workflow_params_action(self):  # type: ignore # pylint: disable=no-self-use
+    def workflow_params_action(self):  # type: ignore
         class _WorkflowParams(argparse.Action):
             def __call__(  # type: ignore
                 self: "_WorkflowParams", parser, args, values, option_string=None
@@ -198,10 +197,8 @@ class FerryCLI:
             params_args, _ = subparser.parse_known_args(params)
             return self.ferry_api.call_endpoint(endpoint, params=vars(params_args))
 
-    # pylint: disable=no-self-use
     def generate_endpoints(self: "FerryCLI") -> Dict[str, FerryParser]:
         endpoints = {}
-        # pylint: disable=unspecified-encoding
         with open("swagger.json", "r") as json_file:
             api_data = json.load(json_file)
             for path, data in api_data["paths"].items():

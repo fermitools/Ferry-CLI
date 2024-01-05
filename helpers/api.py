@@ -5,7 +5,6 @@ import requests  # pylint: disable=import-error
 from . import auth
 
 
-# pylint: disable=too-few-public-methods
 class FerryAPI:
     def __init__(
         self: "FerryAPI",
