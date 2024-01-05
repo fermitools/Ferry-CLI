@@ -1,10 +1,11 @@
-from typing import Any, Callable, Dict
+from typing import Any, Dict
 
-import requests
+import requests  # pylint: disable=import-error
 
 from . import auth
 
 
+# pylint: disable=too-few-public-methods
 class FerryAPI:
     def __init__(
         self: "FerryAPI",
@@ -22,6 +23,7 @@ class FerryAPI:
         self.authorizer = authorizer
         self.quiet = quiet
 
+    # pylint: disable=dangerous-default-value,too-many-arguments
     def call_endpoint(
         self: "FerryAPI",
         endpoint: str,
