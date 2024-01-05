@@ -3,6 +3,7 @@ from os import geteuid
 import os.path
 from typing import Optional
 
+# pylint: disable=import-error
 import requests
 import requests.auth
 
@@ -77,6 +78,7 @@ def get_default_cert_path(debug: bool = False) -> str:
     return fallback_location
 
 
+# pylint: disable=too-few-public-methods
 class Auth(ABC):
     """This is the base class on which all Auth classes should build"""
 
@@ -84,22 +86,25 @@ class Auth(ABC):
         return s
 
 
+# pylint: disable=too-few-public-methods
 class AuthToken(Auth):
     """This is a callable class that modifies a requests.Session object to add token
     auth"""
 
-    def __init__(self: "AuthToken", token_path: Optional[str] = None, debug: bool = False) -> None:
+    def __init__(
+        self: "AuthToken", token_path: Optional[str] = None, debug: bool = False
+    ) -> None:
         self.debug = debug
         try:
             self.token_string = (
-                    get_default_token_string()
-                    if token_path is None
-                    else read_in_token(token_path)
-                )
+                get_default_token_string()
+                if token_path is None
+                else read_in_token(token_path)
+            )
         except FileNotFoundError:
-            raise FileNotFoundError(
-                        f"Bearer token file not found. Please verify that you have a valid token in the specified, or default path: /tmp/{default_token_file_name()}, or run 'htgettoken -i htvaultprod.fnal.gov -i fermilab'"
-                    )
+            raise FileNotFoundError(  # pylint: disable=raise-missing-from
+                f"Bearer token file not found. Please verify that you have a valid token in the specified, or default path: /tmp/{default_token_file_name()}, or run 'htgettoken -i htvaultprod.fnal.gov -i fermilab'"
+            )
 
     def __call__(self: "AuthToken", s: requests.Session) -> requests.Session:
         """Modify the passed in session to add token auth"""
@@ -127,14 +132,12 @@ class AuthCert(Auth):
         if not os.path.exists(self.cert_path):
             raise FileNotFoundError(
                 f"Cert file {cert_path} does not exist. Please check the given path and try again. Make sure you have Kerberos ticket, then run kx509"
-
             )
         if not os.path.exists(ca_path):
             raise FileNotFoundError(
                 f"CA dir {ca_path} does not exist. Please check the given path and try again."
             )
-        else:
-            self.ca_path = ca_path
+        self.ca_path = ca_path
 
     def __call__(self: "AuthCert", s: requests.Session) -> requests.Session:
         """Modify the passed in session to use certificate auth"""
