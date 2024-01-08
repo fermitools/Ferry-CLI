@@ -28,6 +28,9 @@ jobs:
         #flake8 . --count --show-source --statistics
     - name: run unit tests only
       run: |
+<<<<<<< HEAD
         pytest -m unit -k 'not AuthCert'
-    # upon some condition we can run unit and integration tests  
-  
+=======
+        pytest -m unit
+>>>>>>> edef1d3 (Mocked auth.DEFAULT_CA_DIR in cert unit tests)
+    # upon some condition we can run unit and integration tests

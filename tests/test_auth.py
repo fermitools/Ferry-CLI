@@ -1,4 +1,4 @@
-import os
+import importlib
 from shutil import copyfile
 from pathlib import Path
 
@@ -101,6 +101,11 @@ class TestAuthToken:
 
 
 class TestAuthCert:
+    @pytest.fixture(autouse=True)
+    def mock_DEFAULT_CA_DIR_as_cwd(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(auth, "DEFAULT_CA_DIR", str(tmp_path))
+        importlib.reload(auth)
+
     @pytest.mark.unit
     def test_AuthCert(self, create_fake_credential):
         s = Session()
