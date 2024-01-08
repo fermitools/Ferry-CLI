@@ -102,10 +102,13 @@ class TestAuthToken:
 class TestAuthCert:
     @pytest.fixture(autouse=True)
     def mock_DEFAULT_CA_DIR_as_cwd(self, monkeypatch, tmp_path):
-        monkeypatch.setattr(auth, "DEFAULT_CA_DIR", str(tmp_path))
+        monkeypatch.setattr("helpers.auth.DEFAULT_CA_DIR", str(tmp_path))
+        monkeypatch.setattr(
+            "helpers.auth.get_default_cert_path", lambda x: str(tmp_path)
+        )
         monkeypatch.setattr(
             "helpers.auth.AuthCert.__init__.__defaults__",
-            (auth.get_default_cert_path(), str(tmp_path)),
+            (None, str(tmp_path), False),
         )
 
     @pytest.mark.unit
