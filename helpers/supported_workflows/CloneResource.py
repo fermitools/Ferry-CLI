@@ -24,7 +24,7 @@ class CloneResource(Workflow):
             },
             {
                 "name": "unitname",
-                "description": "Affiliation the role belongs to",
+                "description": "Affiliation the resource belongs to",
                 "type": "string",
                 "required": True,
             }
