@@ -1,6 +1,11 @@
+# pylint: disable=invalid-name
+import sys
+
 from typing import Any
 
-from helpers.api import FerryAPI
+
+
+
 from helpers.workflows import Workflow
 
 
@@ -19,12 +24,12 @@ class GetFilteredGroupInfo(Workflow):
         ]
         super().__init__()
 
-    def run(self, api: "FerryAPI", args: Any) -> Any:  # type: ignore
+    def run(self, api, args):  # type: ignore #pylint: disable=arguments-differ
         group_json = api.call_endpoint("getAllGroups")
         if not group_json:
-            print(f"Failed'")
-            exit(1)
-        print(f"Received successful response")
+            print("Failed'")
+            sys.exit(1)
+        print("Received successful response")
         print(f"Filtering by groupname: '{args['groupname']}'")
         group_info = [
             entry
