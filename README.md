@@ -5,7 +5,7 @@
   * pip3 - requests
   * pip3 - toml
 
-## Usage - Base API  
+## Usage - Base API
 Currently, this program is compatible with all existing ferry api calls listed on the [Ferry Docs](https://ferry.fnal.gov:8445/docs#).
 
 To begin, simply clone the repo, and run python3 ferry.py inside the directory.
@@ -144,7 +144,7 @@ Each custom workflow should be defined as a separate class, see below for exampl
   * type: string (friendly name for the data type to use)
   * required: boolean
 
-* run(api, args): inherited function - this is where your logic goes 
+* run(api, args): inherited function - this is where your logic goes
 
 A simple definition within the file may look like this:
 ```python
@@ -158,14 +158,14 @@ class GetFilteredGroupInfo(Workflow):
         self.description = "Returns gid, groupname, and grouptype for all groups with 'groupname' variable in its name."
         self.params = [
                 {
-                    "name":"groupname", 
-                    "description":"Name of the group", 
-                    "type":"string", 
+                    "name":"groupname",
+                    "description":"Name of the group",
+                    "type":"string",
                     "required":True
                 }
             ]
         super().__init__(self)
-        
+
     # Gets all the groups, filter json output by group name, returns filtered json list
     def run(self, api, args):
         group_json = api.call_endpoint("getAllGroups")
@@ -178,7 +178,7 @@ class GetFilteredGroupInfo(Workflow):
         return group_info
 ```
 
-  
+
 ### Workflow Flags
 The workflow flags include:
 [-lw/--list_workflows], [-wp/--workflow_params] and [-w/--workflow], for each of these, ferry.py will:
@@ -189,7 +189,7 @@ The workflow flags include:
   * if valid, finds the corresponding function - which is indexed in SUPPORTED_WORKFLOWS (dictionary constant)
     ```python
       # helpers.supported_workflows.__init__.py
-      
+
       # Import custom workflow modules
       from helpers.supported_workflows.GetFilteredGroupInfo import GetFilteredGroupInfo
 
@@ -210,7 +210,7 @@ The workflow flags include:
             # This method should be implemented by all subclasses
             pass
     ```
-  * example: 
+  * example:
     ``` bash
       python3 ferry.py -w getFilteredGroupInfo --groupname=mu2e
       Called Endpoint: https://{ferry_url}/getAllGroups
@@ -230,4 +230,3 @@ The workflow flags include:
           },
       ]
     ```
- 

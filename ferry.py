@@ -5,7 +5,6 @@ import sys
 import textwrap
 from typing import Any, Dict, Optional, List, Tuple
 
-from helpers.prepare import Queue
 from helpers.customs import TConfig, FerryParser
 from helpers.supported_workflows import SUPPORTED_WORKFLOWS
 from helpers.api import FerryAPI
@@ -18,7 +17,7 @@ def get_default_paths(config: TConfig) -> Tuple[str, str]:
     capath = config.get_from("Auth", "default_capath", check_path=True)
     return cert, capath
 
-@Queue.authorize
+
 def set_auth_from_args(
     auth_method: str,
     token_path: Optional[str],
@@ -37,15 +36,17 @@ def set_auth_from_args(
         raise ValueError(
             "Unsupported auth method!  Please use one of the following auth methods: ['token', 'cert', 'certificate']"
         )
-        
+
+
 class FerryCLI:
-        
     def __init__(self: "FerryCLI") -> None:
         self.config = TConfig()
         self.base_url = self.config.get_from("Ferry", "base_url")
         self.safeguards = SafeguardsDCS()
-        self.endpoints = self.generate_endpoints()
-        self.parser = self.get_arg_parser()
+        self.endpoints: Dict[str, Any] = {}
+        self.authorizer: Optional["Auth"] = None
+        self.ferry_api: Optional["FerryAPI"] = None
+        self.parser: Optional["FerryParser"] = None
 
     def get_arg_parser(self: "FerryCLI") -> FerryParser:
         parser = FerryParser.create(description="CLI for Ferry API endpoints")
@@ -90,12 +91,14 @@ class FerryCLI:
         parser.add_argument("-e", "--endpoint", help="API endpoint and parameters")
         parser.add_argument("-w", "--workflow", help="Execute supported workflows")
         parser.add_argument(
-            "-u", 
-            "--update", 
-            action="store_true",
-            help="Updates CLI to use the latest Ferry Documentation")
-        parser.add_argument(
             "-q", "--quiet", action="store_true", default=False, help="Hide output"
+        )
+        parser.add_argument(
+            "-u",
+            "--update",
+            action="store_true",
+            default=False,
+            help="Get latest swagger file",
         )
         parser.add_argument(
             "-d",
@@ -106,7 +109,6 @@ class FerryCLI:
         )
         return parser
 
-    @Queue.ready
     def list_available_endpoints_action(self: "FerryCLI"):  # type: ignore
         endpoints = self.endpoints
 
@@ -190,7 +192,7 @@ class FerryCLI:
         else:
             print(subparser.format_help())
             print()
-    
+
     def execute_endpoint(self: "FerryCLI", endpoint: str, params: List[str]) -> Any:
         try:
             subparser = self.endpoints[endpoint]
@@ -200,33 +202,30 @@ class FerryCLI:
             )
         else:
             params_args, _ = subparser.parse_known_args(params)
-            return self.ferry_api.call_endpoint(endpoint, params=vars(params_args))
-    
-    @Queue.ready
+            return self.ferry_api.call_endpoint(endpoint, params=vars(params_args))  # type: ignore
+
     def generate_endpoints(self: "FerryCLI") -> Dict[str, FerryParser]:
         endpoints = {}
-        try:
-            with open("config/swagger.json", "r") as json_file:
-                Queue.swagger_exists = True
-                api_data = json.load(json_file)
-                for path, data in api_data["paths"].items():
-                    endpoint = path.replace("/", "")
-                    if "get" in data:
-                        method = "get"
-                    elif "post" in data:
-                        method = "post"
-                    elif "put" in data:
-                        method = "put"
+        with open("config/swagger.json", "r") as json_file:
 
-                    endpoint_parser = FerryParser.create_subparser(
-                        endpoint,
-                        method=method.upper(),
-                        description=data[method]["description"],
-                    )
-                    endpoint_parser.set_arguments(data[method].get("parameters", []))
-                    endpoints[path.replace("/", "")] = endpoint_parser
-        except FileNotFoundError:
-            Queue.swagger_exists = False
+            api_data = json.load(json_file)
+            for path, data in api_data["paths"].items():
+                endpoint = path.replace("/", "")
+                if "get" in data:
+                    method = "get"
+                elif "post" in data:
+                    method = "post"
+                elif "put" in data:
+                    method = "put"
+
+                endpoint_parser = FerryParser.create_subparser(
+                    endpoint,
+                    method=method.upper(),
+                    description=data[method]["description"],
+                )
+                endpoint_parser.set_arguments(data[method].get("parameters", []))
+                endpoints[path.replace("/", "")] = endpoint_parser
+
         return endpoints
 
     def parse_description(
@@ -243,42 +242,46 @@ class FerryCLI:
         for line in rest_lines:
             endpoint_description += f"{'':<50} | {line}\n"
         return endpoint_description
-    
+
     def run(self: "FerryCLI") -> None:
+        self.parser = self.get_arg_parser()
         args, endpoint_args = self.parser.parse_known_args()
+
         if args.debug:
             print(f"Args:  {vars(args)}\n" f"Endpoint Args:  {endpoint_args}")
-        authorizer = set_auth_from_args(
-            args.auth_method, args.token_path, args.cert_path, args.ca_path, args.debug
-        )
-        Queue.set(authorizer=authorizer, base_url = self.base_url, quiet=args.quiet)
-        if args.update:
+
+        if not self.authorizer:
+            self.authorizer = set_auth_from_args(
+                args.auth_method,
+                args.token_path,
+                args.cert_path,
+                args.ca_path,
+                args.debug,
+            )
+        if not self.ferry_api:
             self.ferry_api = FerryAPI(
-                    base_url=self.base_url, authorizer=authorizer, quiet=args.quiet
-                )
-            if not self.ferry_api.get_latest_swagger_file() or args.update:
-                return
+                base_url=self.base_url, authorizer=self.authorizer, quiet=args.quiet
+            )
+
+        if args.update:
+            self.ferry_api.get_latest_swagger_file()
             self.endpoints = self.generate_endpoints()
+
         if args.endpoint:
             # Prevent DCS from running this endpoint if necessary, and print proper steps to take instead.
             self.safeguards.verify(args.endpoint)
             try:
-                self.ferry_api = FerryAPI(
-                    base_url=self.base_url, authorizer=authorizer, quiet=args.quiet
-                )
                 json_result = self.execute_endpoint(args.endpoint, endpoint_args)
             except Exception as e:
                 raise Exception(f"{e}")
             if not args.quiet:
                 self.handle_output(json.dumps(json_result, indent=4))
+
         elif args.workflow:
             try:
                 # Finds workflow inherited class in dictionary if exists, and initializes it.
                 workflow = SUPPORTED_WORKFLOWS[args.workflow]()
                 workflow.init_parser()
-                self.ferry_api = FerryAPI(
-                    base_url=self.base_url, authorizer=authorizer, quiet=args.quiet
-                )
                 workflow_params, _ = workflow.parser.parse_known_args(endpoint_args)
                 json_result = workflow.run(self.ferry_api, vars(workflow_params))  # type: ignore
                 if not args.quiet:
@@ -303,9 +306,28 @@ class FerryCLI:
 
 
 def main() -> None:
-    ferry_api = FerryCLI()
+    ferry_cli = FerryCLI()
     try:
-        ferry_api.run()
+        ferry_cli.authorizer = None
+        if not os.path.exists("config/swagger.json"):
+            print(f"Swagger file not found, fetching latest file...")
+            parser = ferry_cli.get_arg_parser()
+            args, _ = parser.parse_known_args(args="auth_method, quiet, debug")
+            ferry_cli.authorizer = set_auth_from_args(
+                args.auth_method,
+                args.token_path,
+                args.cert_path,
+                args.ca_path,
+                args.debug,
+            )
+            ferry_cli.ferry_api = FerryAPI(
+                ferry_cli.base_url, ferry_cli.authorizer, args.quiet
+            )
+            ferry_cli.ferry_api.get_latest_swagger_file()
+            print(f"Successfully stored latest swagger file")
+            print(f"Continuing")
+        ferry_cli.endpoints = ferry_cli.generate_endpoints()
+        ferry_cli.run()
     except (
         Exception
     ) as e:  # TODO Eventually we want to handle a certain set of exceptions, but this will do for now
