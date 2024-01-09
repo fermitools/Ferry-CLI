@@ -142,10 +142,9 @@ class AuthCert(Auth):
                 f"\nSetting Session cert attribute to {self.cert_path} and verify attribute to {self.ca_path}"
             )
         return s
-    
 
 
-def get_auth_parser() -> 'FerryParser':
+def get_auth_parser() -> "FerryParser":
     auth_parser = FerryParser.create(description="CLI for Ferry API endpoints")
     auth_parser.add_argument(
         "-a", "--auth-method", default="token", help="Auth method for FERRY request"
@@ -160,27 +159,27 @@ def get_auth_parser() -> 'FerryParser':
         "--ca-path", default=DEFAULT_CA_DIR, help="Certificate authority path"
     )
     auth_parser.add_argument(
-                "-d",
-                "--debug",
-                action="store_true",
-                default=False,
-                help="Turn on debugging",
+        "-d",
+        "--debug",
+        action="store_true",
+        default=False,
+        help="Turn on debugging",
     )
     auth_parser.add_argument(
-                "-q", "--quiet", action="store_true", default=False, help="Hide output"
-            )
+        "-q", "--quiet", action="store_true", default=False, help="Hide output"
+    )
     auth_parser.add_argument(
-            "-u",
-            "--update",
-            action="store_true",
-            default=False,
-            help="Get latest swagger file",
-        )
+        "-u",
+        "--update",
+        action="store_true",
+        default=False,
+        help="Get latest swagger file",
+    )
 
     return auth_parser
 
 
-def set_auth_from_args(args:Namespace) -> Auth:
+def set_auth_from_args(args: Namespace) -> Auth:
     """Set the auth class based on the given arguments"""
     if args.auth_method == "token":
         print("\nUsing token auth")
@@ -192,9 +191,9 @@ def set_auth_from_args(args:Namespace) -> Auth:
         raise ValueError(
             "Unsupported auth method!  Please use one of the following auth methods: ['token', 'cert', 'certificate']"
         )
-            
+
 
 def get_auth_args() -> Namespace:
     parser = get_auth_parser()
-    args, _  = parser.parse_known_args()
+    args, _ = parser.parse_known_args()
     return args

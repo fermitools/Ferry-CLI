@@ -194,7 +194,7 @@ class FerryCLI:
             endpoint_description += f"{'':<50} | {line}\n"
         return endpoint_description
 
-    def run(self: "FerryCLI", debug:bool, quiet:bool) -> None:
+    def run(self: "FerryCLI", debug: bool, quiet: bool) -> None:
         self.parser = self.get_arg_parser()
         args, endpoint_args = self.parser.parse_known_args()
 
@@ -203,7 +203,7 @@ class FerryCLI:
 
         if not self.ferry_api:
             self.ferry_api = FerryAPI(
-                base_url=self.base_url, authorizer=self.authorizer, quiet=quiet
+                base_url=self.base_url, authorizer=self.authorizer, quiet=quiet  # type: ignore
             )
 
         if args.endpoint:
@@ -256,7 +256,7 @@ def main() -> None:
             )
             ferry_cli.ferry_api.get_latest_swagger_file()
             print(f"Successfully stored latest swagger file.\n")
-        
+
         ferry_cli.endpoints = ferry_cli.generate_endpoints()
         ferry_cli.run(args.debug, args.quiet)
     except (
