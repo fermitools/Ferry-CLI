@@ -5,14 +5,14 @@ from typing import Any, Callable, Dict
 
 import requests
 
-from . import auth
+from helpers.auth import Auth
 
 
 class FerryAPI:
     def __init__(
         self: "FerryAPI",
         base_url: str,
-        authorizer: auth.Auth = auth.Auth(),
+        authorizer: Auth = Auth(),
         quiet: bool = False,
     ):
         """

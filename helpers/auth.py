@@ -1,11 +1,12 @@
 from abc import ABC
+from argparse import Namespace
 from os import geteuid
 import os.path
 from typing import Optional
 
 import requests
 import requests.auth
-
+from helpers.customs import FerryParser
 
 __all__ = [
     "Auth",
@@ -141,3 +142,59 @@ class AuthCert(Auth):
                 f"\nSetting Session cert attribute to {self.cert_path} and verify attribute to {self.ca_path}"
             )
         return s
+    
+
+
+def get_auth_parser() -> 'FerryParser':
+    auth_parser = FerryParser.create(description="CLI for Ferry API endpoints")
+    auth_parser.add_argument(
+        "-a", "--auth-method", default="token", help="Auth method for FERRY request"
+    )
+    auth_group = auth_parser.add_mutually_exclusive_group(required=False)
+    auth_group.add_argument(
+        "--token-path",
+        help="Path to bearer token",
+    )
+    auth_group.add_argument("--cert-path", help="Path to cert")
+    auth_parser.add_argument(
+        "--ca-path", default=DEFAULT_CA_DIR, help="Certificate authority path"
+    )
+    auth_parser.add_argument(
+                "-d",
+                "--debug",
+                action="store_true",
+                default=False,
+                help="Turn on debugging",
+    )
+    auth_parser.add_argument(
+                "-q", "--quiet", action="store_true", default=False, help="Hide output"
+            )
+    auth_parser.add_argument(
+            "-u",
+            "--update",
+            action="store_true",
+            default=False,
+            help="Get latest swagger file",
+        )
+
+    return auth_parser
+
+
+def set_auth_from_args(args:Namespace) -> Auth:
+    """Set the auth class based on the given arguments"""
+    if args.auth_method == "token":
+        print("\nUsing token auth")
+        return AuthToken(args.token_path, args.debug)
+    elif args.auth_method == "cert" or args.auth_method == "certificate":
+        print("\nUsing cert auth")
+        return AuthCert(args.cert_path, args.ca_path, args.debug)
+    else:
+        raise ValueError(
+            "Unsupported auth method!  Please use one of the following auth methods: ['token', 'cert', 'certificate']"
+        )
+            
+
+def get_auth_args() -> Namespace:
+    parser = get_auth_parser()
+    args, _  = parser.parse_known_args()
+    return args
