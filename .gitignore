@@ -3,3 +3,4 @@ result.json
 .git
 /tmp/*
 __pycache__
+.make_creds.sh
