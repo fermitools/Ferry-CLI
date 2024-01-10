@@ -2,7 +2,7 @@ from abc import ABC
 from argparse import Namespace
 from os import geteuid
 import os.path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 import requests
 import requests.auth
@@ -145,7 +145,7 @@ class AuthCert(Auth):
 
 
 def get_auth_parser() -> "FerryParser":
-    auth_parser = FerryParser.create(description="CLI for Ferry API endpoints")
+    auth_parser = FerryParser.create(description="CLI for Ferry API endpoints", add_help=False)
     auth_parser.add_argument(
         "-a", "--auth-method", default="token", help="Auth method for FERRY request"
     )
@@ -193,7 +193,7 @@ def set_auth_from_args(args: Namespace) -> Auth:
         )
 
 
-def get_auth_args() -> Namespace:
+def get_auth_args() -> Tuple[Namespace, List[str]]:
     parser = get_auth_parser()
-    args, _ = parser.parse_known_args()
-    return args
+    auth_args, other_args = parser.parse_known_args()
+    return auth_args, other_args

@@ -57,7 +57,7 @@ class FerryParser(argparse.ArgumentParser):
             )
 
     @staticmethod
-    def create(description: str) -> "FerryParser":
+    def create(description: str, **kwargs) -> "FerryParser":
         f"""Creates a FerryParser instance.
 
         Args:
@@ -66,7 +66,7 @@ class FerryParser(argparse.ArgumentParser):
         Returns:
             FerryParser
         """
-        return FerryParser(description=description)
+        return FerryParser(description=description, **kwargs)
 
     @staticmethod
     def create_subparser(

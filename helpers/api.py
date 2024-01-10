@@ -74,4 +74,4 @@ class FerryAPI:
                 file.write(json.dumps(response, indent=4))
         else:
             print(f"Failed to fetch swagger.json file")
-            sys.exit(0)
+            sys.exit(1)
