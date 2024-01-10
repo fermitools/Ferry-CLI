@@ -29,5 +29,4 @@ jobs:
     - name: run unit tests only
       run: |
         pytest -m unit -k 'not AuthCert'
-    # upon some condition we can run unit and integration tests  
-  
+    # upon some condition we can run unit and integration tests

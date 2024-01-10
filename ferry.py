@@ -61,6 +61,11 @@ class FerryCLI:
             "--ca-path", default=DEFAULT_CA_DIR, help="Certificate authority path"
         )
         parser.add_argument(
+            "--filter",
+            default=None,
+            help="(string) Use to filter results on -le and -lw flags",
+        )
+        parser.add_argument(
             "-le",
             "--list_endpoints",
             action=self.list_available_endpoints_action(),
@@ -108,12 +113,16 @@ class FerryCLI:
                 self: "_ListEndpoints", parser, args, values, option_string=None
             ) -> None:
                 print(
-                    """
-                    Listing all available endpoints:
+                    f"""
+                    Listing all available endpoints{' (filtering for "%s")' % (args.filter) if args.filter else ''}:
                     """
                 )
-                for subparser in endpoints.values():
-                    print(subparser.description)
+                for ep, subparser in endpoints.items():
+                    if args.filter:
+                        if args.filter in ep:
+                            print(subparser.description)
+                    else:
+                        print(subparser.description)
                 sys.exit(0)
 
         return _ListEndpoints
@@ -124,12 +133,17 @@ class FerryCLI:
                 self: "_ListWorkflows", parser, args, values, option_string=None
             ) -> None:
                 print(
-                    """
-                      Listing all supported workflows:
+                    f"""
+                      Listing all supported workflows{' (filtering for "%s")' % (args.filter) if args.filter else ''}:
                       """
                 )
-                for workflow in SUPPORTED_WORKFLOWS.values():
-                    workflow().get_description()
+                for name, workflow in SUPPORTED_WORKFLOWS.items():
+                    if args.filter:
+                        if args.filter in name:
+                            workflow().get_description()
+                    else:
+                        workflow().get_description()
+
                 sys.exit(0)
 
         return _ListWorkflows
