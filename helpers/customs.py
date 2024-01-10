@@ -1,10 +1,9 @@
 import argparse
 import os
-
-from typing import Optional, Any, List, Dict
 import textwrap
+from typing import Optional, Any, List, Dict
 
-import toml
+import toml  # pylint: disable=import-error
 
 
 class TConfig:

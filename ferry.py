@@ -5,10 +5,10 @@ import sys
 import textwrap
 from typing import Any, Dict, Optional, List, Tuple
 
+from helpers.api import FerryAPI
+from helpers.auth import Auth, DEFAULT_CA_DIR, AuthToken, AuthCert, get_auth_args, set_auth_from_args, get_auth_parser
 from helpers.customs import TConfig, FerryParser
 from helpers.supported_workflows import SUPPORTED_WORKFLOWS
-from helpers.api import FerryAPI
-from helpers.auth import Auth, get_auth_args, set_auth_from_args, get_auth_parser
 from safeguards.dcs import SafeguardsDCS
 
 
@@ -16,7 +16,6 @@ def get_default_paths(config: TConfig) -> Tuple[str, str]:
     cert = config.get_from("Auth", "default_cert_path", check_path=True)
     capath = config.get_from("Auth", "default_capath", check_path=True)
     return cert, capath
-
 
 class FerryCLI:
     def __init__(self: "FerryCLI") -> None:
@@ -120,12 +119,14 @@ class FerryCLI:
                     workflow.init_parser()
                     workflow.get_info()
                     sys.exit(0)
-                except KeyError as e:
+                except KeyError:
+                    # pylint: disable=raise-missing-from
                     raise KeyError(f"Error: '{values}' is not a supported workflow.")
 
         return _WorkflowParams
 
     def get_endpoint_params(self: "FerryCLI", endpoint: str) -> None:
+        # pylint: disable=consider-using-f-string
         print(
             """
               Listing parameters for endpoint: %s%s"
@@ -135,6 +136,7 @@ class FerryCLI:
         subparser = self.endpoints.get(endpoint, None)
         if not subparser:
             print(
+                # pylint: disable=consider-using-f-string
                 """
                   Error: '%s' is not a valid endpoint. Run 'ferry -l' for a full list of available endpoints.
                   """
@@ -148,7 +150,7 @@ class FerryCLI:
         try:
             subparser = self.endpoints[endpoint]
         except KeyError:
-            raise ValueError(
+            raise ValueError(  # pylint: disable=raise-missing-from
                 f"Error: '{endpoint}' is not a valid endpoint. Run 'ferry -l' for a full list of available endpoints."
             )
         else:
@@ -185,8 +187,8 @@ class FerryCLI:
         description_lines = textwrap.wrap(desc, width=60)
         first_line = description_lines[0]
         rest_lines = description_lines[1:]
-        endpoint_description = "%s" % (name.replace("/", ""))
-        method_char_count = 49 - len("(%s)" % method)
+        endpoint_description = name.replace("/", "")
+        method_char_count = 49 - len(f"({method})")
         endpoint_description = (
             f"{endpoint_description:<{method_char_count}} ({method}) | {first_line}\n"
         )
@@ -225,7 +227,7 @@ class FerryCLI:
                 json_result = workflow.run(self.ferry_api, vars(workflow_params))  # type: ignore
                 if not quiet:
                     self.handle_output(json.dumps(json_result, indent=4))
-            except KeyError as e:
+            except KeyError:
                 raise KeyError(f"Error: '{args.workflow}' is not a supported workflow.")
 
         else:
@@ -260,8 +262,8 @@ def main() -> None:
         ferry_cli.endpoints = ferry_cli.generate_endpoints()
         ferry_cli.run(auth_args.debug, auth_args.quiet, other_args)
     except (
-        Exception
-    ) as e:  # TODO Eventually we want to handle a certain set of exceptions, but this will do for now
+        Exception  # pylint: disable=broad-except
+    ) as e:  # TODO Eventually we want to handle a certain set of exceptions, but this will do for now # pylint: disable=fixme
         print(f"There was an error querying the FERRY API: {e}")
         sys.exit(1)
 

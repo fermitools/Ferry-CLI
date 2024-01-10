@@ -3,7 +3,7 @@ import sys
 
 from typing import Any, Callable, Dict
 
-import requests
+import requests  # pylint: disable=import-error
 
 from helpers.auth import Auth
 
@@ -25,6 +25,7 @@ class FerryAPI:
         self.authorizer = authorizer
         self.quiet = quiet
 
+    # pylint: disable=dangerous-default-value,too-many-arguments
     def call_endpoint(
         self: "FerryAPI",
         endpoint: str,
@@ -53,7 +54,11 @@ class FerryAPI:
                 )
             elif method.lower() == "post":
                 response = session.post(
-                    f"{self.base_url}{endpoint}", data=data, headers=headers
+                    f"{self.base_url}{endpoint}", params=params, headers=headers
+                )
+            elif method.lower() == "put":
+                response = session.put(
+                    f"{self.base_url}{endpoint}", params=params, headers=headers
                 )
             else:
                 raise ValueError("Unsupported HTTP method.")
