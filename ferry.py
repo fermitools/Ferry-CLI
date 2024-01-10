@@ -6,7 +6,12 @@ import textwrap
 from typing import Any, Dict, Optional, List, Tuple
 
 from helpers.api import FerryAPI
-from helpers.auth import Auth, DEFAULT_CA_DIR, AuthToken, AuthCert, get_auth_args, set_auth_from_args, get_auth_parser
+from helpers.auth import (
+    Auth,
+    get_auth_args,
+    set_auth_from_args,
+    get_auth_parser,
+)
 from helpers.customs import TConfig, FerryParser
 from helpers.supported_workflows import SUPPORTED_WORKFLOWS
 from safeguards.dcs import SafeguardsDCS
@@ -16,6 +21,7 @@ def get_default_paths(config: TConfig) -> Tuple[str, str]:
     cert = config.get_from("Auth", "default_cert_path", check_path=True)
     capath = config.get_from("Auth", "default_capath", check_path=True)
     return cert, capath
+
 
 class FerryCLI:
     def __init__(self: "FerryCLI") -> None:
@@ -28,7 +34,9 @@ class FerryCLI:
         self.parser: Optional["FerryParser"] = None
 
     def get_arg_parser(self: "FerryCLI") -> FerryParser:
-        parser = FerryParser.create(description="CLI for Ferry API endpoints", parents=[get_auth_parser()])
+        parser = FerryParser.create(
+            description="CLI for Ferry API endpoints", parents=[get_auth_parser()]
+        )
         parser.add_argument(
             "-le",
             "--list_endpoints",
@@ -196,7 +204,7 @@ class FerryCLI:
             endpoint_description += f"{'':<50} | {line}\n"
         return endpoint_description
 
-    def run(self: "FerryCLI", debug: bool, quiet: bool, extra_args:Any) -> None:
+    def run(self: "FerryCLI", debug: bool, quiet: bool, extra_args: Any) -> None:
         self.parser = self.get_arg_parser()
         args, endpoint_args = self.parser.parse_known_args(extra_args)
 
@@ -252,12 +260,12 @@ def main() -> None:
         auth_args, other_args = get_auth_args()
         ferry_cli.authorizer = set_auth_from_args(auth_args)
         if auth_args.update or not os.path.exists("config/swagger.json"):
-            print(f"Fetching latest swagger file...")
+            print("Fetching latest swagger file...")
             ferry_cli.ferry_api = FerryAPI(
                 ferry_cli.base_url, ferry_cli.authorizer, auth_args.quiet
             )
             ferry_cli.ferry_api.get_latest_swagger_file()
-            print(f"Successfully stored latest swagger file.\n")
+            print("Successfully stored latest swagger file.\n")
 
         ferry_cli.endpoints = ferry_cli.generate_endpoints()
         ferry_cli.run(auth_args.debug, auth_args.quiet, other_args)

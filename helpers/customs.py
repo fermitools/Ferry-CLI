@@ -56,7 +56,7 @@ class FerryParser(argparse.ArgumentParser):
             )
 
     @staticmethod
-    def create(description: str, **kwargs) -> "FerryParser":
+    def create(description: str, **kwargs: Any) -> "FerryParser":
         f"""Creates a FerryParser instance.
 
         Args:

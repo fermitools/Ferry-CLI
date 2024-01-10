@@ -150,7 +150,9 @@ class AuthCert(Auth):
 
 
 def get_auth_parser() -> "FerryParser":
-    auth_parser = FerryParser.create(description="CLI for Ferry API endpoints", add_help=False)
+    auth_parser = FerryParser.create(
+        description="CLI for Ferry API endpoints", add_help=False
+    )
     auth_parser.add_argument(
         "-a", "--auth-method", default="token", help="Auth method for FERRY request"
     )
