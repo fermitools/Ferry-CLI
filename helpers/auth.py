@@ -3,6 +3,7 @@ from os import geteuid
 import os.path
 from typing import Optional
 
+# pylint: disable=import-error
 import requests
 import requests.auth
 
@@ -99,7 +100,7 @@ class AuthToken(Auth):
                 else read_in_token(token_path)
             )
         except FileNotFoundError:
-            raise FileNotFoundError(
+            raise FileNotFoundError(  # pylint: disable=raise-missing-from
                 f"Bearer token file not found. Please verify that you have a valid token in the specified, or default path: /tmp/{default_token_file_name()}, or run 'htgettoken -i htvaultprod.fnal.gov -i fermilab'"
             )
 
@@ -134,8 +135,7 @@ class AuthCert(Auth):
             raise FileNotFoundError(
                 f"CA dir {ca_path} does not exist. Please check the given path and try again."
             )
-        else:
-            self.ca_path = ca_path
+        self.ca_path = ca_path
 
     def __call__(self: "AuthCert", s: requests.Session) -> requests.Session:
         """Modify the passed in session to use certificate auth"""

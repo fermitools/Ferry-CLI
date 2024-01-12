@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from helpers.api import FerryAPI
+from typing import Any, Dict, List
+
 from helpers.customs import FerryParser
-from typing import Any, Dict, List, Optional
 
 
 class Workflow(ABC):
