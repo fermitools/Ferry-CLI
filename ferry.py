@@ -258,6 +258,9 @@ def main() -> None:
     ferry_cli = FerryCLI()
     try:
         auth_args, other_args = get_auth_args()
+        if not other_args or ("-h" in other_args) or ("--help" in other_args):
+            ferry_cli.get_arg_parser().print_help()
+            sys.exit(0)
         ferry_cli.authorizer = set_auth_from_args(auth_args)
         if auth_args.update or not os.path.exists("config/swagger.json"):
             print("Fetching latest swagger file...")

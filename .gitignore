@@ -4,3 +4,5 @@ result.json
 /tmp/*
 __pycache__
 .make_creds.sh
+swagger.json
+config/swagger.json
