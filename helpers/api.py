@@ -1,17 +1,20 @@
-from typing import Any, Dict
+import json
+import sys
+
+from typing import Any, Callable, Dict
 
 import requests  # pylint: disable=import-error
 
-from . import auth
+from helpers.auth import Auth
 
 
 class FerryAPI:
     def __init__(
         self: "FerryAPI",
         base_url: str,
-        authorizer: auth.Auth = auth.Auth(),
+        authorizer: Auth = Auth(),
         quiet: bool = False,
-    ) -> None:
+    ):
         """
         Parameters:
             base_url (str):  The root URL from which all FERRY API URLs are constructed
@@ -68,3 +71,12 @@ class FerryAPI:
         except BaseException as e:
             # How do we want to handle errors?
             raise e
+
+    def get_latest_swagger_file(self: "FerryAPI") -> None:
+        response = self.call_endpoint("docs/swagger.json")
+        if response:
+            with open("config/swagger.json", "w") as file:
+                file.write(json.dumps(response, indent=4))
+        else:
+            print(f"Failed to fetch swagger.json file")
+            sys.exit(1)

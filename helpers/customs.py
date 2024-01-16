@@ -8,7 +8,7 @@ import toml  # pylint: disable=import-error
 
 class TConfig:
     def __init__(self) -> None:
-        with open("config.toml", "r") as file:
+        with open("config/config.toml", "r") as file:
             os.environ["UID"] = str(os.getuid())
             file_mapped = file.read().format_map(os.environ)
             self.config = toml.loads(file_mapped)
@@ -56,8 +56,8 @@ class FerryParser(argparse.ArgumentParser):
             )
 
     @staticmethod
-    def create(description: str) -> "FerryParser":
-        """Creates a FerryParser instance.
+    def create(description: str, **kwargs: Any) -> "FerryParser":
+        f"""Creates a FerryParser instance.
 
         Args:
             description (string): Name of the FerryParser.
@@ -65,7 +65,7 @@ class FerryParser(argparse.ArgumentParser):
         Returns:
             FerryParser
         """
-        return FerryParser(description=description)
+        return FerryParser(description=description, **kwargs)
 
     @staticmethod
     def create_subparser(

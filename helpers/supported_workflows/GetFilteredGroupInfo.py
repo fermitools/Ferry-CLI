@@ -1,9 +1,7 @@
-# pylint: disable=invalid-name
 import sys
+from typing import Any, Dict, List
 
-from typing import Any
-
-
+# pylint: disable=invalid-name
 
 
 from helpers.workflows import Workflow
@@ -11,10 +9,10 @@ from helpers.workflows import Workflow
 
 class GetFilteredGroupInfo(Workflow):
     def __init__(self: "GetFilteredGroupInfo") -> None:
-        self.name = "getFilteredGroupInfo"
-        self.method = "GET"
-        self.description = "Returns gid, groupname, and grouptype for all groups with 'groupname' variable in its name."
-        self.params = [
+        self.name: str = "getFilteredGroupInfo"
+        self.method: str = "GET"
+        self.description: str = "Returns gid, groupname, and grouptype for all groups with 'groupname' variable in its name."
+        self.params: List[Dict[str, Any]] = [
             {
                 "name": "groupname",
                 "description": "Name of the group",
