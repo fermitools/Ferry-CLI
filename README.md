@@ -28,6 +28,8 @@ optional arguments:
   -d, --debug           Turn on debugging
   -q, --quiet           Hide output
   -u, --update          Get latest swagger file
+  --support_email       Get Ferry CLI support emails
+  --version             Get Ferry CLI version
   --filter FILTER       (string) Use to filter results on -le and -lw flags
   -le, --list_endpoints
                         List all available endpoints
