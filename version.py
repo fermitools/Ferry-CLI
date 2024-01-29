@@ -7,10 +7,10 @@ __title__ = "Ferry CLI"
 __swagger_file_title__ = "Ferry API"
 __summary__ = "A command line interface for making ferry api calls. Can be used to automate repetitive tasks, incorporate usage safeguards for users or groups, or create scripts for common sequences. ."
 __uri__ = "https://github.com/fermitools/Ferry-CLI"
-__version__ = "1.0.0"
+__version__ = "v1.0.0"
 __email__ = "ltrestka@fnal.gov, sbhat@fnal.gov, brynmool@fnal.gov"
 __author__ = "Fermi National Accelerator Laboratory"
-__copyright__ = f"2023 {__author__}"
+__copyright__ = f"2024 {__author__}"
 
 
 
