@@ -12,16 +12,18 @@ __email__ = "ltrestka@fnal.gov, sbhat@fnal.gov, brynmool@fnal.gov"
 __author__ = "Fermi National Accelerator Laboratory"
 __copyright__ = f"2024 {__author__}"
 
+def get_summary():
+    return __summary__
 
-
-def print_version() -> None:
+def print_version(full=False, short=False) -> None:
     file_version = None
     if os.path.exists("config/swagger.json"):
         json_file = json.load(open("config/swagger.json", "r"))
         file_version = json_file.get("info", {}).get("version", None)
-        
+    if short:
+        return __version__
     print(f"{__title__} version {__version__}")
-    if file_version:
+    if file_version and full:
         print(f"Interfacing with {__swagger_file_title__} version {file_version}")
     sys.exit()
     
@@ -38,7 +40,7 @@ def request_project_info(view:str):  # type: ignore
                 if view == "email":
                     print_support_email()
                 elif view == "version":
-                    print_version()
+                    print_version(True)
             except KeyError:
                 # pylint: disable=raise-missing-from
                 raise KeyError(f"Error: '{view}' is not a supported.")
