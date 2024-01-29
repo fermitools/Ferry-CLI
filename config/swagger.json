@@ -4,7 +4,7 @@
         "description": "FERRY API Documentation.\n(For all APIs, you can also use ferry.fnal.gov:8445/api?help)",
         "title": "FERRY API",
         "contact": {},
-        "version": "v2.2.7-58-gb45f2c6"
+        "version": "v2.2.10-64-g92402d4"
     },
     "paths": {
         "/IsUserLeaderOfGroup": {
@@ -1228,18 +1228,11 @@
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "name of group to set as primary",
-                        "name": "groupname",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
                         "type": "boolean",
-                        "description": "true if this is a group account - default is false",
+                        "description": "true is this is a group account - default is false",
                         "name": "groupaccount",
                         "in": "query",
-                        "required": false
+                        "required": true
                     },
                     {
                         "type": "string",
@@ -2543,21 +2536,21 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "fqan to assign user too",
+                        "description": "group to limit the results to",
                         "name": "groupname",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "affiliation to limit assignment too",
+                        "description": "specific type of group to show results for - case sensitive",
                         "name": "grouptype",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "boolean",
-                        "description": "display leader flag - default false",
+                        "description": "display if user is a leader for the group - default false",
                         "name": "leader",
                         "in": "query"
                     }
@@ -2904,12 +2897,6 @@
                 ],
                 "summary": "Returns the affiliations the user is a member of.",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "limit results to a specific affiliation",
-                        "name": "experiment",
-                        "in": "query"
-                    },
                     {
                         "type": "string",
                         "description": "user to list whose membership will be listed",
@@ -4241,6 +4228,64 @@
                 }
             }
         },
+        "/removeGroupLeader": {
+            "put": {
+                "description": "Removes the group leadership privilege from a user.  The user's association with the group is not altered.",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Removes the group leadership privilege from a user.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "name of group",
+                        "name": "groupname",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "type of group",
+                        "name": "grouptype",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name of user to remove leadership privilege from",
+                        "name": "username",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    }
+                }
+            }
+        },
         "/removeLPCConvener": {
             "put": {
                 "description": "Removes a user from being an group's leader\"",
@@ -4637,6 +4682,57 @@
                 }
             }
         },
+        "/removeUserFromExperiment": {
+            "put": {
+                "description": "Removes a user from an experiment. Specifically, this removes the user's relationships to the experiment's resources, FQANs, certificates and storage quotas from the specified user. NOTE: API is unable to remove the user from groups as a group may be connected to multiple affiliations.",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Removes a user from an experiment.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "name of the experiment to remove the user from",
+                        "name": "unitname",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "user name of the user to remove from the experiment",
+                        "name": "username",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    }
+                }
+            }
+        },
         "/removeUserFromGroup": {
             "put": {
                 "description": "Remove this group membership from the user.",
@@ -4654,7 +4750,7 @@
                     {
                         "type": "string",
                         "description": "the group to remove the user from",
-                        "name": "groupname",
+                        "name": "group",
                         "in": "query",
                         "required": true
                     },
@@ -5056,7 +5152,7 @@
         },
         "/setGroupLeader": {
             "put": {
-                "description": "Removes the group leadership privilege from a user.  The user's association with the group is not altered.",
+                "description": "Sets this user as a group leader. If the user is not part of the group, the user will be added at the same time. A\ngroup can have multiple group leaders.",
                 "consumes": [
                     "text/html"
                 ],
@@ -5066,7 +5162,7 @@
                 "tags": [
                     "Groups"
                 ],
-                "summary": "Removes the group leadership privilege from a user.",
+                "summary": "Sets user as leader of the group.",
                 "parameters": [
                     {
                         "type": "string",
@@ -5084,7 +5180,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "name of user to remove leadership privilege from",
+                        "description": "name of user to make a leader",
                         "name": "username",
                         "in": "query",
                         "required": true
@@ -5733,7 +5829,7 @@
                     },
                     {
                         "type": "boolean",
-                        "description": "true if this is a group account - default is false",
+                        "description": "true is this is a group account - default is false",
                         "name": "groupaccount",
                         "in": "query"
                     },
@@ -5993,115 +6089,6 @@
                         "type": "string",
                         "description": "setname to use for obtaining the list of members to update",
                         "name": "setname",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.jsonOutput"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/main.jsonOutput"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/main.jsonOutput"
-                        }
-                    }
-                }
-            }
-        },
-        "/removeUserFromExperiment": {
-            "put": {
-                "description": "Removes a user from an experiment. Specifically, this removes the user's relationships to the experiment's resources, FQANs, certificates and storage quotas from the specified user. NOTE: API is unable to remove the user from groups as a group may be connected to multiple affiliations.",
-                "consumes": [
-                    "text/html"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Removes a user from an experiment.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "name of the experiment to remove the user from",
-                        "name": "unitname",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "user name of the user to remove from the experiment",
-                        "name": "username",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.jsonOutput"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/main.jsonOutput"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/main.jsonOutput"
-                        }
-                    }
-                }
-            }
-        },
-        "/removeGroupLeader": {
-            "put": {
-                "description": "Removes the group leadership privilege from a user.  The user's association with the group is not altered.",
-                "consumes": [
-                    "text/html"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Groups"
-                ],
-                "summary": "Removes the group leadership privilege from a user.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "name of group",
-                        "name": "groupname",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "type of group",
-                        "name": "grouptype",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "name of user to remove leadership privilege from",
-                        "name": "username",
                         "in": "query",
                         "required": true
                     }
@@ -6755,5 +6742,6 @@
                 }
             }
         }
-    }
+    },
+    "request_url": "https://ferry.fnal.gov:8445/docs/swagger.json"
 }
