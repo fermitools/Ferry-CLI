@@ -8,6 +8,7 @@ from typing import List, Optional, Tuple
 import requests
 import requests.auth
 from helpers.customs import FerryParser
+from version import request_project_info
 
 __all__ = [
     "Auth",
@@ -182,7 +183,18 @@ def get_auth_parser() -> "FerryParser":
         default=False,
         help="Get latest swagger file",
     )
-
+    auth_parser.add_argument(
+        "--support_email",
+        nargs=0,
+        help="Get Ferry CLI support emails",
+        action=request_project_info("email"),
+    )
+    auth_parser.add_argument(
+        "--version",
+        nargs=0,
+        help="Get Ferry CLI version",
+        action=request_project_info("version"),
+    )
     return auth_parser
 
 

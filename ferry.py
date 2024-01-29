@@ -65,6 +65,7 @@ class FerryCLI:
         )
         parser.add_argument("-e", "--endpoint", help="API endpoint and parameters")
         parser.add_argument("-w", "--workflow", help="Execute supported workflows")
+
         return parser
 
     def list_available_endpoints_action(self: "FerryCLI"):  # type: ignore

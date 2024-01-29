@@ -12,8 +12,7 @@ To begin, simply clone the repo, and run python3 ferry.py inside the directory.
 
 ``` bash
 $ python3 ferry.py
-usage: ferry.py [-h] [-a AUTH_METHOD] [--token-path TOKEN_PATH | --cert-path CERT_PATH] [--ca-path CA_PATH] [-le] [-lw] [-ep ENDPOINT_PARAMS] [-wp WORKFLOW_PARAMS]
-                [-e ENDPOINT] [-w WORKFLOW] [-q]
+usage: ferry.py [-h] [-a AUTH_METHOD] [--token-path TOKEN_PATH | --cert-path CERT_PATH] [--ca-path CA_PATH] [-d] [-q] [-u] [--filter FILTER] [-le] [-lw] [-ep ENDPOINT_PARAMS] [-wp WORKFLOW_PARAMS] [-e ENDPOINT] [-w WORKFLOW]
 
 CLI for Ferry API endpoints
 
@@ -26,6 +25,10 @@ optional arguments:
   --cert-path CERT_PATH
                         Path to cert
   --ca-path CA_PATH     Certificate authority path
+  -d, --debug           Turn on debugging
+  -q, --quiet           Hide output
+  -u, --update          Get latest swagger file
+  --filter FILTER       (string) Use to filter results on -le and -lw flags
   -le, --list_endpoints
                         List all available endpoints
   -lw, --list_workflows
@@ -38,7 +41,6 @@ optional arguments:
                         API endpoint and parameters
   -w WORKFLOW, --workflow WORKFLOW
                         Execute supported workflows
-  -q, --quiet           Hide output
 ```
 ---
 ## Safeguards
@@ -62,9 +64,11 @@ $ python3 ferry.py -e createUser
 ### List Endpoints
 
 ``` bash
-$ python3 ferry.py -l
+$ python3 ferry.py -le
 
-Listing all available endpoints:
+Using token auth
+
+                      Listing all supported endpoints:
 
 IsUserLeaderOfGroup                          (GET) | Returns if the user is the leader of the group.
 
@@ -78,6 +82,28 @@ addCapabilitySetToFQAN                       (PUT) | Associates a capability set
                                                    | of the FQAN are immediately updated. That update could take
                                                    | a while.
 ... (Continues)
+
+```
+
+---
+
+### List Endpoints (with filter)
+
+``` bash
+$ python3 ferry.py -le --filter=sync
+
+Using token auth
+
+                      Listing all supported endpoints (filtering for "sync"):
+
+syncLdapWithFerry                            (PUT) | Synchronize all USER LDAP data to FERRY with FERRY as the
+                                                   | source of truth. Does NOT synchronize capability sets and
+                                                   | scopes. 1. Removes all records in LDAP which have no
+                                                   | corresponding record in FERRY, or are not active users in
+                                                   | FERRY. 2. Adds all active FERRY users to LDAP which are
+                                                   | missing from LDAP. 3. Verifies the capability sets in LDAP
+                                                   | are set properly for each user, per their FQANs, correcting
+                                                   | LDAP as needed.
 
 ```
 
@@ -105,14 +131,10 @@ optional arguments:
 ``` bash
 $ python3 ferry.py -e getUserInfo --username=johndoe
 
-Endpoint: getUserInfo
+Using token auth
 
-Arguments: [
-   username=johndoe
-]
-
-Calling: "curl --cert /tmp/x509up_u12345 --capath /etc/grid-security/certificates https://{ferry_url}/getUserInfo?username=johndoe"
-
+Calling Endpoint: https://{ferry_url}/getUserInfo
+Called Endpoint: https://{ferry_url}/getUserInfo?username=johndoe
 Response: {
     "ferry_status": "success",
     "ferry_error": [],
@@ -126,10 +148,8 @@ Response: {
         "vopersonid": "00000000-0000-0000-0000-000000000000"
     }
 }
-
 ```
 > Note: All responses are currently stored locally in results.json if the -q flag is not passed, for longer responses - stdout will point to the file, rather than print them in the terminal.
-
 
 ## Usage - Custom Workflows
 Existing workflows are defined in helpers.supported_workflows.*
@@ -144,7 +164,7 @@ Each custom workflow should be defined as a separate class, see below for exampl
   * type: string (friendly name for the data type to use)
   * required: boolean
 
-* run(api, args): inherited function - this is where your logic goes
+* run(api, args): inherited function - this is where your logic should go
 
 A simple definition within the file may look like this:
 ```python
@@ -182,7 +202,8 @@ class GetFilteredGroupInfo(Workflow):
 ### Workflow Flags
 The workflow flags include:
 [-lw/--list_workflows], [-wp/--workflow_params] and [-w/--workflow], for each of these, ferry.py will:
-* --list_workflows (list all supported workflows):
+* --list_workflows (list all supported workflows)
+  > Note: you may use the --filter flag with this action:
 * --workflow_params (list specified workflow parameters):
 * --workflow (execute a custom workflow):
   * passes arguments into the parser
