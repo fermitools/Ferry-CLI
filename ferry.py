@@ -79,14 +79,15 @@ class FerryCLI:
             def __call__(  # type: ignore
                 self: "_ListEndpoints", parser, args, values, option_string=None
             ) -> None:
+                filter_args = FerryCLI.get_filter_args()
                 print(
                     f"""
-                    Listing all available endpoints{' (filtering for "%s")' % (args.filter) if args.filter else ''}:
-                    """
+                      Listing all supported endpoints{' (filtering for "%s")' % (filter_args.filter) if filter_args.filter else ''}:
+                      """
                 )
                 for ep, subparser in endpoints.items():
-                    if args.filter:
-                        if args.filter in ep:
+                    if filter_args.filter:
+                        if filter_args.filter in ep:
                             print(subparser.description)
                     else:
                         print(subparser.description)
@@ -94,19 +95,31 @@ class FerryCLI:
 
         return _ListEndpoints
 
+    def get_filter_args() -> argparse.Namespace:
+        filter_parser = FerryParser()
+        filter_parser.set_arguments([{
+            "name": "filter",
+            "description": "Filter by workflow title (contains)",
+            "type": "string",
+            "required":False
+        }])
+        filter_args, _ = filter_parser.parse_known_args()
+        return filter_args
+    
     def list_workflows_action(self):  # type: ignore
         class _ListWorkflows(argparse.Action):
             def __call__(  # type: ignore
                 self: "_ListWorkflows", parser, args, values, option_string=None
             ) -> None:
+                filter_args = FerryCLI.get_filter_args()
                 print(
                     f"""
-                      Listing all supported workflows{' (filtering for "%s")' % (args.filter) if args.filter else ''}:
+                      Listing all supported workflows{' (filtering for "%s")' % (filter_args.filter) if filter_args.filter else ''}:
                       """
                 )
                 for name, workflow in SUPPORTED_WORKFLOWS.items():
-                    if args.filter:
-                        if args.filter in name:
+                    if filter_args.filter:
+                        if filter_args.filter in name:
                             workflow().get_description()
                     else:
                         workflow().get_description()
