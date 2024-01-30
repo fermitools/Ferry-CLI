@@ -87,7 +87,7 @@ class FerryCLI:
                 )
                 for ep, subparser in endpoints.items():
                     if filter_args.filter:
-                        if filter_args.filter in ep:
+                        if filter_args.filter.lower() in ep.lower():
                             print(subparser.description)
                     else:
                         print(subparser.description)
@@ -119,7 +119,7 @@ class FerryCLI:
                 )
                 for name, workflow in SUPPORTED_WORKFLOWS.items():
                     if filter_args.filter:
-                        if filter_args.filter in name:
+                        if filter_args.filter.lower() in name.lower():
                             workflow().get_description()
                     else:
                         workflow().get_description()
