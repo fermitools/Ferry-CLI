@@ -38,6 +38,11 @@ class FerryCLI:
             description="CLI for Ferry API endpoints", parents=[get_auth_parser()]
         )
         parser.add_argument(
+            "--filter",
+            default=None,
+            help="(string) Use to filter results on -le and -lw flags",
+        )
+        parser.add_argument(
             "-le",
             "--list_endpoints",
             action=self.list_available_endpoints_action(),
@@ -74,29 +79,51 @@ class FerryCLI:
             def __call__(  # type: ignore
                 self: "_ListEndpoints", parser, args, values, option_string=None
             ) -> None:
+                filter_args = FerryCLI.get_filter_args()
                 print(
-                    """
-                    Listing all available endpoints:
-                    """
+                    f"""
+                      Listing all supported endpoints{' (filtering for "%s")' % (filter_args.filter) if filter_args.filter else ''}:
+                      """
                 )
-                for subparser in endpoints.values():
-                    print(subparser.description)
+                for ep, subparser in endpoints.items():
+                    if filter_args.filter:
+                        if filter_args.filter.lower() in ep.lower():
+                            print(subparser.description)
+                    else:
+                        print(subparser.description)
                 sys.exit(0)
 
         return _ListEndpoints
 
+    def get_filter_args() -> argparse.Namespace:
+        filter_parser = FerryParser()
+        filter_parser.set_arguments([{
+            "name": "filter",
+            "description": "Filter by workflow title (contains)",
+            "type": "string",
+            "required":False
+        }])
+        filter_args, _ = filter_parser.parse_known_args()
+        return filter_args
+    
     def list_workflows_action(self):  # type: ignore
         class _ListWorkflows(argparse.Action):
             def __call__(  # type: ignore
                 self: "_ListWorkflows", parser, args, values, option_string=None
             ) -> None:
+                filter_args = FerryCLI.get_filter_args()
                 print(
-                    """
-                      Listing all supported workflows:
+                    f"""
+                      Listing all supported workflows{' (filtering for "%s")' % (filter_args.filter) if filter_args.filter else ''}:
                       """
                 )
-                for workflow in SUPPORTED_WORKFLOWS.values():
-                    workflow().get_description()
+                for name, workflow in SUPPORTED_WORKFLOWS.items():
+                    if filter_args.filter:
+                        if filter_args.filter.lower() in name.lower():
+                            workflow().get_description()
+                    else:
+                        workflow().get_description()
+
                 sys.exit(0)
 
         return _ListWorkflows
