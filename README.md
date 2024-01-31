@@ -41,7 +41,7 @@ Install is simple, and can be done via pip, or spack:
 	# python3 -m venv .venv
 	# source .venv/bin/activate
 	
-	python3 -m pip  install .
+	pip  install .
 	
 	```
 
