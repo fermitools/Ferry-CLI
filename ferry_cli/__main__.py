@@ -5,17 +5,32 @@ import sys
 import textwrap
 from typing import Any, Dict, Optional, List, Tuple
 
-from helpers.api import FerryAPI
-from helpers.auth import (
-    Auth,
-    get_auth_args,
-    set_auth_from_args,
-    get_auth_parser,
-)
-from helpers.customs import TConfig, FerryParser
-from helpers.supported_workflows import SUPPORTED_WORKFLOWS
-from safeguards.dcs import SafeguardsDCS
-
+try:
+    # Try package import
+    from ferry_cli.helpers.api import FerryAPI
+    from ferry_cli.helpers.auth import (
+        Auth,
+        get_auth_args,
+        set_auth_from_args,
+        get_auth_parser,
+    )
+    from ferry_cli.helpers.customs import TConfig, FerryParser
+    from ferry_cli.helpers.supported_workflows import SUPPORTED_WORKFLOWS
+    from ferry_cli.safeguards.dcs import SafeguardsDCS
+    from ferry_cli.config import DIR
+except ImportError:
+    # Fallback to direct import
+    from helpers.api import FerryAPI
+    from helpers.auth import (
+        Auth,
+        get_auth_args,
+        set_auth_from_args,
+        get_auth_parser,
+    )
+    from helpers.customs import TConfig, FerryParser
+    from helpers.supported_workflows import SUPPORTED_WORKFLOWS
+    from safeguards.dcs import SafeguardsDCS
+    from config import DIR
 
 def get_default_paths(config: TConfig) -> Tuple[str, str]:
     cert = config.get_from("Auth", "default_cert_path", check_path=True)
@@ -88,7 +103,7 @@ class FerryCLI:
                 )
                 for ep, subparser in endpoints.items():
                     if filter_args.filter:
-                        if filter_args.filter in ep:
+                        if filter_args.filter.lower() in ep.lower():
                             print(subparser.description)
                     else:
                         print(subparser.description)
@@ -120,7 +135,7 @@ class FerryCLI:
                 )
                 for name, workflow in SUPPORTED_WORKFLOWS.items():
                     if filter_args.filter:
-                        if filter_args.filter in name:
+                        if filter_args.filter.lower() in name.lower():
                             workflow().get_description()
                     else:
                         workflow().get_description()
@@ -195,7 +210,7 @@ class FerryCLI:
 
     def generate_endpoints(self: "FerryCLI") -> Dict[str, FerryParser]:
         endpoints = {}
-        with open("config/swagger.json", "r") as json_file:
+        with open(f"{DIR}/config/swagger.json", "r") as json_file:
 
             api_data = json.load(json_file)
             for path, data in api_data["paths"].items():
@@ -290,7 +305,7 @@ def main() -> None:
             ferry_cli.get_arg_parser().print_help()
             sys.exit(0)
         ferry_cli.authorizer = set_auth_from_args(auth_args)
-        if auth_args.update or not os.path.exists("config/swagger.json"):
+        if auth_args.update or not os.path.exists(f"{DIR}/config/swagger.json"):
             print("Fetching latest swagger file...")
             ferry_cli.ferry_api = FerryAPI(
                 ferry_cli.base_url, ferry_cli.authorizer, auth_args.quiet

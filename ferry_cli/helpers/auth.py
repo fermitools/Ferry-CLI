@@ -7,8 +7,14 @@ from typing import List, Optional, Tuple
 # pylint: disable=import-error
 import requests
 import requests.auth
-from helpers.customs import FerryParser
-from version import request_project_info
+
+try:
+    from ferry_cli.helpers.customs import FerryParser
+    from ferry_cli.version import request_project_info
+except ImportError:
+    from helpers.customs import FerryParser
+    from version import request_project_info
+
 
 __all__ = [
     "Auth",

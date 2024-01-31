@@ -5,10 +5,15 @@ from typing import Optional, Any, List, Dict
 
 import toml  # pylint: disable=import-error
 
+try:
+    from ferry_cli.config import DIR
+except ImportError:
+    from config import DIR
+
 
 class TConfig:
     def __init__(self) -> None:
-        with open("config/config.toml", "r") as file:
+        with open(f"{DIR}/config/config.toml", "r") as file:
             os.environ["UID"] = str(os.getuid())
             file_mapped = file.read().format_map(os.environ)
             self.config = toml.loads(file_mapped)

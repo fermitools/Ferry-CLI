@@ -3,9 +3,10 @@ from typing import Any, Dict, List
 
 # pylint: disable=invalid-name
 
-
-from helpers.workflows import Workflow
-
+try:
+    from ferry_cli.helpers.workflows import Workflow
+except ImportError:
+    from helpers.workflows import Workflow
 
 class GetFilteredGroupInfo(Workflow):
     def __init__(self: "GetFilteredGroupInfo") -> None:

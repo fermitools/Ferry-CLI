@@ -1,9 +1,12 @@
 import sys
 from typing import Any
 
-from helpers.api import FerryAPI
-from helpers.workflows import Workflow
-
+try:
+    from ferry_cli.helpers.api import FerryAPI
+    from ferry_cli.helpers.workflows import Workflow
+except ImportError:
+    from helpers.api import FerryAPI
+    from helpers.workflows import Workflow
 
 class CloneResource(Workflow):
     def __init__(self: "CloneResource") -> None:

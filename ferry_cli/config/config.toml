@@ -5,6 +5,7 @@ log.error_file = ""
 
 [Ferry]
 base_url = "https://ferry.fnal.gov:8445/"
+dev_url = "https://ferrydev.fnal.gov:8447/"
 
 [Auth]
 default_cert_path = "/tmp/x509up_u{UID}"

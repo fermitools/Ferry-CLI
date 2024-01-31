@@ -2,23 +2,29 @@ import sys
 import argparse
 import json
 import os
+from typing import Optional
+
+try:
+    from ferry_cli.config import DIR
+except ImportError: 
+    from config import DIR # type: ignore
 
 __title__ = "Ferry CLI"
 __swagger_file_title__ = "Ferry API"
 __summary__ = "A command line interface for making ferry api calls. Can be used to automate repetitive tasks, incorporate usage safeguards for users or groups, or create scripts for common sequences. ."
 __uri__ = "https://github.com/fermitools/Ferry-CLI"
-__version__ = "v1.0.0"
+__version__ = "0.1.0"
 __email__ = "ltrestka@fnal.gov, sbhat@fnal.gov, brynmool@fnal.gov"
 __author__ = "Fermi National Accelerator Laboratory"
 __copyright__ = f"2024 {__author__}"
 
-def get_summary():
+def get_summary() -> str:
     return __summary__
 
-def print_version(full=False, short=False) -> None:
+def print_version(full:bool=False, short:bool=False) -> Optional[str]:
     file_version = None
-    if os.path.exists("config/swagger.json"):
-        json_file = json.load(open("config/swagger.json", "r"))
+    if os.path.exists(f"{DIR}/config/swagger.json"):
+        json_file = json.load(open(f"{DIR}/config/swagger.json", "r"))
         file_version = json_file.get("info", {}).get("version", None)
     if short:
         return __version__

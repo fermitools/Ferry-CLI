@@ -1,12 +1,16 @@
 import json
 import sys
-
+import os
 from typing import Any, Callable, Dict
 
 import requests  # pylint: disable=import-error
 
-from helpers.auth import Auth
-
+try:
+    from ferry_cli.helpers.auth import Auth
+    from ferry_cli.config import DIR
+except ImportError:
+    from helpers.auth import Auth
+    from config import DIR
 
 class FerryAPI:
     def __init__(
@@ -73,9 +77,10 @@ class FerryAPI:
             raise e
 
     def get_latest_swagger_file(self: "FerryAPI") -> None:
+        
         response = self.call_endpoint("docs/swagger.json")
         if response:
-            with open("config/swagger.json", "w") as file:
+            with open(f"{DIR}/config/swagger.json", "w") as file:
                 file.write(json.dumps(response, indent=4))
         else:
             print(f"Failed to fetch swagger.json file")

@@ -1,18 +1,105 @@
 # Ferry-CLI
 
-## Requirements
-* Python 3.6 or higher
-  * pip3 - requests
-  * pip3 - toml
+## REQUIREMENTS
+* bearer token (htgettoken) or x509 user proxy for authorization
 
-## Usage - Base API
+AND
+
+* Python 3.6  or higher + pip with the following libraries:
+	certifi>=2023.11.17
+	charset-normalizer>=3.3.2
+	idna>=3.4
+	requests>=2.31.0
+	toml>=0.10.2
+	urllib3>=2.1.0
+	
+OR
+
+* Spack + scd_recipes repo
+
+## INSTALL
+Install is simple, and can be done via pip, or spack:
+
+#### Using pip:
+
+* Simply Run: (requires repo access)
+	``` bash
+		# https
+		pip install git+https://github.com/fermitools/Ferry-CLI.git
+	``` 
+	``` bash
+		# ssh
+		pip install git@github.com:fermitools/Ferry-CLI.git
+	```
+
+* If you wish to contribute to this project, or run a local copy:
+	``` bash
+	git clone https://github.com/fermitools/Ferry-CLI.git
+	cd Ferry-CLI
+
+	# Uncomment if you wish to use a virtual environment
+	# python3 -m venv .venv
+	# source .venv/bin/activate
+	
+	python3 -m pip  install .
+	
+	```
+
+#### Using Spack:
+If not already done, install spack, with the scd_recipes repo
+* Guide: [spack setup](https://github.com/FNALssi/fermi-spack-tools/wiki)
+
+You can now either create a new spack environment, or add ferry-cli to an existing environment:
+```bash
+spack env create ferry_cli_env
+spack env activate ferry_cli_env
+spack add ferry-cli
+spack install ferry-cli
+spack load ferry-cli
+```
+
+
+## AUTHORIZE
+#### htgettoken
+
+The ferry-cli is designed to make setup as easy as possible. Before you begin, ensure that you have htgettoken set up.  
+
+Once this is done, the following script will ensure you have everything you need to run the CLI:
+```
+httokensh -i fermilab -a htvaultprod.fnal.gov -- /bin/bash
+ferry-cli -a token --token-path=/tmp/bt_u{uid} ARGS
+```
+
+If you wish to use a custom "**token-path**" for your token, you can set the standard token flags as needed. 
+> The CLI is configured to look for a token by default, and will check the locations below, in the following order, whichever comes first: 
+> 1. **$BEARER_TOKEN** - if defined
+> 2. **$BEARER_TOKEN_FILE** - if defined
+> 3. **$XDG_RUNTIME_DIR**/bt_u{**uid**} - if **$XDG_RUNTIME_DIR** is defined
+> 4. Custom path, provided at execution time:
+	
+If none of these are found, the CLI will return an error stating that an authentication method is required. 
+
+#### X509 USER PROXY
+If you wish to use a cert, you can do so by running:
+```bash
+kinit $USER
+kx509
+ferry-cli -a cert --cert_path=/tmp/x509up_u{uid} --ca_path=/etc/grid-security/certificates ARGS
+```
+> The paths above are the default paths. The cli will check there by default and at **$X509_USER_PROXY** if defined.
+
+
+## USAGE
+
 Currently, this program is compatible with all existing ferry api calls listed on the [Ferry Docs](https://ferry.fnal.gov:8445/docs#).
 
-To begin, simply clone the repo, and run python3 ferry.py inside the directory.
+
+To begin, simply clone the repo, and run:  ferry-cli -h
+> if running python3, cd to Ferry-CLI and run `python3 ferry_cli`
 
 ``` bash
-$ python3 ferry.py
-usage: ferry.py [-h] [-a AUTH_METHOD] [--token-path TOKEN_PATH | --cert-path CERT_PATH] [--ca-path CA_PATH] [-d] [-q] [-u] [--filter FILTER] [-le] [-lw] [-ep ENDPOINT_PARAMS] [-wp WORKFLOW_PARAMS] [-e ENDPOINT] [-w WORKFLOW]
+$ ferry-cli
+usage: ferry-cli [-h] [-a AUTH_METHOD] [--token-path TOKEN_PATH | --cert-path CERT_PATH] [--ca-path CA_PATH] [-d] [-q] [-u] [--filter FILTER] [-le] [-lw] [-ep ENDPOINT_PARAMS] [-wp WORKFLOW_PARAMS] [-e ENDPOINT] [-w WORKFLOW]
 
 CLI for Ferry API endpoints
 
@@ -50,7 +137,7 @@ Not all ferry endpoints should be used by DCS, or other groups that may be using
 * safeguards.py is where you can store information for users regarding the proper steps to achieve a goal.
 * endpoints that are listed in safeguards.py will not be called, rather - they will print out a message for the user listing the correct action to take:
 ```bash
-$ python3 ferry.py -e createUser
+$ ferry-cli -e createUser
 
               SAFEGUARDED: DCS Should NOT be using this call.
 
@@ -66,7 +153,7 @@ $ python3 ferry.py -e createUser
 ### List Endpoints
 
 ``` bash
-$ python3 ferry.py -le
+$ ferry-cli -le
 
 Using token auth
 
@@ -92,7 +179,7 @@ addCapabilitySetToFQAN                       (PUT) | Associates a capability set
 ### List Endpoints (with filter)
 
 ``` bash
-$ python3 ferry.py -le --filter=sync
+$ ferry-cli -le --filter=sync
 
 Using token auth
 
@@ -113,11 +200,11 @@ syncLdapWithFerry                            (PUT) | Synchronize all USER LDAP d
 
 ### List endpoint parameters/args:
 ``` bash
-$ python3 ferry.py -ep getUserInfo
+$ ferry-cli -ep getUserInfo
 
 Listing parameters for endpoint: https://{ferry_url}/getUserInfo
 
-usage: ferry.py [-h] [--username USERNAME] [--uid UID] [--vopersonid VOPERSONID]
+usage: ferry-cli [-h] [--username USERNAME] [--uid UID] [--vopersonid VOPERSONID]
 
 getUserInfo (GET) | For a specific user, returns the entity attributes. You must | supply ONE of username or uid or vopersonid.
 
@@ -131,7 +218,7 @@ optional arguments:
 
 ### Call an endpoint:
 ``` bash
-$ python3 ferry.py -e getUserInfo --username=johndoe
+$ ferry-cli -e getUserInfo --username=johndoe
 
 Using token auth
 
@@ -235,7 +322,7 @@ The workflow flags include:
     ```
   * example:
     ``` bash
-      python3 ferry.py -w getFilteredGroupInfo --groupname=mu2e
+      ferry-cli -w getFilteredGroupInfo --groupname=mu2e
       Called Endpoint: https://{ferry_url}/getAllGroups
       Recieved successful response
       Filtering by groupname: 'mu2e'
