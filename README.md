@@ -1,7 +1,8 @@
 # Ferry-CLI
 
 ## REQUIREMENTS
-* bearer token (htgettoken) or x509 user proxy for authorization
+* Repo access
+* Bearer token (htgettoken) or x509 user proxy for authorization
 
 AND
 
@@ -10,39 +11,41 @@ AND
 	charset-normalizer>=3.3.2
 	idna>=3.4
 	requests>=2.31.0
-	toml>=0.10.2
 	urllib3>=2.1.0
-	
+
 OR
 
 * Spack + scd_recipes repo
 
 ## INSTALL
-Install is simple, and can be done via pip, or spack:
+Install is simple, and can be done via source, pip, or spack:
 
 #### Using pip:
 
-* Simply Run: (requires repo access)
+* Simply Run:
 	``` bash
-		# https
+		# using https
 		pip install git+https://github.com/fermitools/Ferry-CLI.git
-	``` 
-	``` bash
-		# ssh
+
+		# using ssh
 		pip install git@github.com:fermitools/Ferry-CLI.git
 	```
 
 * If you wish to contribute to this project, or run a local copy:
 	``` bash
-	git clone https://github.com/fermitools/Ferry-CLI.git
-	cd Ferry-CLI
+		git clone https://github.com/fermitools/Ferry-CLI.git
+		cd Ferry-CLI
 
-	# Uncomment if you wish to use a virtual environment
-	# python3 -m venv .venv
-	# source .venv/bin/activate
-	
-	pip  install .
-	
+		# Uncomment if you wish to use a virtual environment
+		# python3 -m venv .venv
+		# source .venv/bin/activate
+
+		pip install .
+
+		# If you don't wish to use pip or spack,
+		# you can create a symlink to the executable:
+		sudo ln -s /path/to/Ferry-CLI/bin/ferry-cli /usr/bin/ferry-cli
+
 	```
 
 #### Using Spack:
@@ -51,9 +54,11 @@ If not already done, install spack, with the scd_recipes repo
 
 You can now either create a new spack environment, or add ferry-cli to an existing environment:
 ```bash
-spack env create ferry_cli_env
-spack env activate ferry_cli_env
-spack add ferry-cli
+# Uncomment to use in a custom spack environment
+# spack env create ferry_cli_env
+# spack env activate ferry_cli_env
+# spack add ferry-cli
+
 spack install ferry-cli
 spack load ferry-cli
 ```
@@ -62,7 +67,7 @@ spack load ferry-cli
 ## AUTHORIZE
 #### htgettoken
 
-The ferry-cli is designed to make setup as easy as possible. Before you begin, ensure that you have htgettoken set up.  
+The ferry-cli is designed to make setup as easy as possible. Before you begin, ensure that you have htgettoken set up.
 
 Once this is done, the following script will ensure you have everything you need to run the CLI:
 ```
@@ -70,14 +75,14 @@ httokensh -i fermilab -a htvaultprod.fnal.gov -- /bin/bash
 ferry-cli -a token --token-path=/tmp/bt_u{uid} ARGS
 ```
 
-If you wish to use a custom "**token-path**" for your token, you can set the standard token flags as needed. 
-> The CLI is configured to look for a token by default, and will check the locations below, in the following order, whichever comes first: 
+If you wish to use a custom "**token-path**" for your token, you can set the standard token flags as needed.
+> The CLI is configured to look for a token by default, and will check the locations below, in the following order, whichever comes first:
 > 1. **$BEARER_TOKEN** - if defined
 > 2. **$BEARER_TOKEN_FILE** - if defined
 > 3. **$XDG_RUNTIME_DIR**/bt_u{**uid**} - if **$XDG_RUNTIME_DIR** is defined
 > 4. Custom path, provided at execution time:
-	
-If none of these are found, the CLI will return an error stating that an authentication method is required. 
+
+If none of these are found, the CLI will return an error stating that an authentication method is required.
 
 #### X509 USER PROXY
 If you wish to use a cert, you can do so by running:
@@ -94,8 +99,7 @@ ferry-cli -a cert --cert_path=/tmp/x509up_u{uid} --ca_path=/etc/grid-security/ce
 Currently, this program is compatible with all existing ferry api calls listed on the [Ferry Docs](https://ferry.fnal.gov:8445/docs#).
 
 
-To begin, simply clone the repo, and run:  ferry-cli -h
-> if running python3, cd to Ferry-CLI and run `python3 ferry_cli`
+To begin, simply run:  ferry-cli
 
 ``` bash
 $ ferry-cli

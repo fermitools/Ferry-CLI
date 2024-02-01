@@ -8,9 +8,10 @@ try:
     from ferry_cli.helpers.auth import Auth
     from ferry_cli.config import DIR
 except ImportError:
-    from helpers.auth import Auth
-    from config import DIR
+    from helpers.auth import Auth  # type: ignore
+    from config import DIR  # type: ignore
 
+# pylint: disable=unused-argument,pointless-statement
 class FerryAPI:
     def __init__(
         self: "FerryAPI",
@@ -76,11 +77,11 @@ class FerryAPI:
             raise e
 
     def get_latest_swagger_file(self: "FerryAPI") -> None:
-        
+
         response = self.call_endpoint("docs/swagger.json")
         if response:
             with open(f"{DIR}/config/swagger.json", "w") as file:
                 file.write(json.dumps(response, indent=4))
         else:
-            print(f"Failed to fetch swagger.json file")
+            print("Failed to fetch swagger.json file")
             sys.exit(1)

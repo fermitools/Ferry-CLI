@@ -4,7 +4,7 @@ from os import geteuid
 import os.path
 from typing import List, Optional, Tuple
 
-# pylint: disable=import-error
+# pylint: disable=import-error,no-else-return
 import requests
 import requests.auth
 
@@ -12,8 +12,8 @@ try:
     from ferry_cli.helpers.customs import FerryParser
     from ferry_cli.version import request_project_info
 except ImportError:
-    from helpers.customs import FerryParser
-    from version import request_project_info
+    from helpers.customs import FerryParser  # type: ignore
+    from version import request_project_info  # type: ignore
 
 
 __all__ = [
@@ -209,7 +209,7 @@ def set_auth_from_args(args: Namespace) -> Auth:
     if args.auth_method == "token":
         print("\nUsing token auth")
         return AuthToken(args.token_path, args.debug)
-    elif args.auth_method == "cert" or args.auth_method == "certificate":
+    elif args.auth_method in ["cert", "certificate"]:
         print("\nUsing cert auth")
         return AuthCert(args.cert_path, args.ca_path, args.debug)
     else:

@@ -1,4 +1,5 @@
 #!/usr/bin/python3 -I
+# pylint: disable=invalid-name,wrong-import-position
 import os
 import sys
 

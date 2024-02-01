@@ -43,10 +43,9 @@ setup(
         "urllib3>=2.1.0",
     ],
     classifiers=[
-        "Programming Language :: Python :: 3.6+",
+        "Programming Language :: Python :: 3.6.8+",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
-    scripts=['bin/ferry-cli'],
-    
+    scripts=["bin/ferry-cli"],
 )

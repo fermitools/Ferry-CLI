@@ -5,6 +5,7 @@ import sys
 import textwrap
 from typing import Any, Dict, Optional, List
 
+# pylint: disable=unused-import
 try:
     # Try package import
     from ferry_cli.helpers.api import FerryAPI
@@ -20,23 +21,23 @@ try:
     from ferry_cli.config import DIR
 except ImportError:
     # Fallback to direct import
-    from helpers.api import FerryAPI
-    from helpers.auth import (
+    from helpers.api import FerryAPI  # type: ignore
+    from helpers.auth import (  # type: ignore
         Auth,
         get_auth_args,
         set_auth_from_args,
         get_auth_parser,
     )
-    from helpers.customs import FerryParser
-    from helpers.supported_workflows import SUPPORTED_WORKFLOWS
-    from safeguards.dcs import SafeguardsDCS
-    from config import DIR
+    from helpers.customs import FerryParser  # type: ignore
+    from helpers.supported_workflows import SUPPORTED_WORKFLOWS  # type: ignore
+    from safeguards.dcs import SafeguardsDCS  # type: ignore
+    from config import DIR  # type: ignore
 
 
 class FerryCLI:
     def __init__(self: "FerryCLI") -> None:
         self.base_url = "https://ferry.fnal.gov:8445/"
-        self.dev_url= "https://ferrydev.fnal.gov:8447/"
+        self.dev_url = "https://ferrydev.fnal.gov:8447/"
         self.safeguards = SafeguardsDCS()
         self.endpoints: Dict[str, Any] = {}
         self.authorizer: Optional["Auth"] = None
@@ -91,10 +92,15 @@ class FerryCLI:
                 self: "_ListEndpoints", parser, args, values, option_string=None
             ) -> None:
                 filter_args = FerryCLI.get_filter_args()
+                filter_str = (
+                    f' (filtering for "{filter_args.filter}")'
+                    if filter_args.filter
+                    else ""
+                )
                 print(
                     f"""
-                      Listing all supported endpoints{' (filtering for "%s")' % (filter_args.filter) if filter_args.filter else ''}:
-                      """
+                    Listing all supported endpoints{filter_str}':
+                    """
                 )
                 for ep, subparser in endpoints.items():
                     if filter_args.filter:
@@ -106,34 +112,44 @@ class FerryCLI:
 
         return _ListEndpoints
 
+    @staticmethod
     def get_filter_args() -> argparse.Namespace:
         filter_parser = FerryParser()
-        filter_parser.set_arguments([{
-            "name": "filter",
-            "description": "Filter by workflow title (contains)",
-            "type": "string",
-            "required":False
-        }])
+        filter_parser.set_arguments(
+            [
+                {
+                    "name": "filter",
+                    "description": "Filter by workflow title (contains)",
+                    "type": "string",
+                    "required": False,
+                }
+            ]
+        )
         filter_args, _ = filter_parser.parse_known_args()
         return filter_args
-    
+
     def list_workflows_action(self):  # type: ignore
         class _ListWorkflows(argparse.Action):
             def __call__(  # type: ignore
                 self: "_ListWorkflows", parser, args, values, option_string=None
             ) -> None:
                 filter_args = FerryCLI.get_filter_args()
+                filter_str = (
+                    f' (filtering for "{filter_args.filter}")'
+                    if filter_args.filter
+                    else ""
+                )
                 print(
                     f"""
-                      Listing all supported workflows{' (filtering for "%s")' % (filter_args.filter) if filter_args.filter else ''}:
-                      """
+                    Listing all supported workflows{filter_str}':
+                    """
                 )
                 for name, workflow in SUPPORTED_WORKFLOWS.items():
                     if filter_args.filter:
                         if filter_args.filter.lower() in name.lower():
-                            workflow().get_description()
+                            workflow().get_description()  # type: ignore
                     else:
-                        workflow().get_description()
+                        workflow().get_description()  # type: ignore
 
                 sys.exit(0)
 
@@ -161,7 +177,7 @@ class FerryCLI:
             ) -> None:
                 try:
                     # Finds workflow inherited class in dictionary if exists, and initializes it.
-                    workflow = SUPPORTED_WORKFLOWS[values]()
+                    workflow = SUPPORTED_WORKFLOWS[values]()  # type: ignore
                     workflow.init_parser()
                     workflow.get_info()
                     sys.exit(0)
@@ -267,7 +283,7 @@ class FerryCLI:
         elif args.workflow:
             try:
                 # Finds workflow inherited class in dictionary if exists, and initializes it.
-                workflow = SUPPORTED_WORKFLOWS[args.workflow]()
+                workflow = SUPPORTED_WORKFLOWS[args.workflow]()  # type: ignore
                 workflow.init_parser()
                 workflow_params, _ = workflow.parser.parse_known_args(endpoint_args)
                 json_result = workflow.run(self.ferry_api, vars(workflow_params))  # type: ignore

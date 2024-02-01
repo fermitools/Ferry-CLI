@@ -30,7 +30,7 @@ class FerryParser(argparse.ArgumentParser):
 
     @staticmethod
     def create(description: str, **kwargs: Any) -> "FerryParser":
-        f"""Creates a FerryParser instance.
+        """Creates a FerryParser instance.
 
         Args:
             description (string): Name of the FerryParser.

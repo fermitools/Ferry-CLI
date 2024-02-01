@@ -6,8 +6,8 @@ from typing import Optional
 
 try:
     from ferry_cli.config import DIR
-except ImportError: 
-    from config import DIR # type: ignore
+except ImportError:
+    from config import DIR  # type: ignore
 
 __title__ = "Ferry CLI"
 __swagger_file_title__ = "Ferry API"
@@ -18,26 +18,31 @@ __email__ = "ltrestka@fnal.gov, sbhat@fnal.gov, brynmool@fnal.gov"
 __author__ = "Fermi National Accelerator Laboratory"
 __copyright__ = f"2024 {__author__}"
 
+
 def get_summary() -> str:
     return __summary__
 
-def print_version(full:bool=False, short:bool=False) -> Optional[str]:
+
+def print_version(full: bool = False, short: bool = False) -> Optional[str]:
     file_version = None
     if os.path.exists(f"{DIR}/config/swagger.json"):
-        json_file = json.load(open(f"{DIR}/config/swagger.json", "r"))
-        file_version = json_file.get("info", {}).get("version", None)
+        with open(f"{DIR}/config/swagger.json", "r") as file:
+            json_file = json.load(file)
+            file_version = json_file.get("info", {}).get("version", None)
     if short:
         return __version__
     print(f"{__title__} version {__version__}")
     if file_version and full:
         print(f"Interfacing with {__swagger_file_title__} version {file_version}")
     sys.exit()
-    
+
+
 def print_support_email() -> None:
     print(f"Email {__email__} for help.")
     sys.exit()
-    
-def request_project_info(view:str):  # type: ignore
+
+
+def request_project_info(view: str):  # type: ignore
     class _WorkflowParams(argparse.Action):
         def __call__(  # type: ignore
             self: "_WorkflowParams", parser, args, values, option_string=None
