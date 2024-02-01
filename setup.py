@@ -4,7 +4,7 @@ from ferry_cli.version import print_version, get_summary
 with open("README.md", "r") as file:
     long_desc = file.read()
 setup(
-    name="Ferry CLI",
+    name="ferry_cli",
     version=print_version(short=True),
     author="Lucas Trestka, Shreyas Bhat, Lydia Brynmoor",
     author_email="ltrestka@fnal.gov, sbhat@fnal.gov, brynmoor@fnal.gov",
