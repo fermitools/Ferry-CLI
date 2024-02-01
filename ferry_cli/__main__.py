@@ -3,7 +3,7 @@ import json
 import os
 import sys
 import textwrap
-from typing import Any, Dict, Optional, List, Tuple
+from typing import Any, Dict, Optional, List
 
 try:
     # Try package import
@@ -14,7 +14,7 @@ try:
         set_auth_from_args,
         get_auth_parser,
     )
-    from ferry_cli.helpers.customs import TConfig, FerryParser
+    from ferry_cli.helpers.customs import FerryParser
     from ferry_cli.helpers.supported_workflows import SUPPORTED_WORKFLOWS
     from ferry_cli.safeguards.dcs import SafeguardsDCS
     from ferry_cli.config import DIR
@@ -27,21 +27,16 @@ except ImportError:
         set_auth_from_args,
         get_auth_parser,
     )
-    from helpers.customs import TConfig, FerryParser
+    from helpers.customs import FerryParser
     from helpers.supported_workflows import SUPPORTED_WORKFLOWS
     from safeguards.dcs import SafeguardsDCS
     from config import DIR
 
-def get_default_paths(config: TConfig) -> Tuple[str, str]:
-    cert = config.get_from("Auth", "default_cert_path", check_path=True)
-    capath = config.get_from("Auth", "default_capath", check_path=True)
-    return cert, capath
-
 
 class FerryCLI:
     def __init__(self: "FerryCLI") -> None:
-        self.config = TConfig()
-        self.base_url = self.config.get_from("Ferry", "base_url")
+        self.base_url = "https://ferry.fnal.gov:8445/"
+        self.dev_url= "https://ferrydev.fnal.gov:8447/"
         self.safeguards = SafeguardsDCS()
         self.endpoints: Dict[str, Any] = {}
         self.authorizer: Optional["Auth"] = None

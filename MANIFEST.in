@@ -1,1 +1,2 @@
-include ferry_cli/config/config.toml
+include bin/ferry-cli
+include ferry_cli/config/swagger.json

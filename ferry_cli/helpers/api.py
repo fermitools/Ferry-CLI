@@ -1,7 +1,6 @@
 import json
 import sys
-import os
-from typing import Any, Callable, Dict
+from typing import Any, Dict
 
 import requests  # pylint: disable=import-error
 

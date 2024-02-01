@@ -1,0 +1,9 @@
+#!/usr/bin/python3 -I
+import os
+import sys
+
+PREFIX = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(PREFIX)
+from ferry_cli import __main__
+
+__main__.main()

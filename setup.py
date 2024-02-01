@@ -33,14 +33,13 @@ setup(
             "ferry_cli/helpers/supported_workflows/GetFilteredGroupInfo.py",
         ],
         "safeguards": ["ferry_cli/safeguards/dcs.py"],
-        "config": ["ferry_cli/config/config.toml", "ferry_cli/config/swagger.json"],
+        "config": ["ferry_cli/config/swagger.json"],
     },
     install_requires=[
         "certifi>=2023.11.17",
         "charset-normalizer>=3.3.2",
         "idna>=3.4",
         "requests>=2.31.0",
-        "toml>=0.10.2",
         "urllib3>=2.1.0",
     ],
     classifiers=[
@@ -48,9 +47,6 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
-    entry_points={
-        "console_scripts": [
-            "ferry-cli=ferry_cli.__main__:main",
-        ],
-    },
+    scripts=['bin/ferry-cli'],
+    
 )
