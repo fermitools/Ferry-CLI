@@ -15,7 +15,8 @@ AND
 
 OR
 
-* Spack + scd_recipes repo
+* [spack](https://github.com/FNALssi/fermi-spack-tools/wiki) package manager with the [scd_recipes](https://github.com/marcmengel/scd_recipes) repository
+  * See .spack/package.py for package information
 
 ## INSTALL
 Install is simple, and can be done via source, pip, or spack:
