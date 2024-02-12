@@ -49,6 +49,12 @@ class FerryCLI:
             description="CLI for Ferry API endpoints", parents=[get_auth_parser()]
         )
         parser.add_argument(
+            "--dryrun",
+            action="store_true",
+            default=False,
+            help="Populate the API call(s) but don't actually run them",
+        )
+        parser.add_argument(
             "--filter",
             default=None,
             help="(string) Use to filter results on -le and -lw flags",
@@ -56,6 +62,7 @@ class FerryCLI:
         parser.add_argument(
             "-le",
             "--list_endpoints",
+            "--list-endpoints",
             action=self.list_available_endpoints_action(),
             nargs=0,
             help="List all available endpoints",
@@ -63,6 +70,7 @@ class FerryCLI:
         parser.add_argument(
             "-lw",
             "--list_workflows",
+            "--list-workflows",
             action=self.list_workflows_action(),  # type: ignore
             nargs=0,
             help="List all supported custom workflows",
@@ -70,12 +78,14 @@ class FerryCLI:
         parser.add_argument(
             "-ep",
             "--endpoint_params",
+            "--endpoint-params",
             action=self.get_endpoint_params_action(),  # type: ignore
             help="List parameters for the selected endpoint",
         )
         parser.add_argument(
             "-wp",
             "--workflow_params",
+            "--workflow-params",
             action=self.workflow_params_action(),  # type: ignore
             help="List parameters for the supported workflow",
         )
@@ -267,7 +277,7 @@ class FerryCLI:
 
         if not self.ferry_api:
             self.ferry_api = FerryAPI(
-                base_url=self.base_url, authorizer=self.authorizer, quiet=quiet  # type: ignore
+                base_url=self.base_url, authorizer=self.authorizer, quiet=quiet, dryrun=args.dryrun  # type: ignore
             )
 
         if args.endpoint:
@@ -277,7 +287,7 @@ class FerryCLI:
                 json_result = self.execute_endpoint(args.endpoint, endpoint_args)
             except Exception as e:
                 raise Exception(f"{e}")
-            if not quiet:
+            if (not quiet) and (not args.dryrun):
                 self.handle_output(json.dumps(json_result, indent=4))
 
         elif args.workflow:
@@ -287,7 +297,7 @@ class FerryCLI:
                 workflow.init_parser()
                 workflow_params, _ = workflow.parser.parse_known_args(endpoint_args)
                 json_result = workflow.run(self.ferry_api, vars(workflow_params))  # type: ignore
-                if not quiet:
+                if (not quiet) and (not args.dryrun):
                     self.handle_output(json.dumps(json_result, indent=4))
             except KeyError:
                 raise KeyError(f"Error: '{args.workflow}' is not a supported workflow.")
