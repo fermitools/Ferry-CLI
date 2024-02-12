@@ -1,7 +1,6 @@
 # Ferry-CLI
 
 ## REQUIREMENTS
-* Repo access
 * Bearer token (htgettoken) or x509 user proxy for authorization
 
 AND
