@@ -6,10 +6,10 @@ import requests  # pylint: disable=import-error
 
 try:
     from ferry_cli.helpers.auth import Auth
-    from ferry_cli.config import DIR
+    from ferry_cli.config import CONFIG_DIR
 except ImportError:
     from helpers.auth import Auth  # type: ignore
-    from config import DIR  # type: ignore
+    from config import CONFIG_DIR  # type: ignore
 
 # pylint: disable=unused-argument,pointless-statement
 class FerryAPI:
@@ -80,7 +80,7 @@ class FerryAPI:
 
         response = self.call_endpoint("docs/swagger.json")
         if response:
-            with open(f"{DIR}/config/swagger.json", "w") as file:
+            with open(f"{CONFIG_DIR}/config/swagger.json", "w") as file:
                 file.write(json.dumps(response, indent=4))
         else:
             print("Failed to fetch swagger.json file")

@@ -5,9 +5,9 @@ import os
 from typing import Optional
 
 try:
-    from ferry_cli.config import DIR
+    from ferry_cli.config import CONFIG_DIR
 except ImportError:
-    from config import DIR  # type: ignore
+    from config import CONFIG_DIR  # type: ignore
 
 __title__ = "Ferry CLI"
 __swagger_file_title__ = "Ferry API"
@@ -25,8 +25,8 @@ def get_summary() -> str:
 
 def print_version(full: bool = False, short: bool = False) -> Optional[str]:
     file_version = None
-    if os.path.exists(f"{DIR}/config/swagger.json"):
-        with open(f"{DIR}/config/swagger.json", "r") as file:
+    if os.path.exists(f"{CONFIG_DIR}/config/swagger.json"):
+        with open(f"{CONFIG_DIR}/config/swagger.json", "r") as file:
             json_file = json.load(file)
             file_version = json_file.get("info", {}).get("version", None)
     if short:

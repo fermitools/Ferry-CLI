@@ -73,17 +73,16 @@ The ferry-cli is designed to make setup as easy as possible. Before you begin, e
 Once this is done, the following script will ensure you have everything you need to run the CLI:
 ```
 httokensh -i fermilab -a htvaultprod.fnal.gov -- /bin/bash
-ferry-cli -a token --token-path=/tmp/bt_u{uid} ARGS
+
+# then simply run
+ferry-cli ARGS
 ```
+> If a token is not pre-defined, you can also include -a token --token-path=/tmp/bt_u{uid} to your args
 
 If you wish to use a custom "**token-path**" for your token, you can set the standard token flags as needed.
-> The CLI is configured to look for a token by default, and will check the locations below, in the following order, whichever comes first:
-> 1. **$BEARER_TOKEN** - if defined
-> 2. **$BEARER_TOKEN_FILE** - if defined
-> 3. **$XDG_RUNTIME_DIR**/bt_u{**uid**} - if **$XDG_RUNTIME_DIR** is defined
-> 4. Custom path, provided at execution time:
+> The CLI is configured to look for a token by default, and follows the WLCG Bearer Token Discovery standard here: https://zenodo.org/records/3937438, but this can be overridden with a custom path via --token-path={your_custom_path}.
 
-If none of these are found, the CLI will return an error stating that an authentication method is required.
+If a token is not found in the default or custom paths, the CLI will return an error stating that an authentication method is required.
 
 #### X509 USER PROXY
 If you wish to use a cert, you can do so by running:

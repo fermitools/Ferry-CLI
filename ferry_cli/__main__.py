@@ -18,7 +18,7 @@ try:
     from ferry_cli.helpers.customs import FerryParser
     from ferry_cli.helpers.supported_workflows import SUPPORTED_WORKFLOWS
     from ferry_cli.safeguards.dcs import SafeguardsDCS
-    from ferry_cli.config import DIR
+    from ferry_cli.config import CONFIG_DIR
 except ImportError:
     # Fallback to direct import
     from helpers.api import FerryAPI  # type: ignore
@@ -31,7 +31,7 @@ except ImportError:
     from helpers.customs import FerryParser  # type: ignore
     from helpers.supported_workflows import SUPPORTED_WORKFLOWS  # type: ignore
     from safeguards.dcs import SafeguardsDCS  # type: ignore
-    from config import DIR  # type: ignore
+    from config import CONFIG_DIR  # type: ignore
 
 
 class FerryCLI:
@@ -221,7 +221,7 @@ class FerryCLI:
 
     def generate_endpoints(self: "FerryCLI") -> Dict[str, FerryParser]:
         endpoints = {}
-        with open(f"{DIR}/config/swagger.json", "r") as json_file:
+        with open(f"{CONFIG_DIR}/config/swagger.json", "r") as json_file:
 
             api_data = json.load(json_file)
             for path, data in api_data["paths"].items():
@@ -316,7 +316,7 @@ def main() -> None:
             ferry_cli.get_arg_parser().print_help()
             sys.exit(0)
         ferry_cli.authorizer = set_auth_from_args(auth_args)
-        if auth_args.update or not os.path.exists(f"{DIR}/config/swagger.json"):
+        if auth_args.update or not os.path.exists(f"{CONFIG_DIR}/config/swagger.json"):
             print("Fetching latest swagger file...")
             ferry_cli.ferry_api = FerryAPI(
                 ferry_cli.base_url, ferry_cli.authorizer, auth_args.quiet
