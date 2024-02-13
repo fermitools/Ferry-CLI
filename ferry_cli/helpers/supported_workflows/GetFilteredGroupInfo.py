@@ -1,10 +1,11 @@
+# pylint: disable=invalid-name,arguments-differ
 import sys
 from typing import Any, Dict, List
 
-# pylint: disable=invalid-name
-
-
-from helpers.workflows import Workflow
+try:
+    from ferry_cli.helpers.workflows import Workflow
+except ImportError:
+    from helpers.workflows import Workflow  # type: ignore
 
 
 class GetFilteredGroupInfo(Workflow):

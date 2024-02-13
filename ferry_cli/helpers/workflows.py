@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
-from helpers.customs import FerryParser
+try:
+    from ferry_cli.helpers.customs import FerryParser
+except ImportError:
+    from helpers.customs import FerryParser  # type: ignore
 
 
 class Workflow(ABC):

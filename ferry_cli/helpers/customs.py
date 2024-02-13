@@ -1,33 +1,6 @@
 import argparse
-import os
 import textwrap
-from typing import Optional, Any, List, Dict
-
-import toml  # pylint: disable=import-error
-
-
-class TConfig:
-    def __init__(self) -> None:
-        with open("config/config.toml", "r") as file:
-            os.environ["UID"] = str(os.getuid())
-            file_mapped = file.read().format_map(os.environ)
-            self.config = toml.loads(file_mapped)
-
-    def get_from(
-        self,
-        section: str,
-        field: str,
-        default: Optional[Any] = None,
-        check_path: bool = False,
-    ) -> Any:
-        if section not in self.config:
-            raise KeyError(f"Section '{section}' not in config file")
-        retval = self.config[section].get(field, default)
-        return (
-            retval
-            if not check_path or (check_path and os.path.exists(retval))
-            else default
-        )
+from typing import Any, List, Dict
 
 
 class FerryParser(argparse.ArgumentParser):
@@ -57,7 +30,7 @@ class FerryParser(argparse.ArgumentParser):
 
     @staticmethod
     def create(description: str, **kwargs: Any) -> "FerryParser":
-        f"""Creates a FerryParser instance.
+        """Creates a FerryParser instance.
 
         Args:
             description (string): Name of the FerryParser.

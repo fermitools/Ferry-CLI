@@ -4,10 +4,17 @@ from os import geteuid
 import os.path
 from typing import List, Optional, Tuple
 
-# pylint: disable=import-error
+# pylint: disable=import-error,no-else-return
 import requests
 import requests.auth
-from helpers.customs import FerryParser
+
+try:
+    from ferry_cli.helpers.customs import FerryParser
+    from ferry_cli.version import request_project_info
+except ImportError:
+    from helpers.customs import FerryParser  # type: ignore
+    from version import request_project_info  # type: ignore
+
 
 __all__ = [
     "Auth",
@@ -182,7 +189,18 @@ def get_auth_parser() -> "FerryParser":
         default=False,
         help="Get latest swagger file",
     )
-
+    auth_parser.add_argument(
+        "--support_email",
+        nargs=0,
+        help="Get Ferry CLI support emails",
+        action=request_project_info("email"),
+    )
+    auth_parser.add_argument(
+        "--version",
+        nargs=0,
+        help="Get Ferry CLI version",
+        action=request_project_info("version"),
+    )
     return auth_parser
 
 
@@ -191,7 +209,7 @@ def set_auth_from_args(args: Namespace) -> Auth:
     if args.auth_method == "token":
         print("\nUsing token auth")
         return AuthToken(args.token_path, args.debug)
-    elif args.auth_method == "cert" or args.auth_method == "certificate":
+    elif args.auth_method in ["cert", "certificate"]:
         print("\nUsing cert auth")
         return AuthCert(args.cert_path, args.ca_path, args.debug)
     else:

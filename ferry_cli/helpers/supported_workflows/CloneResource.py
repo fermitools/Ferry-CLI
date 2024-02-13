@@ -1,8 +1,13 @@
+# pylint: disable=invalid-name,arguments-differ,unused-import
 import sys
 from typing import Any
 
-from helpers.api import FerryAPI
-from helpers.workflows import Workflow
+try:
+    from ferry_cli.helpers.api import FerryAPI
+    from ferry_cli.helpers.workflows import Workflow
+except ImportError:
+    from helpers.api import FerryAPI  # type: ignore
+    from helpers.workflows import Workflow  # type: ignore
 
 
 class CloneResource(Workflow):
@@ -86,7 +91,7 @@ class CloneResource(Workflow):
             if resources:
                 # Add each user from the original resource into the new resource with the same configurations
                 for resource in resources:
-                    print(f"Found Resources")
+                    print("Found Resources")
                     print(resource)
                     for user in resource.get("users", []):
                         user_access_data = dict(user)
