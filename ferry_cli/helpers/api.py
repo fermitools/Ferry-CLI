@@ -18,16 +18,19 @@ class FerryAPI:
         base_url: str,
         authorizer: Auth = Auth(),
         quiet: bool = False,
+        dryrun: bool = False,
     ):
         """
         Parameters:
             base_url (str):  The root URL from which all FERRY API URLs are constructed
             authorizer (Callable[[requests.Session, requests.Session]): A function that prepares the requests session by adding any necessary auth data
             quiet (bool):  Whether or not output should be suppressed
+            dryrun (bool): Whether or not this is a test run.  If True, the intended URL will be printed, but the HTTP request will not be made
         """
         self.base_url = base_url
         self.authorizer = authorizer
         self.quiet = quiet
+        self.dryrun = dryrun
 
     # pylint: disable=dangerous-default-value,too-many-arguments
     def call_endpoint(
@@ -40,6 +43,10 @@ class FerryAPI:
         extra: Dict[Any, Any] = {},
     ) -> Any:
         # Create a session object to persist certain parameters across requests
+        if self.dryrun:
+            print(f"\nWould call endpoint: {self.base_url}{endpoint}")
+            return
+
         if not self.quiet:
             print(f"\nCalling Endpoint: {self.base_url}{endpoint}")
 
