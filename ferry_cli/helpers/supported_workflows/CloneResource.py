@@ -1,6 +1,6 @@
 # pylint: disable=invalid-name,arguments-differ,unused-import
 import sys
-from typing import Any
+from typing import Any, Dict
 
 try:
     from ferry_cli.helpers.api import FerryAPI
@@ -37,56 +37,73 @@ class CloneResource(Workflow):
         ]
         super().__init__()
 
-    def run(self: "CloneResource", api: "FerryAPI", args: Any) -> Any:  # type: ignore
+    def run(self: "CloneResource", api: "FerryAPI", args: Any) -> Any:  # type: ignore # pylint: disable=arguments-differ,too-many-branches
         # Get all compute resources and filter out the resource to be cloned, and the cloned resource - if it already exists
+        if api.dryrun:
+            print(
+                "WARNING:  This workflow is being run with the --dryrun flag.  The exact steps shown here may differ since "
+                "some of the workflow steps depend on the output of API calls."
+            )
         try:
             resources = {
                 resource["resourcename"]: resource
                 for resource in self.verify_output(
-                    api.call_endpoint("getAllComputeResources")
+                    api, api.call_endpoint("getAllComputeResources")
                 )
                 if resource.get("resourcename", "")
                 in [args["clone"], args["new_resource"]]
             }
-            print(resources)
+            if not api.dryrun:
+                print(resources)
             # Verify that resource to be cloned exists
-            if args["clone"] not in resources:
+            if args["clone"] not in resources and not api.dryrun:
                 raise ValueError("Resource to be cloned does not exist")
 
             # If the clone doesnt exist, create a resource with the same details, just changing the provided name
-            cloned_resource_data = dict(resources[args["clone"]])
+            cloned_resource_data: Dict[Any, Any] = {}
+            if not api.dryrun:
+                cloned_resource_data = dict(resources[args["clone"]])
             cloned_resource_data["resourcename"] = args["new_resource"]
-            print(cloned_resource_data)
+            if not api.dryrun:
+                print(cloned_resource_data)
             if args["new_resource"] not in resources:
                 print(
                     f"New resource doesn't exist. Creating new resource with the same attributes as: {args['clone']}"
                 )
                 self.verify_output(
+                    api,
                     api.call_endpoint(
                         "createComputeResource",
                         method="PUT",
                         params=cloned_resource_data,
-                    )
+                    ),
                 )
             else:
                 # If the clone already exists, we will update its info
                 self.verify_output(
+                    api,
                     api.call_endpoint(
                         "setComputeResourceInfo",
                         method="POST",
                         params=cloned_resource_data,
-                    )
+                    ),
                 )
 
             # Now we will get all user groups, and filter for the original resource
             group_json = self.verify_output(
+                api,
                 api.call_endpoint(
                     "getUserGroupsForComputeResource",
                     method="GET",
                     params={"unitname": args["unitname"]},
-                )
+                ),
             )
-            print(f"Received response, searching for resource: {args['clone']}")
+            if api.dryrun:
+                print(
+                    "Dryrun: Since no API was actually run, we cannot simulate adding users from the cloned resource to the new resource"
+                )
+            else:
+                print(f"Received response, searching for resource: {args['clone']}")
             resources = [resource for resource in group_json if resource.get("resourcename", "") == args["clone"]]  # type: ignore
             if resources:
                 # Add each user from the original resource into the new resource with the same configurations
@@ -102,11 +119,12 @@ class CloneResource(Workflow):
                         if "status" in user_access_data:
                             del user_access_data["status"]
                         self.verify_output(
+                            api,
                             api.call_endpoint(
                                 "setUserAccessToComputeResource",
                                 method="PUT",
                                 params=user_access_data,
-                            )
+                            ),
                         )
 
             print(
@@ -115,12 +133,3 @@ class CloneResource(Workflow):
             sys.exit(0)
         except Exception as e:
             raise e
-
-    def verify_output(self: "CloneResource", response: Any) -> Any:
-        if not response:
-            print("Failed'")
-            sys.exit(1)
-        if "ferry_status" in response and response.get("ferry_status", "") != "success":
-            print(f"{response}")
-            sys.exit(1)
-        return response["ferry_output"]
