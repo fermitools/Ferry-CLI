@@ -1,4 +1,3 @@
-<<<<<<< HEAD:ferry_cli/helpers/supported_workflows/GetFilteredGroupInfo.py
 # pylint: disable=invalid-name,arguments-differ
 import sys
 from typing import Any, Dict, List
@@ -7,13 +6,6 @@ try:
     from ferry_cli.helpers.workflows import Workflow
 except ImportError:
     from helpers.workflows import Workflow  # type: ignore
-=======
-# pylint: disable=invalid-name
-
-from typing import Any, Dict, List
-
-from helpers.workflows import Workflow
->>>>>>> 4dcb437 (Fixed workflow dryrun flag.  Note that it's nearly impossible to simulate exact workflow logic with dryrun flag):helpers/supported_workflows/GetFilteredGroupInfo.py
 
 
 class GetFilteredGroupInfo(Workflow):
