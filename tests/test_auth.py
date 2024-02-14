@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from requests import Session
 
-from helpers import auth
+from ferry_cli.helpers import auth
 
 FAKE_CREDENTIAL_DATA = "fakecredential\n"
 
@@ -102,12 +102,12 @@ class TestAuthToken:
 class TestAuthCert:
     @pytest.fixture(autouse=True)
     def mock_DEFAULT_CA_DIR_as_cwd(self, monkeypatch, tmp_path):
-        monkeypatch.setattr("helpers.auth.DEFAULT_CA_DIR", str(tmp_path))
+        monkeypatch.setattr("ferry_cli.helpers.auth.DEFAULT_CA_DIR", str(tmp_path))
         monkeypatch.setattr(
-            "helpers.auth.get_default_cert_path", lambda x: str(tmp_path)
+            "ferry_cli.helpers.auth.get_default_cert_path", lambda x: str(tmp_path)
         )
         monkeypatch.setattr(
-            "helpers.auth.AuthCert.__init__.__defaults__",
+            "ferry_cli.helpers.auth.AuthCert.__init__.__defaults__",
             (None, str(tmp_path), False),
         )
 
