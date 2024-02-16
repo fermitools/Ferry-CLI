@@ -1,7 +1,7 @@
 # MIT License
 #
 # Copyright (c) 2024, FERMI NATIONAL ACCELERATOR LABORATORY
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -23,22 +23,23 @@
 
 from spack.package import *
 
+
 class FerryCli(PythonPackage):
     """
-    FA command line interface for making ferry api calls. 
-    Can be used to automate repetitive tasks, incorporate 
+    FA command line interface for making ferry api calls.
+    Can be used to automate repetitive tasks, incorporate
     usage safeguards for users or groups, or create and
-    execute scripts for common sequences. 
+    execute scripts for common sequences.
     """
 
     homepage = "https://github.com/fermitools/Ferry-CLI"
     git = "https://github.com/fermitools/Ferry-CLI.git"
-    
+
     maintainers = ["ltrestka", "shreyb", "cathulhu"]
 
-    version("master",  branch="master")
+    version("master", branch="master")
     version("0.1.0", branch="spack_deployment", preferred=True)
-    
+
     depends_on("python@3.6.8:", type=("run"))
     depends_on("py-pip", type=("build", "run"))
     depends_on("py-certifi", type=("build", "run"))
@@ -53,4 +54,3 @@ class FerryCli(PythonPackage):
 
     def setup_environment(self, spack_env, run_env):
         run_env.prepend_path("PATH", self.prefix.bin)
-        
