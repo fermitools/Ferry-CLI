@@ -6,7 +6,7 @@ try:
     from ferry_cli.helpers.api import FerryAPI  # pylint: disable=unused-import
     from ferry_cli.helpers.customs import FerryParser
 except ImportError:
-    from helpers.api import FerryAPI  # pylint: disable=unused-import
+    from helpers.api import FerryAPI  # type: ignore # pylint: disable=unused-import
     from helpers.customs import FerryParser  # type: ignore
 
 
