@@ -1,5 +1,4 @@
 # pylint: disable=invalid-name,arguments-differ
-import sys
 from typing import Any, Dict, List
 
 try:

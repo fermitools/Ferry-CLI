@@ -11,6 +11,7 @@ except ImportError:
     from helpers.auth import Auth  # type: ignore
     from config import CONFIG_DIR  # type: ignore
 
+
 # pylint: disable=unused-argument,pointless-statement
 class FerryAPI:
     def __init__(
@@ -45,7 +46,7 @@ class FerryAPI:
         # Create a session object to persist certain parameters across requests
         if self.dryrun:
             print(f"\nWould call endpoint: {self.base_url}{endpoint}")
-            return
+            return None
 
         if not self.quiet:
             print(f"\nCalling Endpoint: {self.base_url}{endpoint}")
