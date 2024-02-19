@@ -161,9 +161,9 @@ class FerryCLI:
                 for name, workflow in SUPPORTED_WORKFLOWS.items():
                     if filter_args.filter:
                         if filter_args.filter.lower() in name.lower():
-                            workflow().get_description()  # type: ignore
+                            workflow().get_description()
                     else:
-                        workflow().get_description()  # type: ignore
+                        workflow().get_description()
 
                 sys.exit(0)
 
@@ -191,7 +191,7 @@ class FerryCLI:
             ) -> None:
                 try:
                     # Finds workflow inherited class in dictionary if exists, and initializes it.
-                    workflow = SUPPORTED_WORKFLOWS[values]()  # type: ignore
+                    workflow = SUPPORTED_WORKFLOWS[values]()
                     workflow.init_parser()
                     workflow.get_info()
                     sys.exit(0)
@@ -297,7 +297,7 @@ class FerryCLI:
         elif args.workflow:
             try:
                 # Finds workflow inherited class in dictionary if exists, and initializes it.
-                workflow = SUPPORTED_WORKFLOWS[args.workflow]()  # type: ignore
+                workflow = SUPPORTED_WORKFLOWS[args.workflow]()
                 workflow.init_parser()
                 workflow_params, _ = workflow.parser.parse_known_args(endpoint_args)
                 json_result = workflow.run(self.ferry_api, vars(workflow_params))  # type: ignore
