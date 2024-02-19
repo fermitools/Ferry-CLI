@@ -18,9 +18,21 @@ ferryPort = 8445
 
 
 @pytest.fixture
-def get_token():
-    subprocess.run([TokenGetCommand, "-a", tokenHost, "-i", tokenUser])
+def get_token(monkeypatch, tmp_path):
+    # Set up temporary area for token to live
+    token_file = tmp_path / "tokenfile"
+    token_file.touch()
+    old_bearer_token_file = os.getenv("BEARER_TOKEN_FILE", None)
+    monkeypatch.setenv("BEARER_TOKEN_FILE", str(token_file.absolute()))
 
+    # Get our token
+    proc = subprocess.run([TokenGetCommand, "-a", tokenHost, "-i", tokenUser])
+    if proc.returncode != 0:
+        raise ValueError(
+            f"{TokenGetCommand} failed.  Please try running it manually for more details"
+        )
+
+    # Decode and validate the token
     tokenObject = {}
     tokenDecoding = subprocess.getoutput([tokenDecodeCommand])
 
@@ -30,8 +42,12 @@ def get_token():
         print(" *** Token Failure: Didn't get valid JWT")
         raise ve
 
-    if tokenValidCheck(tokenObject):
-        return tokenObject
+    tokenValidCheck(tokenObject)
+    yield tokenObject
+
+    # Set the environment back
+    if old_bearer_token_file:
+        os.environ["BEARER_TOKEN_FILE"] = old_bearer_token_file
 
 
 @pytest.fixture
@@ -89,7 +105,7 @@ def test_get_capability_set(getEncodedToken, sendToEndpoint):
 def tokenValidCheck(passedToken):
     if "exp" in passedToken:
         if int(time.time()) < passedToken["exp"]:
-            return True
+            return
     raise ValueError(" *** Token Failure: Expired")
 
 
