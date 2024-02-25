@@ -24,6 +24,7 @@ def create_configfile_if_not_exists() -> None:
     dest_path = xdg_path if xdg_path else home_path
     if dest_path:
         shutil.copy(_get_template_path(), dest_path)
+        print(f"Configuration file created at {dest_path.absolute()}")
         return
     raise OSError(
         "XDG_CONFIG_HOME or HOME needs to be set to copy the template config file into place"
