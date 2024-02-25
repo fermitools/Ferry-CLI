@@ -25,8 +25,8 @@ def get_summary() -> str:
 
 def print_version(full: bool = False, short: bool = False) -> Optional[str]:
     file_version = None
-    if os.path.exists(f"{CONFIG_DIR}/config/swagger.json"):
-        with open(f"{CONFIG_DIR}/config/swagger.json", "r") as file:
+    if os.path.exists(f"{CONFIG_DIR}/swagger.json"):
+        with open(f"{CONFIG_DIR}/swagger.json", "r") as file:
             json_file = json.load(file)
             file_version = json_file.get("info", {}).get("version", None)
     if short:
