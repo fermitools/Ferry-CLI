@@ -23,6 +23,7 @@ def create_configfile_if_not_exists() -> None:
     home_path = _get_configfile_path_home()
     dest_path = xdg_path if xdg_path else home_path
     if dest_path:
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(_get_template_path(), dest_path)
         print(f"Configuration file created at {dest_path.absolute()}")
         return
