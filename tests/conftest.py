@@ -4,11 +4,10 @@ import pytest
 
 
 @pytest.fixture
-def stash_env():
+def stash_env(monkeypatch):
     def inner(env_var):
         env_previous = os.getenv(env_var)
-        if env_previous:
-            del os.environ[env_var]
+        monkeypatch.delenv(env_var, raising=False)
         yield
         if env_previous:
             os.environ[env_var] = env_previous
