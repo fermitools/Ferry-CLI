@@ -12,20 +12,6 @@ from ferry_cli.config import CONFIG_DIR, config
 
 
 @pytest.fixture
-def stash_env():
-    def inner(env_var):
-        env_previous = os.getenv(env_var)
-        if env_previous:
-            del os.environ[env_var]
-        print(os.environ.get(env_var))
-        yield
-        if env_previous:
-            os.environ[env_var] = env_previous
-
-    return inner
-
-
-@pytest.fixture
 def stash_xdg_config_home(stash_env):
     return stash_env("XDG_CONFIG_HOME")
 
