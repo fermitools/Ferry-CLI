@@ -38,6 +38,7 @@ def create_config_file_dummy():
 def test_get_configfile_xdg_config_home_(
     stash_xdg_config_home, create_config_file_dummy, tmp_path, monkeypatch
 ):
+    print(os.environ.get("XDG_CONFIG_HOME"))
     assert not config._get_configfile_path_xdg_config_home()
     env_path = tmp_path
     create_config_file_dummy(env_path, "ferry_cli")
