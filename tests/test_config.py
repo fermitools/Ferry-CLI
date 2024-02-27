@@ -1,7 +1,10 @@
 from collections import namedtuple
 import enum
 import pathlib
+import importlib
 from typing import List
+
+import os
 
 import pytest
 
@@ -102,16 +105,14 @@ def test_get_configfile_path(
 ):
     xdg_path = tmp_path
     home_path = tmp_path
+    monkeypatch.setenv("XDG_CONFIG_HOME", xdg_path)
+    monkeypatch.setenv("HOME", home_path)
 
-    if param_val.xdg_config_home_path:
-        monkeypatch.setenv("XDG_CONFIG_HOME", xdg_path)
-        if param_val.xdg_path_exists:
-            create_config_file_dummy(xdg_path, "ferry_cli")
+    if param_val.xdg_path_exists:
+        create_config_file_dummy(xdg_path, "ferry_cli")
 
-    if param_val.home_config_path:
-        monkeypatch.setenv("HOME", home_path)
-        if param_val.home_path_exists:
-            create_config_file_dummy(xdg_path, ".config", "ferry_cli")
+    if param_val.home_path_exists:
+        create_config_file_dummy(xdg_path, ".config", "ferry_cli")
 
     if param_val.expected == _expectedPathRoot.XDG_CONFIG_HOME:
         expectedPath = xdg_path / "ferry_cli" / "config.ini"
