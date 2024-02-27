@@ -38,6 +38,7 @@ def create_config_file_dummy():
 def test_get_configfile_xdg_config_home_(
     stash_xdg_config_home, create_config_file_dummy, tmp_path, monkeypatch
 ):
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
     assert not config._get_configfile_path_xdg_config_home()
     env_path = tmp_path
     monkeypatch.setenv("XDG_CONFIG_HOME", env_path)
@@ -52,6 +53,7 @@ def test_get_configfile_xdg_config_home_(
 def test_get_configfile_home(
     stash_home, create_config_file_dummy, tmp_path, monkeypatch
 ):
+    monkeypatch.delenv("HOME", raising=False)
     env_path = tmp_path
     create_config_file_dummy(env_path, ".config", "ferry_cli")
     monkeypatch.setenv("HOME", env_path)
@@ -103,10 +105,14 @@ def test_get_configfile_path(
     create_config_file_dummy,
     param_val,
 ):
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    monkeypatch.delenv("HOME", raising=False)
     xdg_path = tmp_path
     home_path = tmp_path
-    monkeypatch.setenv("XDG_CONFIG_HOME", xdg_path)
-    monkeypatch.setenv("HOME", home_path)
+    if param_val.xdg_config_home_path:
+        monkeypatch.setenv("XDG_CONFIG_HOME", xdg_path)
+    if param_val.home_config_path:
+        monkeypatch.setenv("HOME", home_path)
 
     if param_val.xdg_path_exists:
         create_config_file_dummy(xdg_path, "ferry_cli")
