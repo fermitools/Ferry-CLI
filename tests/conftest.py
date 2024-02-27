@@ -9,6 +9,7 @@ def stash_env():
         env_previous = os.getenv(env_var)
         if env_previous:
             del os.environ[env_var]
+        print(os.environ.get(env_var))
         yield
         if env_previous:
             os.environ[env_var] = env_previous
