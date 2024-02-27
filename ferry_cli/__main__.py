@@ -4,6 +4,7 @@ import os
 import sys
 import textwrap
 from typing import Any, Dict, Optional, List
+from urllib.parse import urlsplit, urlunsplit, SplitResult
 
 # pylint: disable=unused-import
 try:
@@ -37,7 +38,10 @@ except ImportError:
 class FerryCLI:
     def __init__(self: "FerryCLI") -> None:
         self.base_url = "https://ferry.fnal.gov:8445/"
+        self.base_url = self._sanitize_base_url(self.base_url)
         self.dev_url = "https://ferrydev.fnal.gov:8447/"
+        self.dev_url = self._sanitize_base_url(self.dev_url)
+
         self.safeguards = SafeguardsDCS()
         self.endpoints: Dict[str, Any] = {}
         self.authorizer: Optional["Auth"] = None
@@ -316,6 +320,31 @@ class FerryCLI:
             print(
                 f"\nResponse in file: {os.path.abspath(os.environ.get('PWD', ''))}/result.json"
             )
+
+    @staticmethod
+    def _sanitize_base_url(raw_base_url: str) -> str:
+        """This function makes sure we have a trailing forward-slash on the base_url before it's passed
+        to any other functions
+
+        That is, "http://hostname.domain:port" --> "http://hostname.domain:port/" but
+                 "http://hostname.domain:port/" --> "http://hostname.domain:port/" and
+                 "http://hostname.domain:port/path?querykey1=value1&querykey2=value2" --> "http://hostname.domain:port/path?querykey1=value1&querykey2=value2" and
+
+        So if there is a non-empty path, parameters, query, or fragment to our URL as defined by RFC 1808, we leave the URL alone
+        """
+        _parts = urlsplit(raw_base_url)
+        parts = (
+            SplitResult(
+                scheme=_parts.scheme,
+                netloc=_parts.netloc,
+                path="/",
+                query=_parts.query,
+                fragment=_parts.fragment,
+            )
+            if (_parts.path == "" and _parts.query == "" and _parts.fragment == "")
+            else _parts
+        )
+        return urlunsplit(parts)
 
 
 def main() -> None:
