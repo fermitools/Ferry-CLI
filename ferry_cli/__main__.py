@@ -102,11 +102,11 @@ class FerryCLI:
         )
         parser.add_argument("-e", "--endpoint", help="API endpoint and parameters")
         parser.add_argument("-w", "--workflow", help="Execute supported workflows")
-        # parser.add_argument(
-        #     "--set-config-value",
-        #     action=self.set_config_value_action(),
-        #     help="Set value in config file.  e.g. --set-config-value api.base_url=foo",
-        # )
+        parser.add_argument(
+            "--set-config-value",
+            action=self.set_config_value_action(),
+            help="Set value in config file.  e.g. --set-config-value api.base_url=foo",
+        )
         parser.add_argument(
             "--get-config-value",
             action=self.get_config_value_action(),
@@ -114,6 +114,29 @@ class FerryCLI:
         )
 
         return parser
+
+    def set_config_value_action(self: "FerryCLI"):  # type: ignore
+        outer = self
+
+        class _ConfigValueSetter(argparse.Action):
+            def __call__(  # type: ignore
+                self,
+                parser,
+                namespace,
+                values,
+                option_string=None,
+            ) -> None:
+                full_key, value = values.split("=")
+                try:
+                    outer._set_config_value(full_key, value)
+                    print(f"Set {full_key} to value {value}")
+                    sys.exit(0)
+                except KeyError:
+                    raise Exception(
+                        f"No configuration option exists, or the option is not supported: {full_key}"
+                    )
+
+        return _ConfigValueSetter
 
     def get_config_value_action(self: "FerryCLI"):  # type: ignore
         outer = self
@@ -404,6 +427,20 @@ class FerryCLI:
             self.dev_url = _dev_url.strip().strip('"')
 
         return configs
+
+    def _set_config_value(self, full_key: str, value: str) -> None:
+        supported_keys = config.get_supported_config_keys()
+        if full_key not in supported_keys:
+            raise KeyError(
+                "Unsupported configuration key.  Allowed keys are:\n{0}".format(
+                    "\n".join(supported_keys)
+                )
+            )
+
+        section, option = full_key.split(".")
+        self.configs[section][option] = value
+        with open(self.config_path, "w") as f:
+            self.configs.write(f)
 
 
 def main() -> None:

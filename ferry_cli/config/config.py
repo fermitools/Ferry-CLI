@@ -1,7 +1,7 @@
 import os
 import pathlib
 import shutil
-from typing import Optional
+from typing import Optional, List
 
 try:
     from ferry_cli.config import CONFIG_DIR
@@ -9,6 +9,13 @@ except ImportError:
     from config import CONFIG_DIR  # type: ignore
 
 __config_path_post_basedir = pathlib.Path("ferry_cli/config.ini")
+
+CONFIG_SUPPORTED_KEYS = {
+    "api": ("base_url", "dev_url", "swagger_file_url"),
+    "authorization": ("enabled", "auth_method"),
+    "token_auth": ("token_path"),
+    "cert_auth": ("cert_path", "ca_path"),
+}
 
 
 def create_configfile_if_not_exists() -> None:
@@ -69,3 +76,10 @@ def _get_configfile_path_home() -> Optional[pathlib.Path]:
 
 def _get_template_path() -> pathlib.Path:
     return pathlib.Path(CONFIG_DIR) / "config.ini"
+
+
+def get_supported_config_keys() -> List[str]:
+    """Returns list of compound keys e.g. ["api.base_url", "token_auth.token_path", etc.]"""
+    return [
+        f"{key}.{val}" for key, vals in CONFIG_SUPPORTED_KEYS.items() for val in vals
+    ]
