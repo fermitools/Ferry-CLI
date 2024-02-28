@@ -45,7 +45,10 @@ class FerryCLI:
         self.config_path = config_path
         self.configs = self.__parse_config_file()
         self.base_url = self._sanitize_base_url(self.base_url)
-        self.dev_url = self._sanitize_base_url(self.dev_url)
+        try:
+            self.dev_url = self._sanitize_base_url(self.dev_url)
+        except AttributeError:
+            pass
         self.safeguards = SafeguardsDCS()
         self.endpoints: Dict[str, Any] = {}
         self.authorizer: Optional["Auth"] = None
@@ -99,8 +102,40 @@ class FerryCLI:
         )
         parser.add_argument("-e", "--endpoint", help="API endpoint and parameters")
         parser.add_argument("-w", "--workflow", help="Execute supported workflows")
+        # parser.add_argument(
+        #     "--set-config-value",
+        #     action=self.set_config_value_action(),
+        #     help="Set value in config file.  e.g. --set-config-value api.base_url=foo",
+        # )
+        parser.add_argument(
+            "--get-config-value",
+            action=self.get_config_value_action(),
+            help="Get value from config file.  e.g. --get-config-value api.base_url",
+        )
 
         return parser
+
+    def get_config_value_action(self: "FerryCLI"):  # type: ignore
+        outer = self
+
+        class _ConfigValueGetter(argparse.Action):
+            def __call__(  # type: ignore
+                self,
+                parser,
+                namespace,
+                values,
+                option_string=None,
+            ) -> None:
+                section, option = values.split(".")
+                try:
+                    print(outer.configs.get(section, option))
+                    sys.exit(0)
+                except (configparser.NoSectionError, configparser.NoOptionError):
+                    raise Exception(
+                        f"No configuration option exists: {section}.{option}"
+                    )
+
+        return _ConfigValueGetter
 
     def list_available_endpoints_action(self: "FerryCLI"):  # type: ignore
         endpoints = self.endpoints
@@ -352,7 +387,7 @@ class FerryCLI:
         return urlunsplit(parts)
 
     def __parse_config_file(self: "FerryCLI") -> configparser.ConfigParser:
-        configs = configparser.ConfigParser()
+        configs = configparser.ConfigParser(allow_no_value=True)
         with open(self.config_path, "r") as f:
             configs.read_file(f)
 
@@ -360,7 +395,7 @@ class FerryCLI:
         if _base_url is None:
             raise ValueError(
                 f"api.base_url must be specified in the config file at {self.config_path}. "
-                "Please set that value adn try again."
+                "Please set that value and try again."
             )
         self.base_url = _base_url.strip().strip('"')
 
