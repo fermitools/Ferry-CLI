@@ -88,7 +88,7 @@ class FerryAPI:
 
         response = self.call_endpoint("docs/swagger.json")
         if response:
-            with open(f"{CONFIG_DIR}/config/swagger.json", "w") as file:
+            with open(f"{CONFIG_DIR}/swagger.json", "w") as file:
                 file.write(json.dumps(response, indent=4))
         else:
             print("Failed to fetch swagger.json file")

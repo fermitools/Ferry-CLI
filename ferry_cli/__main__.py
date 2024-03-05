@@ -1,6 +1,8 @@
 import argparse
+import configparser
 import json
 import os
+import pathlib
 import sys
 import textwrap
 from typing import Any, Dict, Optional, List
@@ -19,7 +21,7 @@ try:
     from ferry_cli.helpers.customs import FerryParser
     from ferry_cli.helpers.supported_workflows import SUPPORTED_WORKFLOWS
     from ferry_cli.safeguards.dcs import SafeguardsDCS
-    from ferry_cli.config import CONFIG_DIR
+    from ferry_cli.config import CONFIG_DIR, config
 except ImportError:
     # Fallback to direct import
     from helpers.api import FerryAPI  # type: ignore
@@ -32,16 +34,18 @@ except ImportError:
     from helpers.customs import FerryParser  # type: ignore
     from helpers.supported_workflows import SUPPORTED_WORKFLOWS  # type: ignore
     from safeguards.dcs import SafeguardsDCS  # type: ignore
-    from config import CONFIG_DIR  # type: ignore
+    from config import CONFIG_DIR, config  # type: ignore
 
 
 class FerryCLI:
-    def __init__(self: "FerryCLI") -> None:
-        self.base_url = "https://ferry.fnal.gov:8445/"
+    # pylint: disable=too-many-instance-attributes
+    def __init__(self: "FerryCLI", config_path: pathlib.Path) -> None:
+        self.base_url: str
+        self.dev_url: str
+        self.config_path = config_path
+        self.configs = self.__parse_config_file()
         self.base_url = self._sanitize_base_url(self.base_url)
-        self.dev_url = "https://ferrydev.fnal.gov:8447/"
         self.dev_url = self._sanitize_base_url(self.dev_url)
-
         self.safeguards = SafeguardsDCS()
         self.endpoints: Dict[str, Any] = {}
         self.authorizer: Optional["Auth"] = None
@@ -235,7 +239,7 @@ class FerryCLI:
 
     def generate_endpoints(self: "FerryCLI") -> Dict[str, FerryParser]:
         endpoints = {}
-        with open(f"{CONFIG_DIR}/config/swagger.json", "r") as json_file:
+        with open(f"{CONFIG_DIR}/swagger.json", "r") as json_file:
 
             api_data = json.load(json_file)
             for path, data in api_data["paths"].items():
@@ -278,6 +282,7 @@ class FerryCLI:
 
         if debug:
             print(f"Args:  {vars(args)}\n" f"Endpoint Args:  {endpoint_args}")
+            print(f"Using FERRY base url: {self.base_url}")
 
         if not self.ferry_api:
             self.ferry_api = FerryAPI(
@@ -346,16 +351,44 @@ class FerryCLI:
         )
         return urlunsplit(parts)
 
+    def __parse_config_file(self: "FerryCLI") -> configparser.ConfigParser:
+        configs = configparser.ConfigParser()
+        with open(self.config_path, "r") as f:
+            configs.read_file(f)
+
+        _base_url = configs.get("api", "base_url", fallback=None)
+        if _base_url is None:
+            raise ValueError(
+                f"api.base_url must be specified in the config file at {self.config_path}. "
+                "Please set that value adn try again."
+            )
+        self.base_url = _base_url.strip().strip('"')
+
+        _dev_url = configs.get("api", "dev_url", fallback=None)
+        if _dev_url is not None:
+            self.dev_url = _dev_url.strip().strip('"')
+
+        return configs
+
 
 def main() -> None:
-    ferry_cli = FerryCLI()
+    config.create_configfile_if_not_exists()
+    config_path = config.get_configfile_path()
+    if config_path is None:
+        raise TypeError(
+            "Config path could not be found.  Please check to make sure that the "
+            "configuration file is located at $XDG_CONFIG_HOME/ferry_cli/config.ini "
+            "or $HOME/.config/ferry_cli/config.ini."
+        )
+
+    ferry_cli = FerryCLI(config_path=config_path)
     try:
         auth_args, other_args = get_auth_args()
         if not other_args or ("-h" in other_args) or ("--help" in other_args):
             ferry_cli.get_arg_parser().print_help()
             sys.exit(0)
         ferry_cli.authorizer = set_auth_from_args(auth_args)
-        if auth_args.update or not os.path.exists(f"{CONFIG_DIR}/config/swagger.json"):
+        if auth_args.update or not os.path.exists(f"{CONFIG_DIR}/swagger.json"):
             print("Fetching latest swagger file...")
             ferry_cli.ferry_api = FerryAPI(
                 ferry_cli.base_url, ferry_cli.authorizer, auth_args.quiet
