@@ -99,8 +99,30 @@ class FerryCLI:
         )
         parser.add_argument("-e", "--endpoint", help="API endpoint and parameters")
         parser.add_argument("-w", "--workflow", help="Execute supported workflows")
+        parser.add_argument(
+            "--show-config-file",
+            action=self.show_config_file(),
+            nargs=0,
+            help="Locate and print configuration file, if it exists",
+        )
 
         return parser
+
+    def show_config_file(self: "FerryCLI"):  # type: ignore
+        class _ShowConfigFile(argparse.Action):
+            def __call__(  # type: ignore
+                self: "_ShowConfigFile", parser, args, values, option_string=None
+            ) -> None:
+                config_path = config.get_configfile_path()
+                if config_path is not None:
+                    print(f"Configuration file: {str(config_path.absolute())}")
+                else:
+                    print(
+                        'No configuration file found.  Please run "ferry_cli" and answer the prompts to generate a configuration file'
+                    )
+                sys.exit(0)
+
+        return _ShowConfigFile
 
     def list_available_endpoints_action(self: "FerryCLI"):  # type: ignore
         endpoints = self.endpoints
