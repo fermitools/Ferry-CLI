@@ -371,9 +371,19 @@ class FerryCLI:
         return configs
 
 
+# TODO To be implemented in #72 # pylint: disable=fixme
+def get_config_info_from_user() -> Dict[str, str]:
+    return {}
+
+
 def main() -> None:
-    config.create_configfile_if_not_exists()
-    config_path = config.get_configfile_path()
+    _config_path = config.get_configfile_path()
+    if (_config_path is not None) and (_config_path.exists):
+        config_path = config.get_configfile_path()
+    else:
+        config_values = get_config_info_from_user()
+        config_path = config.write_out_configfile(config_values)
+
     if config_path is None:
         raise TypeError(
             "Config path could not be found.  Please check to make sure that the "
