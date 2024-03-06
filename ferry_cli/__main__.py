@@ -378,7 +378,7 @@ def get_config_info_from_user() -> Dict[str, str]:
 
 def main() -> None:
     _config_path = config.get_configfile_path()
-    if (_config_path is not None) and (_config_path.exists):
+    if (_config_path is not None) and (_config_path.exists()):
         config_path = config.get_configfile_path()
     else:
         config_values = get_config_info_from_user()
