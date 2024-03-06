@@ -10,27 +10,6 @@ except ImportError:
 __config_path_post_basedir = pathlib.Path("ferry_cli/config.ini")
 
 
-# def create_configfile_if_not_exists() -> None:
-#     # Creates a copy of the configuration template in ${XDG_CONFIG_HOME}/ferry_cli/config.ini,
-#     # or ${HOME}/.config/ferry_cli/config.ini if $XDG_CONFIG_HOME is not set.
-#     # If $HOME is not set for some reason, this raises an OSError
-#     if configfile_exists():
-#         return
-
-#     dest_path: Optional[pathlib.Path]
-#     xdg_path = _get_configfile_path_xdg_config_home()
-#     home_path = _get_configfile_path_home()
-#     dest_path = xdg_path if xdg_path else home_path
-#     if dest_path:
-#         dest_path.parent.mkdir(parents=True, exist_ok=True)
-#         shutil.copy(_get_template_path(), dest_path)
-#         print(f"Configuration file created at {dest_path.absolute()}")
-#         return
-#     raise OSError(
-#         "XDG_CONFIG_HOME or HOME needs to be set to copy the template config file into place"
-#     )
-
-
 def get_configfile_path() -> Optional[pathlib.Path]:
     """
     Return the location of the configfile.  If $XDG_CONFIG_HOME is set,
@@ -59,11 +38,6 @@ def get_configfile_path() -> Optional[pathlib.Path]:
     return None
 
 
-# pylint:disable=unused-argument
-def write_out_configfile(config_values: Dict[str, str]) -> pathlib.Path:
-    return pathlib.Path()
-
-
 def _get_configfile_path_xdg_config_home() -> Optional[pathlib.Path]:
     xdg_config_home_val = os.getenv("XDG_CONFIG_HOME")
     if not xdg_config_home_val:
@@ -76,6 +50,37 @@ def _get_configfile_path_home() -> Optional[pathlib.Path]:
     if not home:
         return None
     return pathlib.Path(home) / ".config" / __config_path_post_basedir
+
+
+def write_out_configfile(config_values: Dict[str, str]) -> pathlib.Path:
+    with open(_get_template_path(), "r") as f:
+        config_template_string = f.read()
+    return _write_out_configfile_with_template(config_values, config_template_string)
+
+
+def _write_out_configfile_with_template(
+    config_values: Dict[str, str], template_string: str
+) -> pathlib.Path:
+    class SafeDict(dict):  # type: ignore
+        """Use this object to allow us to not need all keys of dict when
+        running str.format_map method to do string interpolation.
+        Taken from https://stackoverflow.com/a/17215533"""
+
+        def __missing__(self, key: str) -> str:
+            """missing item handler"""
+            return f"{{{key}}}"  # "{<key>}"
+
+    out_string = template_string.format_map(SafeDict(config_values))
+    config_file_path = get_configfile_path()
+    if config_file_path is None:
+        raise OSError(
+            "XDG_CONFIG_HOME or HOME needs to be set in order to write out the configuration file."
+        )
+    config_file_path.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Writing configuration file to {str(config_file_path)}")
+    with open(config_file_path, "w") as f:
+        f.write(out_string)
+    return config_file_path
 
 
 def _get_template_path() -> pathlib.Path:

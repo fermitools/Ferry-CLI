@@ -1,0 +1,22 @@
+[
+    {
+        "config_vals": {},
+        "file_contents": "This is a {good_key} template\nThis is another line\n\n# Commented line\n[section]\nkey={good_value}"
+    },
+    {
+        "config_vals": {"good_key": "foo", "good_value": "bar"},
+        "file_contents": "This is a foo template\nThis is another line\n\n# Commented line\n[section]\nkey=bar"
+    },
+    {
+        "config_vals": {"good_key": "foo"},
+        "file_contents": "This is a foo template\nThis is another line\n\n# Commented line\n[section]\nkey={good_value}"
+    },
+    {
+        "config_vals": {"good_key": "foo", "bad_key": "bar"},
+        "file_contents": "This is a foo template\nThis is another line\n\n# Commented line\n[section]\nkey={good_value}"
+    },
+    {
+        "config_vals": {"bad_key1": "foo", "bad_key2": "bar"},
+        "file_contents": "This is a {good_key} template\nThis is another line\n\n# Commented line\n[section]\nkey={good_value}"
+    }
+]

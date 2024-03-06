@@ -1,7 +1,8 @@
 from collections import namedtuple
+import configparser
 import enum
+import json
 import pathlib
-import importlib
 from typing import List
 
 import os
@@ -32,6 +33,32 @@ def create_config_file_dummy():
         path_to_file.touch()
 
     return inner
+
+
+@pytest.fixture
+def test_config_template_string():
+    data_dir = f"{os.path.dirname(os.path.abspath(__file__))}/data"
+    template_file = pathlib.Path(f"{data_dir}/test_config_template")
+    with open(template_file, "r") as f:
+        s = f.read()
+    return s
+
+
+write_out_configfile_test_param = namedtuple(
+    "write_out_configfile_test_param", ("config_vals", "file_contents")
+)
+
+
+def get_write_out_configfile_test_params():
+    data_dir = f"{os.path.dirname(os.path.abspath(__file__))}/data"
+    params_file = pathlib.Path(f"{data_dir}/write_out_configfile_template_tests")
+    with open(params_file, "r") as f:
+        s = f.read()
+    params_list = json.loads(s)
+    params = []
+    for item in params_list:
+        params.append(write_out_configfile_test_param(**item))
+    return params
 
 
 @pytest.mark.unit
@@ -96,7 +123,6 @@ def test_get_configfile_path(
     stash_home,
     tmp_path,
     monkeypatch,
-    create_config_file_dummy,
     param_val,
 ):
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
@@ -123,37 +149,45 @@ def test_get_template_path():
     assert config._get_template_path() == pathlib.Path(f"{CONFIG_DIR}/config.ini")
 
 
-@pytest.mark.parametrize(
-    "config_exists",
-    [(True), (False)],
-)
+@pytest.mark.parametrize("param", get_write_out_configfile_test_params())
 @pytest.mark.unit
-def test_create_configfile_if_not_exists(
+def test__write_out_configfile_with_template(
+    # See tests/data/write_out_configfile_tests for test cases:
+    # 1. Empty values dict --> Template is not filled, key strings left
+    # 2. Values dict has good keys, none missing --> tempate filled
+    # 3. Values dict has good key, missing one key --> template filled with good key
+    # 4. Values dict has good key and bad key --> template filled with good key, bad key ignored
+    # 5. Values dict has bad keys --> template not filled, key strings left
     stash_xdg_config_home,
-    tmp_path,
     monkeypatch,
-    create_config_file_dummy,
-    config_exists,
+    tmp_path,
+    test_config_template_string,
+    param,
 ):
-    env_path = tmp_path
-    monkeypatch.setenv("XDG_CONFIG_HOME", env_path)
+    test_dir = tmp_path
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(test_dir.absolute()))
+    cfile = config._write_out_configfile_with_template(
+        param.config_vals, test_config_template_string
+    )
+    assert (cfile is not None) and cfile.exists()
 
-    if config_exists:
-        create_config_file_dummy(env_path, "ferry_cli")
-    else:
-        basepath = env_path / "ferry_cli"
-        basepath.mkdir()
-
-    config.create_configfile_if_not_exists()
-    assert config.get_configfile_path().exists()
+    # Inspect file
+    with open(cfile, "r") as f:
+        assert f.read() == param.file_contents
 
 
-@pytest.mark.parametrize(
-    "mockFn,expected", [(lambda: None, False), (lambda: pathlib.Path("/"), True)]
-)
 @pytest.mark.unit
-def test_configfile_exists(monkeypatch, mockFn, expected):
-    # Since all we care about in this test is that the return value of get_configfile_path
-    # is used appropriately, mock that return value to make the test simple
-    monkeypatch.setattr(config, "get_configfile_path", mockFn)
-    assert config.configfile_exists() == expected
+def test_write_out_configfile(stash_xdg_config_home, monkeypatch, tmp_path):
+    test_dir = tmp_path
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(test_dir.absolute()))
+    config_val = {"base_url": "https://hostname.domain:port"}
+
+    cfile = config.write_out_configfile(config_val)
+    assert (cfile is not None) and cfile.exists()
+
+    # Make sure we wrote out the file correctly
+    cfg = configparser.ConfigParser()
+    with open(cfile, "r") as f:
+        cfg.read_file(f)
+
+    assert cfg.get("api", "base_url") == "https://hostname.domain:port"

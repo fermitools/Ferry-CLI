@@ -1,0 +1,6 @@
+This is a {good_key} template
+This is another line
+
+# Commented line
+[section]
+key={good_value}
