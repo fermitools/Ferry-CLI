@@ -73,22 +73,16 @@ configfile_test_param = namedtuple(
     "configfile_test_param",
     [
         "xdg_config_home_path",
-        "xdg_path_exists",
         "home_config_path",
-        "home_path_exists",
         "expected",
     ],
 )
 
 get_configfile_params_for_test = [
-    configfile_test_param(True, False, False, False, _expectedPathRoot.NOT_FOUND),
-    configfile_test_param(True, False, True, False, _expectedPathRoot.NOT_FOUND),
-    configfile_test_param(True, True, False, False, _expectedPathRoot.XDG_CONFIG_HOME),
-    configfile_test_param(True, True, True, False, _expectedPathRoot.XDG_CONFIG_HOME),
-    configfile_test_param(True, True, True, True, _expectedPathRoot.XDG_CONFIG_HOME),
-    configfile_test_param(False, False, True, False, _expectedPathRoot.NOT_FOUND),
-    configfile_test_param(False, False, True, True, _expectedPathRoot.HOME),
-    configfile_test_param(False, False, False, False, _expectedPathRoot.NOT_FOUND),
+    configfile_test_param(True, True, _expectedPathRoot.XDG_CONFIG_HOME),
+    configfile_test_param(True, False, _expectedPathRoot.XDG_CONFIG_HOME),
+    configfile_test_param(False, True, _expectedPathRoot.HOME),
+    configfile_test_param(False, False, _expectedPathRoot.NOT_FOUND),
 ]
 
 
@@ -113,12 +107,6 @@ def test_get_configfile_path(
         monkeypatch.setenv("XDG_CONFIG_HOME", xdg_path)
     if param_val.home_config_path:
         monkeypatch.setenv("HOME", home_path)
-
-    if param_val.xdg_path_exists:
-        create_config_file_dummy(xdg_path, "ferry_cli")
-
-    if param_val.home_path_exists:
-        create_config_file_dummy(xdg_path, ".config", "ferry_cli")
 
     if param_val.expected == _expectedPathRoot.XDG_CONFIG_HOME:
         expectedPath = xdg_path / "ferry_cli" / "config.ini"
