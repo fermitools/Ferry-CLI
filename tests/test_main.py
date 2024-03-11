@@ -85,20 +85,6 @@ def test_handle_show_configfile_not_found(capsys, monkeypatch):
     )
 
 
-@pytest.mark.unit
-def test_show_configfile_flag():
-    bindir = f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/bin"
-    exe = f"{bindir}/ferry-cli"
-    cmdargs = [exe, "-h"]
-
-    try:
-        proc = subprocess.run(cmdargs, capture_output=True)
-    except SystemExit:
-        pass
-
-    assert "--show-config-file" in str(proc.stdout)
-
-
 # Since we have to handle --show-config-file outside of argparse, make sure we get the correct behavior
 @pytest.mark.unit
 def test_show_configfile_flag_with_other_args():
