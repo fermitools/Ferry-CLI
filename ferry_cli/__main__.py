@@ -99,6 +99,11 @@ class FerryCLI:
         )
         parser.add_argument("-e", "--endpoint", help="API endpoint and parameters")
         parser.add_argument("-w", "--workflow", help="Execute supported workflows")
+        parser.add_argument(
+            "--show-config-file",
+            action="store_true",
+            help="Locate and print configuration file, if it exists, then exit.",
+        )
 
         return parser
 
@@ -376,7 +381,32 @@ def get_config_info_from_user() -> Dict[str, str]:
     return {}
 
 
+# Check args for --show-config-file. If it's there, print the config file path if it exists and exit
+def handle_show_configfile(args: List[str]) -> None:
+    if not "--show-config-file" in args:
+        return
+
+    if "--help" in args or "-h" in args:
+        return
+
+    config_path = config.get_configfile_path()
+    if config_path is not None:
+        if not config_path.exists():
+            print(
+                f"Based on the environment, would use configuration file: {str(config_path.absolute())}.  However, that path does not exist."
+            )
+        else:
+            print(f"Configuration file: {str(config_path.absolute())}")
+    else:
+        print(
+            'No configuration file found.  Please run "ferry_cli" and answer the prompts to generate a configuration file'
+        )
+    sys.exit(0)
+
+
 def main() -> None:
+    handle_show_configfile(sys.argv)
+
     _config_path = config.get_configfile_path()
     if (_config_path is not None) and (_config_path.exists()):
         config_path = config.get_configfile_path()
