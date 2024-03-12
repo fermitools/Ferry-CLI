@@ -1,10 +1,9 @@
 from collections import namedtuple
 import os.path
 import subprocess
-
 import pytest
 
-from ferry_cli.__main__ import FerryCLI, handle_show_configfile
+from ferry_cli.__main__ import FerryCLI, handle_show_configfile, get_config_info_from_user
 import ferry_cli.config.config as _config
 
 
@@ -118,21 +117,19 @@ def test_show_configfile_flag_with_other_args():
         assert case.expected_out_substr in str(proc.stdout)
 
 
-
 @pytest.mark.unit
 def test_get_config_info_from_user(monkeypatch, capsys):
     # test good
-    monkeypatch.setattr('builtins.input', lambda: "https://wwww.google.com")
+    monkeypatch.setattr('builtins.input', lambda _: "https://wwww.google.com")
 
     correct_dict = {"base_url" : "https://wwww.google.com"}
-    generated_dict = FerryCLI.get_config_info_from_user()
+    generated_dict = get_config_info_from_user()
 
     assert(correct_dict == generated_dict)
 
-    # test bad
-    monkeypatch.setattr(__builtins__.input, lambda: "https://wwww.google.")
-    captured = capsys.readouterr()
-    FerryCLI.get_config_info_from_user()
-    assert captured.out.strip() == "\nThis doesn't look like a valid URL, you need to specify the https:// part. Try again."
-
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        monkeypatch.setattr('builtins.input', lambda _: "https://wwww.google.")
+        cget_config_info_from_user()
+        assert(pytest_wrapped_e.from_e == 1)
+    
     

@@ -377,22 +377,10 @@ class FerryCLI:
 
         return configs
 
-
-
-
-
-
-
-
-
-
-
 def get_config_info_from_user() -> Dict[str, str]:
     print(
         '\nLaunching interactive mode to generate config file with user supplied values...'
     )
-    time.sleep(2.5)
-    os.system('clear')
 
     # if we had a list of what all the keys should be I'd load that and we'd ask for each
 
@@ -411,14 +399,6 @@ def get_config_info_from_user() -> Dict[str, str]:
                 sys.exit(1)
     
     return {"base_url": base_url}
-
-
-
-
-
-
-
-
 
 # Check args for --show-config-file. If it's there, print the config file path if it exists and exit
 def handle_show_configfile(args: List[str]) -> None:
@@ -442,14 +422,6 @@ def handle_show_configfile(args: List[str]) -> None:
         # this is the case where path variable isn't set OR the file isn't found but the directory exists
         print('No configuration file found.')
     
-
-
-
-
-
-
-
-
 def main() -> None:
     handle_show_configfile(sys.argv)
 
