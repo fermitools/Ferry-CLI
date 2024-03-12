@@ -2,6 +2,7 @@ from collections import namedtuple
 import configparser
 import enum
 import json
+import time
 import pathlib
 from typing import List
 
@@ -191,3 +192,25 @@ def test_write_out_configfile(stash_xdg_config_home, monkeypatch, tmp_path):
         cfg.read_file(f)
 
     assert cfg.get("api", "base_url") == "https://hostname.domain:port"
+
+
+
+
+
+
+# @pytest.mark.unit
+# def test_get_config_info_from_user(monkeypatch, capsys):
+#     # test good
+#     monkeypatch.setattr('builtins.input', lambda: "https://wwww.google.com")
+
+#     correct_dict = {"base_url" : "https://wwww.google.com"}
+#     generated_dict = config.get_config_info_from_user()
+
+#     assert(correct_dict == generated_dict)
+
+#     # test bad
+#     monkeypatch.setattr(__builtins__.input, lambda: "https://wwww.google.")
+#     captured = capsys.readouterr()
+#     assert captured.out.strip() == "\nThis doesn't look like a valid URL, you need to specify the https:// part. Try again."
+
+    

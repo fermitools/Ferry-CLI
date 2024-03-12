@@ -2,6 +2,8 @@ import argparse
 import configparser
 import json
 import os
+import validators
+import time
 import pathlib
 import sys
 import textwrap
@@ -376,9 +378,46 @@ class FerryCLI:
         return configs
 
 
-# TODO To be implemented in #72 # pylint: disable=fixme
+
+
+
+
+
+
+
+
+
 def get_config_info_from_user() -> Dict[str, str]:
-    return {}
+    print(
+        '\nLaunching interactive mode to generate config file with user supplied values...'
+    )
+    time.sleep(2.5)
+    os.system('clear')
+
+    # if we had a list of what all the keys should be I'd load that and we'd ask for each
+
+    base_url = ""
+    counter = 0
+
+    while not validators.url(base_url):
+        base_url = input("Enter the base url for Ferry/API endpoint: ")
+
+        if not validators.url(base_url):
+            if counter < 2:
+                print("\nThis doesn't look like a valid URL, you need to specify the https:// part. Try again.")
+                counter += 1
+            else:
+                print("\nMultiple failures in specifying base URL, exiting...")
+                sys.exit(1)
+    
+    return {"base_url": base_url}
+
+
+
+
+
+
+
 
 
 # Check args for --show-config-file. If it's there, print the config file path if it exists and exit
@@ -392,16 +431,23 @@ def handle_show_configfile(args: List[str]) -> None:
     config_path = config.get_configfile_path()
     if config_path is not None:
         if not config_path.exists():
+            # this is the case where the directory doesn't exist
             print(
                 f"Based on the environment, would use configuration file: {str(config_path.absolute())}.  However, that path does not exist."
             )
+            sys.exit(0)
         else:
             print(f"Configuration file: {str(config_path.absolute())}")
     else:
-        print(
-            'No configuration file found.  Please run "ferry_cli" and answer the prompts to generate a configuration file'
-        )
-    sys.exit(0)
+        # this is the case where path variable isn't set OR the file isn't found but the directory exists
+        print('No configuration file found.')
+    
+
+
+
+
+
+
 
 
 def main() -> None:
@@ -413,6 +459,7 @@ def main() -> None:
     else:
         config_values = get_config_info_from_user()
         config_path = config.write_out_configfile(config_values)
+        print("\nConfiguration file set. You may now re-run ferry_cli. Displaying command reference: \n")
 
     if config_path is None:
         raise TypeError(
