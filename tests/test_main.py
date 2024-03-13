@@ -1,6 +1,7 @@
 from collections import namedtuple
-import os.path
+import os
 import subprocess
+import sys
 import pytest
 
 from ferry_cli.__main__ import FerryCLI, handle_show_configfile, get_config_info_from_user
@@ -80,7 +81,7 @@ def test_handle_show_configfile_not_found(capsys, monkeypatch):
     captured = capsys.readouterr()
     assert (
         captured.out.strip()
-        == 'No configuration file found.  Please run "ferry_cli" and answer the prompts to generate a configuration file'
+        == 'No configuration file found.'
     )
 
 
@@ -94,17 +95,17 @@ def test_show_configfile_flag_with_other_args():
 
     cases = (
         test_case(
-            [exe, "-h"], "--show-config-file"
+            [sys.executable, exe, "-h"], "--show-config-file"
         ),  # If we pass -h, make sure --show-config-file shows up
         test_case(
-            [exe, "-h", "--show-config-file", "-e", "getAllGroups"],
+            [sys.executable, exe, "-h", "--show-config-file", "-e", "getAllGroups"],
             "--show-config-file",
         ),  # If we pass -h and --show-config-file, -h should win
         test_case(
-            [exe, "--show-config-file"], "Configuration file"
+            [sys.executable, exe, "--show-config-file"], "Configuration file"
         ),  # Print out config file if we only pass --show-config-file
         test_case(
-            [exe, "--show-config-file", "-e", "getAllGroups"], "Configuration file"
+            [sys.executable, exe, "--show-config-file", "-e", "getAllGroups"], "Configuration file"
         ),  # If we pass --show-config-file with other args, --show-config-file should win
     )
 

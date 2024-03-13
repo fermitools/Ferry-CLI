@@ -3,7 +3,6 @@ import configparser
 import json
 import os
 import validators
-import time
 import pathlib
 import sys
 import textwrap
@@ -367,7 +366,7 @@ class FerryCLI:
         if _base_url is None:
             raise ValueError(
                 f"api.base_url must be specified in the config file at {self.config_path}. "
-                "Please set that value adn try again."
+                "Please set that value and try again."
             )
         self.base_url = _base_url.strip().strip('"')
 
