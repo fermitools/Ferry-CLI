@@ -48,6 +48,7 @@ class FerryCli(PythonPackage):
     depends_on("py-requests@2.31.0:", type=("build", "run"))
     depends_on("py-urllib3", type=("build", "run"))
     depends_on("py-setuptools", type=("build", "run"))
+    depends_on("py-validators", type=("build", "run"))
 
     def install(self, spec, prefix):
         install_tree(self.stage.source_path, prefix)
