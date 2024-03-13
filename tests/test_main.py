@@ -129,7 +129,7 @@ def test_get_config_info_from_user(monkeypatch, capsys):
 
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         monkeypatch.setattr('builtins.input', lambda _: "https://wwww.google.")
-        cget_config_info_from_user()
+        get_config_info_from_user()
         assert(pytest_wrapped_e.from_e == 1)
     
     
