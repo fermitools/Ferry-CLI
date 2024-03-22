@@ -2,12 +2,13 @@ import argparse
 import configparser
 import json
 import os
-import validators
 import pathlib
 import sys
 import textwrap
 from typing import Any, Dict, Optional, List
 from urllib.parse import urlsplit, urlunsplit, SplitResult
+
+import validators  # pylint: disable=import-error
 
 # pylint: disable=unused-import
 try:
@@ -40,18 +41,26 @@ except ImportError:
 
 class FerryCLI:
     # pylint: disable=too-many-instance-attributes
-    def __init__(self: "FerryCLI", config_path: pathlib.Path) -> None:
+    def __init__(self: "FerryCLI", config_path: Optional[pathlib.Path]) -> None:
         self.base_url: str
         self.dev_url: str
-        self.config_path = config_path
-        self.configs = self.__parse_config_file()
-        self.base_url = self._sanitize_base_url(self.base_url)
-        self.dev_url = self._sanitize_base_url(self.dev_url)
         self.safeguards = SafeguardsDCS()
         self.endpoints: Dict[str, Any] = {}
         self.authorizer: Optional["Auth"] = None
         self.ferry_api: Optional["FerryAPI"] = None
         self.parser: Optional["FerryParser"] = None
+
+        if config_path is None:
+            self.get_arg_parser().print_help()
+            print(
+                'Error: A configuration file is required to run the Ferry CLI. Please run "ferry-cli" to generate one interactively.'
+            )
+        else:
+            self.config_path = config_path
+
+        self.configs = self.__parse_config_file()
+        self.base_url = self._sanitize_base_url(self.base_url)
+        self.dev_url = self._sanitize_base_url(self.dev_url)
 
     def get_arg_parser(self: "FerryCLI") -> FerryParser:
         parser = FerryParser.create(
@@ -376,9 +385,10 @@ class FerryCLI:
 
         return configs
 
+
 def get_config_info_from_user() -> Dict[str, str]:
     print(
-        '\nLaunching interactive mode to generate config file with user supplied values...'
+        "\nLaunching interactive mode to generate config file with user supplied values..."
     )
 
     # if we had a list of what all the keys should be I'd load that and we'd ask for each
@@ -387,62 +397,128 @@ def get_config_info_from_user() -> Dict[str, str]:
     counter = 0
 
     while not validators.url(base_url):
-        base_url = input("Enter the base url for Ferry/API endpoint: ")
+        try:
+            base_url = input("Enter the base url for Ferry/API endpoint: ")
+        except KeyboardInterrupt:
+            print(
+                "\nKeyboardInterrupt.  Exiting without writing configuration file...\n"
+            )
+            sys.exit(1)
 
-        if not validators.url(base_url):
-            if counter < 2:
-                print("\nThis doesn't look like a valid URL, you need to specify the https:// part. Try again.")
-                counter += 1
-            else:
-                print("\nMultiple failures in specifying base URL, exiting...")
-                sys.exit(1)
-    
+        if validators.url(base_url):
+            break
+
+        if counter >= 2:
+            print("\nMultiple failures in specifying base URL, exiting...")
+            sys.exit(1)
+
+        print(
+            "\nThis doesn't look like a valid URL, you need to specify the https:// part. Try again."
+        )
+        counter += 1
+
     return {"base_url": base_url}
 
-# Check args for --show-config-file. If it's there, print the config file path if it exists and exit
+
+def write_config_file_with_user_values() -> pathlib.Path:
+    """
+    Writes a configuration file with user-provided values.
+
+    This function prompts the user to provide configuration values using the
+    get_config_info_from_user function. It then writes out the configuration
+    file using the provided values.
+
+    Returns:
+        pathlib.Path: The path to the written configuration file.
+    """
+    config_values = get_config_info_from_user()
+    return config.write_out_configfile(config_values)
+
+
 def handle_show_configfile(args: List[str]) -> None:
+    """
+    Handles the logic for displaying the configuration file path or generating it interactively.
+    Otherwise, if the configfile exists, print it.  If not, try to create the configuration file from user input.
+    """
     if not "--show-config-file" in args:
         return
 
-    if "--help" in args or "-h" in args:
+    config_path = config.get_configfile_path()
+    if config_path is None:
+        # this is the case where path variable isn't set OR the file isn't found but the directory exists
+        print(
+            "No configuration file found.  Will attempt to create configuration file at $HOME/.config/ferry_cli/config.ini"
+        )
+        write_config_file_with_user_values()
         return
 
-    config_path = config.get_configfile_path()
-    if config_path is not None:
-        if not config_path.exists():
-            # this is the case where the directory doesn't exist
-            print(
-                f"Based on the environment, would use configuration file: {str(config_path.absolute())}.  However, that path does not exist."
-            )
-            sys.exit(0)
-        else:
-            print(f"Configuration file: {str(config_path.absolute())}")
-    else:
-        # this is the case where path variable isn't set OR the file isn't found but the directory exists
-        print('No configuration file found.')
-    
-def main() -> None:
-    handle_show_configfile(sys.argv)
+    if not config_path.exists():
+        # Our config path is set, but the config file doesn't exist
+        print(
+            f"Based on the environment, would use configuration file: {str(config_path.absolute())}.  However, that path does not exist. Will now enter interactive mode to generate it."
+        )
+        write_config_file_with_user_values()
+        return
 
-    _config_path = config.get_configfile_path()
+    print(f"Configuration file: {str(config_path.absolute())}")
+    return
+
+
+def help_called(args: List[str]) -> bool:
+    return "--help" in args or "-h" in args
+
+
+def handle_no_args(_config_path: Optional[pathlib.Path]) -> None:
+    """
+    Handles the case when no arguments are provided to the CLI.
+    """
     if (_config_path is not None) and (_config_path.exists()):
-        config_path = config.get_configfile_path()
-    else:
-        config_values = get_config_info_from_user()
-        config_path = config.write_out_configfile(config_values)
-        print("\nConfiguration file set. You may now re-run ferry_cli. Displaying command reference: \n")
+        overwrite = input(
+            "Configuration file already exists. Are you sure you want to overwrite it (Y/[n])?  "
+        )
+        if overwrite != "Y":
+            print("Exiting without overwriting configuration file.")
+            sys.exit(0)
 
-    if config_path is None:
+    print(
+        "Will launch interactive mode to rewrite configuration file.  If this was a mistake, just press Ctrl+C to exit."
+    )
+    write_config_file_with_user_values()
+    sys.exit(0)
+
+
+def main() -> None:
+    _config_path = config.get_configfile_path()
+    if len(sys.argv) == 1:
+        # User just called python3 ferry-cli or ferry-cli with no arguments
+        handle_no_args(_config_path)
+
+    _help_called_flag = help_called(sys.argv)
+    if not _help_called_flag:
+        handle_show_configfile(sys.argv)
+
+    # Set our config_path to use in FerryCLI instance
+    config_path: Optional[pathlib.Path]
+    if _help_called_flag:
+        config_path = None
+    elif (_config_path is not None) and (_config_path.exists()):
+        config_path = _config_path
+    else:
+        config_path = write_config_file_with_user_values()
+        print("\nConfiguration file set.\n")
+
+    if config_path is None and not _help_called_flag:
         raise TypeError(
             "Config path could not be found.  Please check to make sure that the "
             "configuration file is located at $XDG_CONFIG_HOME/ferry_cli/config.ini "
-            "or $HOME/.config/ferry_cli/config.ini."
+            'or $HOME/.config/ferry_cli/config.ini. You can run "ferry-cli" with no '
+            "arguments to generate a new configuration file interactively."
         )
 
     ferry_cli = FerryCLI(config_path=config_path)
     try:
         auth_args, other_args = get_auth_args()
-        if not other_args or ("-h" in other_args) or ("--help" in other_args):
+        if not other_args:
             ferry_cli.get_arg_parser().print_help()
             sys.exit(0)
         ferry_cli.authorizer = set_auth_from_args(auth_args)
