@@ -159,19 +159,24 @@ def test_show_configfile_flag_with_other_args(
 @pytest.mark.unit
 def test_get_config_info_from_user(monkeypatch, capsys):
     # test good
-    monkeypatch.setattr('builtins.input', lambda _: "https://wwww.google.com")
-
-    correct_dict = {"base_url" : "https://wwww.google.com"}
+    monkeypatch.setattr("builtins.input", lambda _: "https://wwww.google.com")
+    correct_dict = {"base_url": "https://wwww.google.com"}
     generated_dict = get_config_info_from_user()
-
-    assert(correct_dict == generated_dict)
+    assert correct_dict == generated_dict
 
     with pytest.raises(SystemExit) as pytest_wrapped_e:
-        monkeypatch.setattr('builtins.input', lambda _: "https://wwww.google.")
+        monkeypatch.setattr("builtins.input", lambda _: "badurl")
         get_config_info_from_user()
-        assert(pytest_wrapped_e.from_e == 1)
-    
-    
+        assert pytest_wrapped_e.from_e == 1
+
+    captured = capsys.readouterr()
+    assert (
+        "\nThis doesn't look like a valid URL, you need to specify the https:// part. Try again."
+        in captured.out
+    )
+    assert "\nMultiple failures in specifying base URL, exiting..." in captured.out
+
+
 @pytest.mark.unit
 def test_help_called():
     # Test when "--help" is present in the arguments
