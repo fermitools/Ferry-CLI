@@ -47,6 +47,11 @@ def write_and_set_fake_config_file(monkeypatch, tmp_path):
     return config_file
 
 
+@pytest.fixture
+def configfile_doesnt_exist(monkeypatch):
+    monkeypatch.setattr(_config, "get_configfile_path", lambda: None)
+
+
 @pytest.mark.unit
 def test_sanitize_base_url():
     cases = ["http://hostname.domain:1234/", "http://hostname.domain:1234"]
@@ -105,11 +110,9 @@ def test_handle_show_configfile_configfile_does_not_exist(
 def test_handle_show_configfile_envs_not_found(
     capsys,
     monkeypatch,
+    configfile_doesnt_exist,
     mock_write_config_file_with_user_values,
 ):
-    # If the envs don't allow get_configfile_path to find the config file, we should print out the right message and enter interactive mode
-    monkeypatch.setattr(_config, "get_configfile_path", lambda: None)
-
     args = ["--show-config-file", "--foo", "bar", "--baz"]  # Arg passed
 
     handle_show_configfile(args)
@@ -198,17 +201,17 @@ def test_help_called():
         (
             "Configuration file already exists at",
             "n",
-            ["usage:", "Exiting without overwriting configuration file."],
+            ["usage:", "Exiting without writing configuration file."],
         ),
         (
             "Configuration file already exists at",
             "\n",
-            ["usage:", "Exiting without overwriting configuration file."],
+            ["usage:", "Exiting without writing configuration file."],
         ),
         (
             "Configuration file already exists at",
             "y",
-            ["usage:", "Exiting without overwriting configuration file."],
+            ["usage:", "Exiting without writing configuration file."],
         ),
         (
             "Configuration file already exists at",
@@ -221,7 +224,7 @@ def test_help_called():
     ],
 )
 @pytest.mark.unit
-def test_handle_no_args_configfile_exists_Y(
+def test_handle_no_args_configfile_exists(
     monkeypatch,
     tmp_path,
     mock_write_config_file_with_user_values,
@@ -237,6 +240,60 @@ def test_handle_no_args_configfile_exists_Y(
 
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         _main.handle_no_args(config_file)
+
+    captured = capsys.readouterr()
+    assert expected_stdout_before_prompt in captured.out
+    for elt in expected_stdout_after_prompt:
+        assert elt in captured.out
+
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == 0
+
+
+@pytest.mark.parametrize(
+    "expected_stdout_before_prompt, user_input, expected_stdout_after_prompt",
+    [
+        (
+            "Would you like to enter interactive mode to write the configuration file for ferry-cli to use in the future (Y/[n])? ",
+            "n",
+            ["usage:"],
+        ),
+        (
+            "Would you like to enter interactive mode to write the configuration file for ferry-cli to use in the future (Y/[n])? ",
+            "\n",
+            ["usage:"],
+        ),
+        (
+            "Would you like to enter interactive mode to write the configuration file for ferry-cli to use in the future (Y/[n])? ",
+            "y",
+            ["usage:"],
+        ),
+        (
+            "Would you like to enter interactive mode to write the configuration file for ferry-cli to use in the future (Y/[n])? ",
+            "Y",
+            [
+                "Will launch interactive mode to write configuration file.  If this was a mistake, just press Ctrl+C to exit",
+                "Mocked write_config_file",
+            ],
+        ),
+    ],
+)
+@pytest.mark.unit
+def test_handle_no_args_configfile_does_not_exist(
+    monkeypatch,
+    tmp_path,
+    configfile_doesnt_exist,
+    capsys,
+    inject_fake_stdin,
+    mock_write_config_file_with_user_values,
+    expected_stdout_before_prompt,
+    user_input,
+    expected_stdout_after_prompt,
+):
+    inject_fake_stdin(user_input)
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        _main.handle_no_args(None)
 
     captured = capsys.readouterr()
     assert expected_stdout_before_prompt in captured.out
