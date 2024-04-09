@@ -518,6 +518,10 @@ def main() -> None:
         )
 
     ferry_cli = FerryCLI(config_path=config_path)
+    if _help_called_flag:
+        ferry_cli.get_arg_parser().print_help()
+        sys.exit(0)
+
     try:
         auth_args, other_args = get_auth_args()
         if not other_args:
