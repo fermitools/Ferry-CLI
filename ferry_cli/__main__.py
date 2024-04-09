@@ -471,26 +471,19 @@ def handle_no_args(_config_path: Optional[pathlib.Path]) -> bool:
     """
     Handles the case when no arguments are provided to the CLI.
     """
-    write_config_file = ""
-    would_overwrite = False
+    write_configfile_prompt = "Would you like to enter interactive mode to write the configuration file for ferry-cli to use in the future (Y/[n])? "
     if (_config_path is not None) and (_config_path.exists()):
-        write_config_file = input(
-            f"Configuration file already exists at {_config_path}. Are you sure you want to overwrite it (Y/[n])?  "
-        )
-        would_overwrite = True
-    else:
-        write_config_file = input(
-            "Would you like to enter interactive mode to write the configuration file for ferry-cli to use in the future (Y/[n])? "
-        )
+        write_configfile_prompt = f"Configuration file already exists at {_config_path}. Are you sure you want to overwrite it (Y/[n])?  "
+
+    write_config_file = input(write_configfile_prompt)
 
     if write_config_file != "Y":
         FerryCLI(config_path=None).get_arg_parser().print_help()
         print("Exiting without writing configuration file.")
         sys.exit(0)
 
-    write_rewrite = "rewrite" if would_overwrite else "write"
     print(
-        f"Will launch interactive mode to {write_rewrite} configuration file.  If this was a mistake, just press Ctrl+C to exit."
+        "Will launch interactive mode to write configuration file.  If this was a mistake, just press Ctrl+C to exit."
     )
     write_config_file_with_user_values()
     sys.exit(0)

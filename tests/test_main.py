@@ -217,7 +217,7 @@ def test_help_called():
             "Configuration file already exists at",
             "Y",
             [
-                "Will launch interactive mode to rewrite configuration file.  If this was a mistake, just press Ctrl+C to exit",
+                "Will launch interactive mode to write configuration file.  If this was a mistake, just press Ctrl+C to exit",
                 "Mocked write_config_file",
             ],
         ),
