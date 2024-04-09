@@ -193,14 +193,30 @@ def test_help_called():
 
 
 @pytest.mark.parametrize(
-    "user_input, expected_stdout_after_prompt",
+    "expected_stdout_before_prompt, user_input, expected_stdout_after_prompt",
     [
-        ("n", "Exiting without overwriting configuration file."),
-        ("\n", "Exiting without overwriting configuration file."),
-        ("y", "Exiting without overwriting configuration file."),
         (
+            "Configuration file already exists at",
+            "n",
+            ["usage:", "Exiting without overwriting configuration file."],
+        ),
+        (
+            "Configuration file already exists at",
+            "\n",
+            ["usage:", "Exiting without overwriting configuration file."],
+        ),
+        (
+            "Configuration file already exists at",
+            "y",
+            ["usage:", "Exiting without overwriting configuration file."],
+        ),
+        (
+            "Configuration file already exists at",
             "Y",
-            "Will launch interactive mode to rewrite configuration file.  If this was a mistake, just press Ctrl+C to exit.\nMocked write_config_file",
+            [
+                "Will launch interactive mode to rewrite configuration file.  If this was a mistake, just press Ctrl+C to exit",
+                "Mocked write_config_file",
+            ],
         ),
     ],
 )
@@ -212,6 +228,7 @@ def test_handle_no_args_configfile_exists_Y(
     capsys,
     inject_fake_stdin,
     write_and_set_fake_config_file,
+    expected_stdout_before_prompt,
     user_input,
     expected_stdout_after_prompt,
 ):
@@ -222,11 +239,9 @@ def test_handle_no_args_configfile_exists_Y(
         _main.handle_no_args(config_file)
 
     captured = capsys.readouterr()
-    assert (
-        "Configuration file already exists. Are you sure you want to overwrite it (Y/[n])?  "
-        in captured.out
-    )
+    assert expected_stdout_before_prompt in captured.out
+    for elt in expected_stdout_after_prompt:
+        assert elt in captured.out
 
-    assert expected_stdout_after_prompt in captured.out
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == 0

@@ -51,13 +51,12 @@ class FerryCLI:
         self.parser: Optional["FerryParser"] = None
 
         if config_path is None:
-            self.get_arg_parser().print_help()
             print(
-                'Error: A configuration file is required to run the Ferry CLI. Please run "ferry-cli" to generate one interactively.'
+                'A configuration file is required to run the Ferry CLI. Please run "ferry-cli" to generate one interactively if one does not already exist.'
             )
-        else:
-            self.config_path = config_path
+            return
 
+        self.config_path = config_path
         self.configs = self.__parse_config_file()
         self.base_url = self._sanitize_base_url(self.base_url)
         self.dev_url = self._sanitize_base_url(self.dev_url)
@@ -468,18 +467,18 @@ def help_called(args: List[str]) -> bool:
     return "--help" in args or "-h" in args
 
 
-def handle_no_args(_config_path: Optional[pathlib.Path]) -> None:
+def handle_no_args(_config_path: Optional[pathlib.Path]) -> bool:
     """
     Handles the case when no arguments are provided to the CLI.
     """
     if (_config_path is not None) and (_config_path.exists()):
         overwrite = input(
-            "Configuration file already exists. Are you sure you want to overwrite it (Y/[n])?  "
+            f"Configuration file already exists at {_config_path}. Are you sure you want to overwrite it (Y/[n])?  "
         )
         if overwrite != "Y":
+            FerryCLI(config_path=None).get_arg_parser().print_help()
             print("Exiting without overwriting configuration file.")
             sys.exit(0)
-
     print(
         "Will launch interactive mode to rewrite configuration file.  If this was a mistake, just press Ctrl+C to exit."
     )
