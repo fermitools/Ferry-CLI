@@ -49,7 +49,6 @@ class FerryCLI:
         self.authorizer: Optional["Auth"] = None
         self.ferry_api: Optional["FerryAPI"] = None
         self.parser: Optional["FerryParser"] = None
-
         if config_path is None:
             self.get_arg_parser().print_help()
             print(
@@ -71,6 +70,11 @@ class FerryCLI:
             action="store_true",
             default=False,
             help="Populate the API call(s) but don't actually run them",
+        )
+        parser.add_argument(
+            "--output",
+            default=None,
+            help="(string) Specifies the path to a file where the output will be stored in JSON format. If a file already exists in the specified path, it will be overritten.",
         )
         parser.add_argument(
             "--filter",
@@ -144,6 +148,22 @@ class FerryCLI:
                 sys.exit(0)
 
         return _ListEndpoints
+
+    @staticmethod
+    def get_output_args() -> argparse.Namespace:
+        filter_parser = FerryParser()
+        filter_parser.set_arguments(
+            [
+                {
+                    "name": "output",
+                    "description": "Specifies the path to a file where the output will be stored in JSON format. If a file already exists in the specified path, it will be overritten.",
+                    "type": "string",
+                    "required": False,
+                }
+            ]
+        )
+        output_args, _ = filter_parser.parse_known_args()
+        return output_args
 
     @staticmethod
     def get_filter_args() -> argparse.Namespace:
@@ -312,7 +332,7 @@ class FerryCLI:
             except Exception as e:
                 raise Exception(f"{e}")
             if (not quiet) and (not args.dryrun):
-                self.handle_output(json.dumps(json_result, indent=4))
+                self.handle_output(json.dumps(json_result, indent=4), args.output)
 
         elif args.workflow:
             try:
@@ -322,7 +342,7 @@ class FerryCLI:
                 workflow_params, _ = workflow.parser.parse_known_args(endpoint_args)
                 json_result = workflow.run(self.ferry_api, vars(workflow_params))  # type: ignore
                 if (not quiet) and (not args.dryrun):
-                    self.handle_output(json.dumps(json_result, indent=4))
+                    self.handle_output(json.dumps(json_result, indent=4), args.output)
             except KeyError:
                 raise KeyError(f"Error: '{args.workflow}' is not a supported workflow.")
 
@@ -330,16 +350,28 @@ class FerryCLI:
             self.parser.print_help()
 
     # TBD if we will use this at all
-    def handle_output(self: "FerryCLI", output: str) -> None:
+    def handle_output(self: "FerryCLI", output: str, output_file: str = "") -> None:
         # Don't print excessively long responses - just store them in the result.json file and point to it.
-        if len(output) < 1000:
-            print(f"Response: {output}")
+        if output_file:
+            directory = os.path.dirname(output_file)
+            if not os.path.exists(directory):
+                try:
+                    os.makedirs(directory)
+                except PermissionError:
+                    print(f"Permission denied: Unable to create directory: {directory}")
+                except OSError as e:
+                    print(f"Error creating directory: {e}")
+
+            try:
+                with open(output_file, "w") as file:
+                    file.write(output)
+                    print(f"Output file: {output_file}")
+            except PermissionError:
+                print(f"Permission denied: Unable to write to file: {output_file}")
+            except IOError as e:
+                print(f"Error writing to file: {e}")
         else:
-            with open("result.json", "w") as file:
-                file.write(output)
-            print(
-                f"\nResponse in file: {os.path.abspath(os.environ.get('PWD', ''))}/result.json"
-            )
+            print(f"Response: {output}")
 
     @staticmethod
     def _sanitize_base_url(raw_base_url: str) -> str:
