@@ -150,22 +150,6 @@ class FerryCLI:
         return _ListEndpoints
 
     @staticmethod
-    def get_output_args() -> argparse.Namespace:
-        filter_parser = FerryParser()
-        filter_parser.set_arguments(
-            [
-                {
-                    "name": "output",
-                    "description": "Specifies the path to a file where the output will be stored in JSON format. If a file already exists in the specified path, it will be overritten.",
-                    "type": "string",
-                    "required": False,
-                }
-            ]
-        )
-        output_args, _ = filter_parser.parse_known_args()
-        return output_args
-
-    @staticmethod
     def get_filter_args() -> argparse.Namespace:
         filter_parser = FerryParser()
         filter_parser.set_arguments(
