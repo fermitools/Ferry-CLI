@@ -349,35 +349,35 @@ class FerryCLI:
         else:
             self.parser.print_help()
 
-    # TBD if we will use this at all
     def handle_output(self: "FerryCLI", output: str, output_file: str = "") -> None:
-        # Don't print excessively long responses - just store them in the result.json file and point to it.
-        if output_file:
-            directory = os.path.dirname(output_file) if "/" in output_file else "."
-            if not os.path.exists(directory):
-                try:
-                    os.makedirs(directory)
-                except PermissionError:
-                    print(f"Permission denied: Unable to create directory: {directory}")
-                    sys.exit(1)
-                except OSError as e:
-                    print(f"Error creating directory: {e}")
-                    sys.exit(1)
-
-            try:
-                with open(output_file, "w") as file:
-                    file.write(output)
-                    print(f"Output file: {output_file}")
-                    sys.exit(0)
-            except PermissionError:
-                print(f"Permission denied: Unable to write to file: {output_file}")
-                sys.exit(1)
-            except IOError as e:
-                print(f"Error writing to file: {e}")
-                sys.exit(1)
-        else:
+        if not output_file:
             print(f"Response: {output}")
             sys.exit(0)
+
+        def error_raised(message: str) -> None:
+            print(message)
+            print(f"Printing response instead: {output}")
+            sys.exit(1)
+
+        directory = os.path.dirname(output_file)
+        if directory:
+            try:
+                os.makedirs(directory, exist_ok=True)
+            except PermissionError:
+                error_raised(
+                    f"Permission denied: Unable to create directory: {directory}"
+                )
+            except OSError as e:
+                error_raised(f"Error creating directory: {e}")
+        try:
+            with open(output_file, "w") as file:
+                file.write(output)
+                print(f"Output file: {output_file}")
+        except PermissionError:
+            error_raised(f"Permission denied: Unable to write to file: {output_file}")
+        except IOError as e:
+            error_raised(f"Error writing to file: {e}")
+        sys.exit(0)
 
     @staticmethod
     def _sanitize_base_url(raw_base_url: str) -> str:
