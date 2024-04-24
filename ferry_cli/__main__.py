@@ -5,7 +5,7 @@ import os
 import pathlib
 import sys
 import textwrap
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional, List, Type
 from urllib.parse import urlsplit, urlunsplit, SplitResult
 
 import validators  # pylint: disable=import-error
@@ -336,12 +336,20 @@ class FerryCLI:
     def handle_output(self: "FerryCLI", output: str, output_file: str = "") -> None:
         if not output_file:
             print(f"Response: {output}")
-            sys.exit(0)
+            return
 
-        def error_raised(message: str) -> None:
-            print(message)
-            print(f"Printing response instead: {output}")
-            sys.exit(1)
+        def error_raised(
+            exception_type: Type[BaseException],
+            message: str,
+        ) -> None:
+            message = "\n".join(
+                [
+                    exception_type.__name__,
+                    message,
+                    f"Printing response instead: {output}",
+                ]
+            )
+            raise exception_type(message)
 
         directory = os.path.dirname(output_file)
         if directory:
@@ -349,19 +357,22 @@ class FerryCLI:
                 os.makedirs(directory, exist_ok=True)
             except PermissionError:
                 error_raised(
-                    f"Permission denied: Unable to create directory: {directory}"
+                    PermissionError,
+                    f"Permission denied: Unable to create directory: {directory}",
                 )
             except OSError as e:
-                error_raised(f"Error creating directory: {e}")
+                error_raised(IOError, f"Error creating directory: {e}")
         try:
             with open(output_file, "w") as file:
                 file.write(output)
                 print(f"Output file: {output_file}")
         except PermissionError:
-            error_raised(f"Permission denied: Unable to write to file: {output_file}")
+            error_raised(
+                PermissionError,
+                f"Permission denied: Unable to write to file: {output_file}",
+            )
         except IOError as e:
-            error_raised(f"Error writing to file: {e}")
-        sys.exit(0)
+            error_raised(IOError, f"Error writing to file: {e}")
 
     @staticmethod
     def _sanitize_base_url(raw_base_url: str) -> str:
@@ -557,7 +568,7 @@ def main() -> None:
     except (
         Exception  # pylint: disable=broad-except
     ) as e:  # TODO Eventually we want to handle a certain set of exceptions, but this will do for now # pylint: disable=fixme
-        print(f"There was an error querying the FERRY API: {e}")
+        print(f"An error occurred while using the FERRY CLI: {e}")
         sys.exit(1)
 
 
