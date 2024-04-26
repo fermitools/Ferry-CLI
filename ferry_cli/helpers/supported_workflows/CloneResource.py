@@ -103,19 +103,22 @@ class CloneResource(Workflow):
                     "Dryrun: Since no API was actually run, we cannot simulate adding users from the cloned resource to the new resource"
                 )
             else:
-                print(f"Received response, searching for resource: {args['clone']}")
+                if not api.quiet:
+                    print(f"Received response, searching for resource: {args['clone']}")
             resources = [resource for resource in group_json if resource.get("resourcename", "") == args["clone"]]  # type: ignore
             if resources:
                 # Add each user from the original resource into the new resource with the same configurations
                 for resource in resources:
-                    print("Found Resources")
-                    print(resource)
+                    if not api.quiet:
+                        print("Found Resources")
+                        print(resource)
                     for user in resource.get("users", []):
                         user_access_data = dict(user)
                         user_access_data["resourcename"] = args["new_resource"]
-                        print(
-                            f"Updating user access to {args['new_resource']} for {user['username']}"
-                        )
+                        if not api.quiet:
+                            print(
+                                f"Updating user access to {args['new_resource']} for {user['username']}"
+                            )
                         if "status" in user_access_data:
                             del user_access_data["status"]
                         self.verify_output(
@@ -126,10 +129,10 @@ class CloneResource(Workflow):
                                 params=user_access_data,
                             ),
                         )
-
-            print(
-                f"Resource '{args['clone']}' has been successful cloned as '{args['new_resource']}'"
-            )
+            if not api.quiet:
+                print(
+                    f"Resource '{args['clone']}' has been successful cloned as '{args['new_resource']}'"
+                )
             sys.exit(0)
         except Exception as e:
             raise e

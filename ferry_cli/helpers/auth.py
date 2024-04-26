@@ -179,7 +179,14 @@ def get_auth_parser() -> "FerryParser":
         default=False,
         help="Turn on debugging",
     )
-    auth_parser.add_argument(
+    output_group = auth_parser.add_mutually_exclusive_group(required=False)
+    output_group.add_argument(
+        "--dryrun",
+        action="store_true",
+        default=False,
+        help="Populate the API call(s) but don't actually run them",
+    )
+    output_group.add_argument(
         "-q", "--quiet", action="store_true", default=False, help="Hide output"
     )
     auth_parser.add_argument(
@@ -207,10 +214,12 @@ def get_auth_parser() -> "FerryParser":
 def set_auth_from_args(args: Namespace) -> Auth:
     """Set the auth class based on the given arguments"""
     if args.auth_method == "token":
-        print("\nUsing token auth")
+        if not args.quiet:
+            print("\nUsing token auth")
         return AuthToken(args.token_path, args.debug)
     elif args.auth_method in ["cert", "certificate"]:
-        print("\nUsing cert auth")
+        if not args.quiet:
+            print("\nUsing cert auth")
         return AuthCert(args.cert_path, args.ca_path, args.debug)
     else:
         raise ValueError(

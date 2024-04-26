@@ -66,12 +66,6 @@ class FerryCLI:
             description="CLI for Ferry API endpoints", parents=[get_auth_parser()]
         )
         parser.add_argument(
-            "--dryrun",
-            action="store_true",
-            default=False,
-            help="Populate the API call(s) but don't actually run them",
-        )
-        parser.add_argument(
             "--output",
             default=None,
             help="(string) Specifies the path to a file where the output will be stored in JSON format. If a file already exists in the specified path, it will be overritten.",
@@ -295,7 +289,9 @@ class FerryCLI:
             endpoint_description += f"{'':<50} | {line}\n"
         return endpoint_description
 
-    def run(self: "FerryCLI", debug: bool, quiet: bool, extra_args: Any) -> None:
+    def run(
+        self: "FerryCLI", debug: bool, quiet: bool, dryrun: bool, extra_args: Any
+    ) -> None:
         self.parser = self.get_arg_parser()
         args, endpoint_args = self.parser.parse_known_args(extra_args)
 
@@ -305,7 +301,7 @@ class FerryCLI:
 
         if not self.ferry_api:
             self.ferry_api = FerryAPI(
-                base_url=self.base_url, authorizer=self.authorizer, quiet=quiet, dryrun=args.dryrun  # type: ignore
+                base_url=self.base_url, authorizer=self.authorizer, quiet=quiet, dryrun=dryrun  # type: ignore
             )
 
         if args.endpoint:
@@ -315,8 +311,10 @@ class FerryCLI:
                 json_result = self.execute_endpoint(args.endpoint, endpoint_args)
             except Exception as e:
                 raise Exception(f"{e}")
-            if (not quiet) and (not args.dryrun):
-                self.handle_output(json.dumps(json_result, indent=4), args.output)
+            if not dryrun:
+                self.handle_output(
+                    json.dumps(json_result, indent=4), args.output, quiet
+                )
 
         elif args.workflow:
             try:
@@ -325,31 +323,32 @@ class FerryCLI:
                 workflow.init_parser()
                 workflow_params, _ = workflow.parser.parse_known_args(endpoint_args)
                 json_result = workflow.run(self.ferry_api, vars(workflow_params))  # type: ignore
-                if (not quiet) and (not args.dryrun):
-                    self.handle_output(json.dumps(json_result, indent=4), args.output)
+                if not dryrun:
+                    self.handle_output(
+                        json.dumps(json_result, indent=4), args.output, quiet
+                    )
             except KeyError:
                 raise KeyError(f"Error: '{args.workflow}' is not a supported workflow.")
 
         else:
             self.parser.print_help()
 
-    def handle_output(self: "FerryCLI", output: str, output_file: str = "") -> None:
-        if not output_file:
-            print(f"Response: {output}")
-            return
-
+    def handle_output(
+        self: "FerryCLI", output: str, output_file: str = "", quiet: bool = False
+    ) -> None:
         def error_raised(
             exception_type: Type[BaseException],
             message: str,
         ) -> None:
-            message = "\n".join(
-                [
-                    exception_type.__name__,
-                    message,
-                    f"Printing response instead: {output}",
-                ]
-            )
+            message = f"{exception_type.__name__}\n" f"{message}"
+            if not quiet:
+                message += f"\nPrinting response instead: {output}"
             raise exception_type(message)
+
+        if not output_file:
+            if not quiet:
+                print(f"Response: {output}")
+            return
 
         directory = os.path.dirname(output_file)
         if directory:
@@ -365,7 +364,9 @@ class FerryCLI:
         try:
             with open(output_file, "w") as file:
                 file.write(output)
+            if not quiet:
                 print(f"Output file: {output_file}")
+            return
         except PermissionError:
             error_raised(
                 PermissionError,
@@ -373,6 +374,8 @@ class FerryCLI:
             )
         except IOError as e:
             error_raised(IOError, f"Error writing to file: {e}")
+        except Exception as e:  # pylint: disable=broad-except
+            error_raised(Exception, f"Error: {e}")
 
     @staticmethod
     def _sanitize_base_url(raw_base_url: str) -> str:
@@ -556,15 +559,17 @@ def main() -> None:
             sys.exit(0)
         ferry_cli.authorizer = set_auth_from_args(auth_args)
         if auth_args.update or not os.path.exists(f"{CONFIG_DIR}/swagger.json"):
-            print("Fetching latest swagger file...")
+            if not auth_args.quiet:
+                print("Fetching latest swagger file...")
             ferry_cli.ferry_api = FerryAPI(
                 ferry_cli.base_url, ferry_cli.authorizer, auth_args.quiet
             )
             ferry_cli.ferry_api.get_latest_swagger_file()
-            print("Successfully stored latest swagger file.\n")
+            if not auth_args.quiet:
+                print("Successfully stored latest swagger file.\n")
 
         ferry_cli.endpoints = ferry_cli.generate_endpoints()
-        ferry_cli.run(auth_args.debug, auth_args.quiet, other_args)
+        ferry_cli.run(auth_args.debug, auth_args.quiet, auth_args.dryrun, other_args)
     except (
         Exception  # pylint: disable=broad-except
     ) as e:  # TODO Eventually we want to handle a certain set of exceptions, but this will do for now # pylint: disable=fixme
