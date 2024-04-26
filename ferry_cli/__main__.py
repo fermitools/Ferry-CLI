@@ -360,7 +360,7 @@ class FerryCLI:
                     f"Permission denied: Unable to create directory: {directory}",
                 )
             except OSError as e:
-                error_raised(IOError, f"Error creating directory: {e}")
+                error_raised(OSError, f"Error creating directory: {e}")
         try:
             with open(output_file, "w") as file:
                 file.write(output)
