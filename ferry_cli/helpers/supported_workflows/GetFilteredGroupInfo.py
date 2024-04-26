@@ -26,8 +26,9 @@ class GetFilteredGroupInfo(Workflow):
         group_json = self.verify_output(api, api.call_endpoint("getAllGroups"))
         if api.dryrun:
             return []
-        print("Received successful response")
-        print(f"Filtering by groupname: '{args['groupname']}'")
+        if not api.quiet:
+            print("Received successful response")
+            print(f"Filtering by groupname: '{args['groupname']}'")
         group_info = [
             entry for entry in group_json if entry["groupname"] == args["groupname"]
         ]
