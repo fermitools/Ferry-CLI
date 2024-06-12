@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 
+import os
 from spack.package import *
 
 
@@ -37,21 +38,49 @@ class FerryCli(PythonPackage):
 
     maintainers = ["ltrestka", "shreyb", "cathulhu"]
 
-    version("master", branch="master")
-    version("0.1.0", branch="spack_deployment", preferred=True)
+    version("latest", branch="master")
+    version("1.0.0", tag="1.0.0", preferred=True)
 
     depends_on("python@3.6.8:", type=("run"))
-    depends_on("py-pip", type=("build", "run"))
-    depends_on("py-certifi", type=("build", "run"))
-    depends_on("py-charset-normalizer", type=("build", "run"))
-    depends_on("py-idna@3.4:", type=("build", "run"))
-    depends_on("py-requests@2.31.0:", type=("build", "run"))
-    depends_on("py-urllib3", type=("build", "run"))
-    depends_on("py-setuptools", type=("build", "run"))
-    depends_on("py-validators", type=("build", "run"))
+    
+    python_packages = [
+        "certifi",
+        "charset-normalizer",
+        "idna",
+        "requests",
+        "urllib3",
+        "setuptools",
+        "validators"
+    ]
 
     def install(self, spec, prefix):
         install_tree(self.stage.source_path, prefix)
+        
+        pip = which('pip')
+        for package in self.python_packages:
+            pip('install', package, '--prefix', prefix)
+        
+        # Update the wrapper script to support whichever python interpreter is being used
+        wrapper_content = None
+        script_path = os.path.join(prefix, 'bin', 'ferry-cli')
+        with open(script_path, 'r') as f:
+            wrapper_content = f.read()
+            f.close()
+        if wrapper_content:
+            print(wrapper_content)
+            wrapper_content = wrapper_content.replace("/usr/bin/python3", spec['python'].command.path)
+            with open(script_path, 'w') as f:
+                f.write(wrapper_content)
+                f.close()
+                
+        # Make the wrapper script executable
+        chmod = which('chmod')
+        chmod('+x', script_path)
 
     def setup_environment(self, spack_env, run_env):
         run_env.prepend_path("PATH", self.prefix.bin)
+        run_env.prepend_path("PYTHONPATH", self.prefix.lib)
+
+    def url_for_version(self, version):
+        url = "https://github.com/fermitools/Ferry-CLI/archive/refs/tags/{0}.tar.gz"
+        return url.format(version)
