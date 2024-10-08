@@ -1,0 +1,98 @@
+name: Release Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        type: 'choice'
+        default: 'patch'
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: pip install semver
+
+      - name: Determine Next Version
+        id: version
+        run: |
+          python scripts/determine_version.py ${{ inputs.bump_type }}
+        env:
+          GITHUB_OUTPUT: ${{ steps.version.outputs.new_version }}
+
+      - name: Update ferry_cli/version.py
+        run: |
+          python scripts/update_version.py ${{ steps.version.outputs.new_version }}
+
+      - name: Update .spack/package.py
+        run: |
+          python scripts/update_spack.py ${{ steps.version.outputs.new_version }}
+
+      - name: Commit and Push Changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add ferry_cli/version.py .spack/package.py
+          git commit -m "Bump version to ${{ steps.version.outputs.new_version }}"
+          git push origin HEAD:${{ github.ref }}
+
+      - name: Create Git Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git tag -a v${{ steps.version.outputs.new_version }} -m "Release version ${{ steps.version.outputs.new_version }}"
+          git push origin v${{ steps.version.outputs.new_version }}
+
+      - name: Checkout scd_recipes Repository
+        uses: actions/checkout@v3
+        with:
+          repository: marcmengel/scd_recipes
+          token: ${{ secrets.SCD_RECIPES_PAT }}
+          path: scd_recipes
+
+      - name: Update scd_recipes/.spack/package.py
+        run: |
+          python scripts/update_spack.py ${{ steps.version.outputs.new_version }} scd_recipes/.spack/package.py
+
+      - name: Commit and Push to scd_recipes
+        working-directory: scd_recipes
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCD_RECIPES_PAT }}
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git checkout -b update-version-${{ steps.version.outputs.new_version }}
+          git add .spack/package.py
+          git commit -m "Update to version ${{ steps.version.outputs.new_version }}"
+          git push origin HEAD
+
+      - name: Create Pull Request in scd_recipes
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.SCD_RECIPES_PAT }}
+          commit-message: "Update to version ${{ steps.version.outputs.new_version }}"
+          branch: update-version-${{ steps.version.outputs.new_version }}
+          title: "Update to version ${{ steps.version.outputs.new_version }}"
+          body: "Automatic update to version ${{ steps.version.outputs.new_version }}"
+          base: main
+          path: scd_recipes
