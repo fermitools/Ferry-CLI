@@ -43,7 +43,7 @@ setup(
         "charset-normalizer>=3.3.2",
         "idna>=3.4",
         "requests>=2.31.0",
-        "validators >= 0.22.0",
+        "validators>=0.22.0",
         "urllib3>=2.1.0",
     ],
     classifiers=[
