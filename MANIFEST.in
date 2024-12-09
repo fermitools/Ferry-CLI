@@ -1,2 +1,3 @@
 include bin/ferry-cli
 include ferry_cli/config/swagger.json
+include ferry_cli/config/config.ini
