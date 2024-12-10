@@ -300,7 +300,13 @@ class FerryCLI:
 
         debug = debug_level == DebugLevel.DEBUG
         if debug:
-            print(f"Args:  {vars(args)}\n" f"Endpoint Args:  {endpoint_args}")
+            print(f"Debug level: {debug_level}\nDryrun: {dryrun}")
+            print_args = {
+                f"{k}: {v}"
+                for k, v in vars(args).items()
+                if k not in ["debug_level", "dryrun"]  # We're passing these into run()
+            }
+            print(f"Args: {print_args} \n" f"Endpoint Args:  {endpoint_args}")
             print(f"Using FERRY base url: {self.base_url}")
 
         if not self.ferry_api:
