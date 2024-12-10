@@ -1,5 +1,6 @@
 from abc import ABC
 from argparse import Namespace
+import enum
 from os import geteuid
 import os.path
 from typing import List, Optional, Tuple
@@ -182,12 +183,20 @@ def get_auth_parser() -> "FerryParser":
     output_group.add_argument(
         "-d",
         "--debug",
-        action="store_true",
-        default=False,
+        action="store_const",
+        dest="debug_level",
+        const=DebugLevel.DEBUG,
+        default=DebugLevel.NORMAL,
         help="Turn on debugging",
     )
     output_group.add_argument(
-        "-q", "--quiet", action="store_true", default=False, help="Hide output"
+        "-q",
+        "--quiet",
+        action="store_const",
+        dest="debug_level",
+        const=DebugLevel.QUIET,
+        default=DebugLevel.NORMAL,
+        help="Hide output",
     )
     auth_parser.add_argument(
         "-u",
@@ -213,14 +222,15 @@ def get_auth_parser() -> "FerryParser":
 
 def set_auth_from_args(args: Namespace) -> Auth:
     """Set the auth class based on the given arguments"""
+    debug = args.debug_level == DebugLevel.DEBUG
     if args.auth_method == "token":
-        if not args.quiet and args.debug:
+        if debug:
             print("\nUsing token auth")
-        return AuthToken(args.token_path, args.debug)
+        return AuthToken(args.token_path, debug)
     elif args.auth_method in ["cert", "certificate"]:
-        if not args.quiet and args.debug:
+        if debug:
             print("\nUsing cert auth")
-        return AuthCert(args.cert_path, args.ca_path, args.debug)
+        return AuthCert(args.cert_path, args.ca_path, debug)
     else:
         raise ValueError(
             "Unsupported auth method!  Please use one of the following auth methods: ['token', 'cert', 'certificate']"
@@ -231,3 +241,9 @@ def get_auth_args() -> Tuple[Namespace, List[str]]:
     parser = get_auth_parser()
     auth_args, other_args = parser.parse_known_args()
     return auth_args, other_args
+
+
+class DebugLevel(enum.Enum):
+    QUIET = 0
+    NORMAL = 1
+    DEBUG = 2
