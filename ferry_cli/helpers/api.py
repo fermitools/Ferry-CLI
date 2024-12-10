@@ -12,13 +12,15 @@ except ImportError:
     from config import CONFIG_DIR  # type: ignore
 
 
-# pylint: disable=unused-argument,pointless-statement
+# pylint: disable=unused-argument,pointless-statement,too-many-arguments
 class FerryAPI:
+    # pylint: disable=too-many-arguments
     def __init__(
         self: "FerryAPI",
         base_url: str,
         authorizer: Auth = Auth(),
         quiet: bool = False,
+        debug: bool = False,
         dryrun: bool = False,
     ):
         """
@@ -31,6 +33,7 @@ class FerryAPI:
         self.base_url = base_url
         self.authorizer = authorizer
         self.quiet = quiet
+        self.debug = debug
         self.dryrun = dryrun
 
     # pylint: disable=dangerous-default-value,too-many-arguments
@@ -48,7 +51,7 @@ class FerryAPI:
             print(f"\nWould call endpoint: {self.base_url}{endpoint}")
             return None
 
-        if not self.quiet:
+        if not self.quiet and self.debug:
             print(f"\nCalling Endpoint: {self.base_url}{endpoint}")
 
         _session = requests.Session()
@@ -74,7 +77,7 @@ class FerryAPI:
                 )
             else:
                 raise ValueError("Unsupported HTTP method.")
-            if not self.quiet:
+            if not self.quiet and self.debug:
                 print(f"Called Endpoint: {response.request.url}")
             output = response.json()
 
