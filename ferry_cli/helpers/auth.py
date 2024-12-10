@@ -172,13 +172,6 @@ def get_auth_parser() -> "FerryParser":
     auth_parser.add_argument(
         "--ca-path", default=DEFAULT_CA_DIR, help="Certificate authority path"
     )
-    auth_parser.add_argument(
-        "-d",
-        "--debug",
-        action="store_true",
-        default=False,
-        help="Turn on debugging",
-    )
     output_group = auth_parser.add_mutually_exclusive_group(required=False)
     output_group.add_argument(
         "--dryrun",
@@ -186,7 +179,7 @@ def get_auth_parser() -> "FerryParser":
         default=False,
         help="Populate the API call(s) but don't actually run them",
     )
-    auth_parser.add_argument(
+    output_group.add_argument(
         "-d",
         "--debug",
         action="store_true",
