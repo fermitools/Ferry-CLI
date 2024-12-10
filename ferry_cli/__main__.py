@@ -289,7 +289,11 @@ class FerryCLI:
         return endpoint_description
 
     def run(
-        self: "FerryCLI", debug: bool, quiet: bool, dryrun: bool, extra_args: Any
+        self: "FerryCLI",
+        debug: bool,
+        quiet: bool,
+        dryrun: bool,
+        extra_args: Any,
     ) -> None:
         self.parser = self.get_arg_parser()
         args, endpoint_args = self.parser.parse_known_args(extra_args)
@@ -300,7 +304,7 @@ class FerryCLI:
 
         if not self.ferry_api:
             self.ferry_api = FerryAPI(
-                base_url=self.base_url, authorizer=self.authorizer, quiet=quiet, dryrun=dryrun  # type: ignore
+                base_url=self.base_url, authorizer=self.authorizer, quiet=quiet, debug=debug, dryrun=dryrun  # type: ignore
             )
 
         if args.endpoint:
@@ -312,7 +316,7 @@ class FerryCLI:
                 raise Exception(f"{e}")
             if not dryrun:
                 self.handle_output(
-                    json.dumps(json_result, indent=4), args.output, quiet
+                    json.dumps(json_result, indent=4), args.output, quiet, debug
                 )
 
         elif args.workflow:
@@ -324,7 +328,7 @@ class FerryCLI:
                 json_result = workflow.run(self.ferry_api, vars(workflow_params))  # type: ignore
                 if not dryrun:
                     self.handle_output(
-                        json.dumps(json_result, indent=4), args.output, quiet
+                        json.dumps(json_result, indent=4), args.output, quiet, debug
                     )
             except KeyError:
                 raise KeyError(f"Error: '{args.workflow}' is not a supported workflow.")
@@ -333,7 +337,11 @@ class FerryCLI:
             self.parser.print_help()
 
     def handle_output(
-        self: "FerryCLI", output: str, output_file: str = "", quiet: bool = False
+        self: "FerryCLI",
+        output: str,
+        output_file: str = "",
+        quiet: bool = False,
+        debug: bool = False,
     ) -> None:
         def error_raised(
             exception_type: Type[BaseException],
@@ -345,8 +353,11 @@ class FerryCLI:
             raise exception_type(message)
 
         if not output_file:
-            if not quiet:
-                print(f"Response: {output}")
+            if quiet:
+                return
+
+            print_string = f"Response: {output}" if ((not quiet) and debug) else output
+            print(print_string)
             return
 
         directory = os.path.dirname(output_file)
@@ -568,14 +579,22 @@ def main() -> None:
             if not auth_args.quiet:
                 print("Fetching latest swagger file...")
             ferry_cli.ferry_api = FerryAPI(
-                ferry_cli.base_url, ferry_cli.authorizer, auth_args.quiet
+                ferry_cli.base_url,
+                ferry_cli.authorizer,
+                auth_args.quiet,
+                auth_args.debug,
             )
             ferry_cli.ferry_api.get_latest_swagger_file()
             if not auth_args.quiet:
                 print("Successfully stored latest swagger file.\n")
 
         ferry_cli.endpoints = ferry_cli.generate_endpoints()
-        ferry_cli.run(auth_args.debug, auth_args.quiet, auth_args.dryrun, other_args)
+        ferry_cli.run(
+            auth_args.debug,
+            auth_args.quiet,
+            auth_args.dryrun,
+            other_args,
+        )
     except (
         Exception  # pylint: disable=broad-except
     ) as e:  # TODO Eventually we want to handle a certain set of exceptions, but this will do for now # pylint: disable=fixme
