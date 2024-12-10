@@ -7,7 +7,7 @@ setup(
     name="ferry_cli",
     version=print_version(short=True),
     author="Lucas Trestka, Shreyas Bhat, Lydia Brynmoor",
-    author_email="ltrestka@fnal.gov, sbhat@fnal.gov, brynmoor@fnal.gov",
+    author_email="ltrestka@fnal.gov, sbhat@fnal.gov, brynmool@fnal.gov",
     description=get_summary(),
     long_description=long_desc,
     long_description_content_type="text/markdown",
