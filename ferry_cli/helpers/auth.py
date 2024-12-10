@@ -109,7 +109,7 @@ class AuthToken(Auth):
             )
         except FileNotFoundError:
             raise FileNotFoundError(  # pylint: disable=raise-missing-from
-                f"Bearer token file not found. Please verify that you have a valid token in the specified, or default path: /tmp/{default_token_file_name()}, or run 'htgettoken -i htvaultprod.fnal.gov -i fermilab'"
+                f"Bearer token file not found. Please verify that you have a valid token in the specified, or default path: /tmp/{default_token_file_name()}, or run 'htgettoken -a htvaultprod.fnal.gov -i fermilab'"
             )
 
     def __call__(self: "AuthToken", s: requests.Session) -> requests.Session:
