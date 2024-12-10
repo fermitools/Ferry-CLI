@@ -103,7 +103,7 @@ class AuthToken(Auth):
         self.debug = debug
         try:
             self.token_string = (
-                get_default_token_string()
+                get_default_token_string(debug)
                 if token_path is None
                 else read_in_token(token_path)
             )
@@ -186,6 +186,13 @@ def get_auth_parser() -> "FerryParser":
         default=False,
         help="Populate the API call(s) but don't actually run them",
     )
+    auth_parser.add_argument(
+        "-d",
+        "--debug",
+        action="store_true",
+        default=False,
+        help="Turn on debugging",
+    )
     output_group.add_argument(
         "-q", "--quiet", action="store_true", default=False, help="Hide output"
     )
@@ -214,11 +221,11 @@ def get_auth_parser() -> "FerryParser":
 def set_auth_from_args(args: Namespace) -> Auth:
     """Set the auth class based on the given arguments"""
     if args.auth_method == "token":
-        if not args.quiet:
+        if not args.quiet and args.debug:
             print("\nUsing token auth")
         return AuthToken(args.token_path, args.debug)
     elif args.auth_method in ["cert", "certificate"]:
-        if not args.quiet:
+        if not args.quiet and args.debug:
             print("\nUsing cert auth")
         return AuthCert(args.cert_path, args.ca_path, args.debug)
     else:
