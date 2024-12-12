@@ -5,32 +5,33 @@ from typing import Any, Dict
 import requests  # pylint: disable=import-error
 
 try:
-    from ferry_cli.helpers.auth import Auth
+    from ferry_cli.helpers.auth import Auth, DebugLevel
     from ferry_cli.config import CONFIG_DIR
 except ImportError:
     from helpers.auth import Auth  # type: ignore
     from config import CONFIG_DIR  # type: ignore
 
 
-# pylint: disable=unused-argument,pointless-statement
+# pylint: disable=unused-argument,pointless-statement,too-many-arguments
 class FerryAPI:
+    # pylint: disable=too-many-arguments
     def __init__(
         self: "FerryAPI",
         base_url: str,
         authorizer: Auth = Auth(),
-        quiet: bool = False,
+        debug_level: DebugLevel = DebugLevel.NORMAL,
         dryrun: bool = False,
     ):
         """
         Parameters:
             base_url (str):  The root URL from which all FERRY API URLs are constructed
             authorizer (Callable[[requests.Session, requests.Session]): A function that prepares the requests session by adding any necessary auth data
-            quiet (bool):  Whether or not output should be suppressed
+            debug_level (DebugLevel): Level of debugging.  Can be DebugLevel.QUIET, DebugLevel.NORMAL, or DebugLevel.DEBUG
             dryrun (bool): Whether or not this is a test run.  If True, the intended URL will be printed, but the HTTP request will not be made
         """
         self.base_url = base_url
         self.authorizer = authorizer
-        self.quiet = quiet
+        self.debug_level = debug_level
         self.dryrun = dryrun
 
     # pylint: disable=dangerous-default-value,too-many-arguments
@@ -48,7 +49,9 @@ class FerryAPI:
             print(f"\nWould call endpoint: {self.base_url}{endpoint}")
             return None
 
-        if not self.quiet:
+        debug = self.debug_level == DebugLevel.DEBUG
+
+        if debug:
             print(f"\nCalling Endpoint: {self.base_url}{endpoint}")
 
         _session = requests.Session()
@@ -74,7 +77,7 @@ class FerryAPI:
                 )
             else:
                 raise ValueError("Unsupported HTTP method.")
-            if not self.quiet:
+            if debug:
                 print(f"Called Endpoint: {response.request.url}")
             output = response.json()
 

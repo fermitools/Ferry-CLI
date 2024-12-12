@@ -16,6 +16,7 @@ try:
     from ferry_cli.helpers.api import FerryAPI
     from ferry_cli.helpers.auth import (
         Auth,
+        DebugLevel,
         get_auth_args,
         set_auth_from_args,
         get_auth_parser,
@@ -289,18 +290,28 @@ class FerryCLI:
         return endpoint_description
 
     def run(
-        self: "FerryCLI", debug: bool, quiet: bool, dryrun: bool, extra_args: Any
+        self: "FerryCLI",
+        debug_level: DebugLevel,
+        dryrun: bool,
+        extra_args: Any,
     ) -> None:
         self.parser = self.get_arg_parser()
         args, endpoint_args = self.parser.parse_known_args(extra_args)
 
+        debug = debug_level == DebugLevel.DEBUG
         if debug:
-            print(f"Args:  {vars(args)}\n" f"Endpoint Args:  {endpoint_args}")
+            print(f"Debug level: {debug_level}\nDryrun: {dryrun}")
+            print_args = {
+                f"{k}: {v}"
+                for k, v in vars(args).items()
+                if k not in ["debug_level", "dryrun"]  # We're passing these into run()
+            }
+            print(f"Args: {print_args} \n" f"Endpoint Args:  {endpoint_args}")
             print(f"Using FERRY base url: {self.base_url}")
 
         if not self.ferry_api:
             self.ferry_api = FerryAPI(
-                base_url=self.base_url, authorizer=self.authorizer, quiet=quiet, dryrun=dryrun  # type: ignore
+                base_url=self.base_url, authorizer=self.authorizer, debug_level=debug_level, dryrun=dryrun  # type: ignore
             )
 
         if args.endpoint:
@@ -312,7 +323,7 @@ class FerryCLI:
                 raise Exception(f"{e}")
             if not dryrun:
                 self.handle_output(
-                    json.dumps(json_result, indent=4), args.output, quiet
+                    json.dumps(json_result, indent=4), args.output, debug_level
                 )
 
         elif args.workflow:
@@ -324,7 +335,7 @@ class FerryCLI:
                 json_result = workflow.run(self.ferry_api, vars(workflow_params))  # type: ignore
                 if not dryrun:
                     self.handle_output(
-                        json.dumps(json_result, indent=4), args.output, quiet
+                        json.dumps(json_result, indent=4), args.output, debug_level
                     )
             except KeyError:
                 raise KeyError(f"Error: '{args.workflow}' is not a supported workflow.")
@@ -333,20 +344,28 @@ class FerryCLI:
             self.parser.print_help()
 
     def handle_output(
-        self: "FerryCLI", output: str, output_file: str = "", quiet: bool = False
+        self: "FerryCLI",
+        output: str,
+        output_file: str = "",
+        debug_level: DebugLevel = DebugLevel.NORMAL,
     ) -> None:
         def error_raised(
             exception_type: Type[BaseException],
             message: str,
         ) -> None:
             message = f"{exception_type.__name__}\n" f"{message}"
-            if not quiet:
+            if debug_level != DebugLevel.QUIET:
                 message += f"\nPrinting response instead: {output}"
             raise exception_type(message)
 
         if not output_file:
-            if not quiet:
-                print(f"Response: {output}")
+            if debug_level == DebugLevel.QUIET:
+                return
+
+            print_string = (
+                f"Response: {output}" if (debug_level == DebugLevel.DEBUG) else output
+            )
+            print(print_string)
             return
 
         directory = os.path.dirname(output_file)
@@ -363,7 +382,7 @@ class FerryCLI:
         try:
             with open(output_file, "w") as file:
                 file.write(output)
-            if not quiet:
+            if debug_level == DebugLevel.DEBUG:
                 print(f"Output file: {output_file}")
             return
         except PermissionError:
@@ -565,17 +584,23 @@ def main() -> None:
             sys.exit(0)
         ferry_cli.authorizer = set_auth_from_args(auth_args)
         if auth_args.update or not os.path.exists(f"{CONFIG_DIR}/swagger.json"):
-            if not auth_args.quiet:
+            if auth_args.debug_level != DebugLevel.QUIET:
                 print("Fetching latest swagger file...")
             ferry_cli.ferry_api = FerryAPI(
-                ferry_cli.base_url, ferry_cli.authorizer, auth_args.quiet
+                ferry_cli.base_url,
+                ferry_cli.authorizer,
+                auth_args.debug_level,
             )
             ferry_cli.ferry_api.get_latest_swagger_file()
-            if not auth_args.quiet:
+            if auth_args.debug_level != DebugLevel.QUIET:
                 print("Successfully stored latest swagger file.\n")
 
         ferry_cli.endpoints = ferry_cli.generate_endpoints()
-        ferry_cli.run(auth_args.debug, auth_args.quiet, auth_args.dryrun, other_args)
+        ferry_cli.run(
+            auth_args.debug_level,
+            auth_args.dryrun,
+            other_args,
+        )
     except (
         Exception  # pylint: disable=broad-except
     ) as e:  # TODO Eventually we want to handle a certain set of exceptions, but this will do for now # pylint: disable=fixme

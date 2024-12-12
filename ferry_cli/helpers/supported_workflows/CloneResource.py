@@ -4,6 +4,7 @@ from typing import Any, Dict
 
 try:
     from ferry_cli.helpers.api import FerryAPI
+    from ferry_cli.helpers.auth import DebugLevel
     from ferry_cli.helpers.workflows import Workflow
 except ImportError:
     from helpers.api import FerryAPI  # type: ignore
@@ -103,19 +104,19 @@ class CloneResource(Workflow):
                     "Dryrun: Since no API was actually run, we cannot simulate adding users from the cloned resource to the new resource"
                 )
             else:
-                if not api.quiet:
+                if api.debug_level != DebugLevel.QUIET:
                     print(f"Received response, searching for resource: {args['clone']}")
             resources = [resource for resource in group_json if resource.get("resourcename", "") == args["clone"]]  # type: ignore
             if resources:
                 # Add each user from the original resource into the new resource with the same configurations
                 for resource in resources:
-                    if not api.quiet:
+                    if api.debug_level != DebugLevel.QUIET:
                         print("Found Resources")
                         print(resource)
                     for user in resource.get("users", []):
                         user_access_data = dict(user)
                         user_access_data["resourcename"] = args["new_resource"]
-                        if not api.quiet:
+                        if api.debug_level != DebugLevel.QUIET:
                             print(
                                 f"Updating user access to {args['new_resource']} for {user['username']}"
                             )
@@ -129,7 +130,7 @@ class CloneResource(Workflow):
                                 params=user_access_data,
                             ),
                         )
-            if not api.quiet:
+            if api.debug_level != DebugLevel.QUIET:
                 print(
                     f"Resource '{args['clone']}' has been successful cloned as '{args['new_resource']}'"
                 )

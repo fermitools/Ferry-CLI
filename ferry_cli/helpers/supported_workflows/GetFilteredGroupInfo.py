@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 try:
     from ferry_cli.helpers.workflows import Workflow
+    from ferry_cli.helpers.auth import DebugLevel
 except ImportError:
     from helpers.workflows import Workflow  # type: ignore
 
@@ -26,7 +27,7 @@ class GetFilteredGroupInfo(Workflow):
         group_json = self.verify_output(api, api.call_endpoint("getAllGroups"))
         if api.dryrun:
             return []
-        if not api.quiet:
+        if api.debug_level != DebugLevel.QUIET:
             print("Received successful response")
             print(f"Filtering by groupname: '{args['groupname']}'")
         group_info = [
