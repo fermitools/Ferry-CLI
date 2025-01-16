@@ -8,7 +8,7 @@ try:
     from ferry_cli.helpers.auth import Auth, DebugLevel
     from ferry_cli.config import CONFIG_DIR
 except ImportError:
-    from helpers.auth import Auth  # type: ignore
+    from helpers.auth import Auth, DebugLevel  # type: ignore
     from config import CONFIG_DIR  # type: ignore
 
 

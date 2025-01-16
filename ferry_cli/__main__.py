@@ -30,6 +30,7 @@ except ImportError:
     from helpers.api import FerryAPI  # type: ignore
     from helpers.auth import (  # type: ignore
         Auth,
+        DebugLevel,
         get_auth_args,
         set_auth_from_args,
         get_auth_parser,
