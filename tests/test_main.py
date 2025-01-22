@@ -10,6 +10,7 @@ from ferry_cli.__main__ import (
     handle_show_configfile,
     get_config_info_from_user,
     help_called,
+    handle_arg_capitalization,
 )
 import ferry_cli.__main__ as _main
 import ferry_cli.config.config as _config
@@ -302,3 +303,20 @@ def test_handle_no_args_configfile_does_not_exist(
 
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == 0
+
+
+@pytest.mark.unit
+def test_snakecase_and_underscore_conversion():
+    test_endpoints = ["getUserInfo"]
+    correct_args = ["-e", "getUserInfo", "--username=johndoe"]
+    test_args_case_underscore = ["-e", "_Get_USeriNFo", "--username=johndoe"]
+    result = handle_arg_capitalization(test_endpoints, test_args_case_underscore)
+
+    # test to make sure function does matching irrespective of capitalization
+    assert result == correct_args
+
+    # test to make sure function never stops working for correct syntax
+    assert handle_arg_capitalization(test_endpoints, correct_args) == correct_args
+
+    # test that non endpoint arguments are untouched
+    assert handle_arg_capitalization(test_endpoints, ["-z"]) == ["-z"]
