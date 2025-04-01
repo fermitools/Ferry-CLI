@@ -548,21 +548,20 @@ def handle_no_args(_config_path: Optional[pathlib.Path]) -> bool:
 def handle_arg_capitalization(
     endpoints: Dict[str, Any], arguments: List[str]
 ) -> List[str]:
-
     # check to see if the arguments supplied are for an endpoint. IE a "-e" was supplied
-    if arguments[0] == "-e" or arguments[0] == "-E":
-        endpoint_lowercase = arguments[1].lower()
-
-        # check for underscore seperated endpoint and convert it
-        if "_" in arguments[1]:
-            endpoint_lowercase = endpoint_lowercase.replace("_", "")
-
-        for entry in endpoints:
-            if endpoint_lowercase == entry.lower():
-                arguments[1] = entry
-                return arguments
-
-    # otherwise if not endpoint just return back the same set of args we got to be handled by rest of the program
+    for i in range(len(arguments)):
+        if (arguments[i].lower() == "-e" or arguments[i].lower() == "--endpoint") and len(arguments) > i + 1:
+            # convert snake_case_endpoint arg to lowerCamelCase
+            arguments[i+1] = "".join([part.capitalize() for part in arguments[i+1].split("_")])
+            if len(arguments[i+1]) > 0:
+                arguments[i+1] = arguments[i+1][:1].lower() + arguments[i+1][1:]
+            
+            # handle case where user supplies endpoint with improper capitalization
+            if arguments[i+1] not in endpoints:
+                for endpoint in endpoints:
+                    if arguments[i+1].lower() == endpoint.lower():
+                        arguments[i+1] = endpoint
+            break
     return arguments
 
 
