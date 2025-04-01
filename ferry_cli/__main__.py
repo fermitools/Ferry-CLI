@@ -550,7 +550,7 @@ def handle_arg_capitalization(
 ) -> List[str]:
     # check to see if the arguments supplied are for an endpoint. IE a "-e" was supplied
     for i in range(len(arguments)):
-        if (arguments[i].lower() == "-e" or arguments[i].lower() == "--endpoint") and len(arguments) > i + 1:
+        if arguments[i].lower() in {"-e","--endpoint", "-ep", "--endpoint_params"} and len(arguments) > i + 1:
             # convert snake_case_endpoint arg to lowerCamelCase
             arguments[i+1] = "".join([part.capitalize() for part in arguments[i+1].split("_")])
             if len(arguments[i+1]) > 0:
