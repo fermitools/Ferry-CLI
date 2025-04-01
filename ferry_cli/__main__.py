@@ -545,6 +545,26 @@ def handle_no_args(_config_path: Optional[pathlib.Path]) -> bool:
     sys.exit(0)
 
 
+def handle_arg_capitalization(
+    endpoints: Dict[str, Any], arguments: List[str]
+) -> List[str]:
+    # check to see if the arguments supplied are for an endpoint. IE a "-e" was supplied
+    for i in range(len(arguments)):
+        if arguments[i].lower() in {"-e","--endpoint", "-ep", "--endpoint_params"} and len(arguments) > i + 1:
+            # convert snake_case_endpoint arg to lowerCamelCase
+            arguments[i+1] = "".join([part.capitalize() for part in arguments[i+1].split("_")])
+            if len(arguments[i+1]) > 0:
+                arguments[i+1] = arguments[i+1][:1].lower() + arguments[i+1][1:]
+            
+            # handle case where user supplies endpoint with improper capitalization
+            if arguments[i+1] not in endpoints:
+                for endpoint in endpoints:
+                    if arguments[i+1].lower() == endpoint.lower():
+                        arguments[i+1] = endpoint
+            break
+    return arguments
+
+
 def main() -> None:
     _config_path = config.get_configfile_path()
     if len(sys.argv) == 1:
@@ -597,6 +617,7 @@ def main() -> None:
                 print("Successfully stored latest swagger file.\n")
 
         ferry_cli.endpoints = ferry_cli.generate_endpoints()
+        other_args = handle_arg_capitalization(ferry_cli.endpoints, other_args)
         ferry_cli.run(
             auth_args.debug_level,
             auth_args.dryrun,
