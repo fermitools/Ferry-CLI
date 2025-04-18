@@ -545,6 +545,7 @@ def handle_no_args(_config_path: Optional[pathlib.Path]) -> bool:
     sys.exit(0)
 
 
+# pylint: disable=too-many-branches
 def main() -> None:
     _config_path = config.get_configfile_path()
     if len(sys.argv) == 1:
@@ -580,9 +581,6 @@ def main() -> None:
 
     try:
         auth_args, other_args = get_auth_args()
-        if not other_args:
-            ferry_cli.get_arg_parser().print_help()
-            sys.exit(0)
         ferry_cli.authorizer = set_auth_from_args(auth_args)
         if auth_args.update or not os.path.exists(f"{CONFIG_DIR}/swagger.json"):
             if auth_args.debug_level != DebugLevel.QUIET:
@@ -595,6 +593,14 @@ def main() -> None:
             ferry_cli.ferry_api.get_latest_swagger_file()
             if auth_args.debug_level != DebugLevel.QUIET:
                 print("Successfully stored latest swagger file.\n")
+            if not other_args:
+                if auth_args.debug_level != DebugLevel.QUIET:
+                    print("No more arguments provided. Exiting.")
+                sys.exit(0)
+
+        if not other_args:
+            ferry_cli.get_arg_parser().print_help()
+            sys.exit(1)
 
         ferry_cli.endpoints = ferry_cli.generate_endpoints()
         ferry_cli.run(
