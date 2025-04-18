@@ -91,7 +91,9 @@ class Auth(ABC):
     """This is the base class on which all Auth classes should build"""
 
     def __call__(self: "Auth", s: requests.Session) -> requests.Session:
-        return s
+        raise NotImplementedError(
+            "Must use a subclass of Auth with __call__ method defined"
+        )
 
 
 class AuthToken(Auth):
