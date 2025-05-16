@@ -16,7 +16,7 @@ repos:
       - id: mypy
         name: mypy (no tests)
         exclude: ^(tests/)
-        args: [--strict, '--ignore-missing-imports', '--disable-error-code=unused-ignore']
+        args: [--strict, '--ignore-missing-imports']
         additional_dependencies: ['types-requests', 'types-toml']
 -   repo: https://github.com/psf/black
     rev: 22.8.0

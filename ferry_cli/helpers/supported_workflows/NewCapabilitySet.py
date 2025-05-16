@@ -1,0 +1,305 @@
+# pylint: disable=invalid-name,arguments-differ,unused-import
+import sys
+from typing import Any, List
+
+try:
+    from ferry_cli.helpers.api import FerryAPI
+    from ferry_cli.helpers.auth import DebugLevel
+    from ferry_cli.helpers.workflows import Workflow
+except ImportError:
+    from helpers.api import FerryAPI  # type: ignore
+    from helpers.auth import DebugLevel  # type: ignore
+    from helpers.workflows import Workflow  # type: ignore
+
+
+class NewCapabilitySet(Workflow):
+    def __init__(self: "NewCapabilitySet") -> None:
+        self.name = "newCapabilitySet"
+        self.method = "PUT"
+        self.description = (
+            "Creates a new capability set based on a given role and unix group"
+        )
+        self.params = [
+            {
+                "name": "groupname",
+                "description": "UNIX group the new capability set will be associated with",
+                "type": "string",
+                "required": True,
+            },
+            {
+                "name": "gid",
+                "description": "GID of the UNIX group groupname",
+                "type": int,
+                "required": True,
+            },
+            {
+                "name": "unitname",
+                "description": "Affiliation Unit the new capability set will be associated with",
+                "type": "string",
+                "required": True,
+            },
+            {
+                "name": "fqan",
+                "description": "FQAN associated with the new capability set",
+                "type": "string",
+                "required": True,
+            },
+            {
+                "name": "setname",
+                "description": "Name of the new capability set",
+                "type": "string",
+                "required": True,
+            },
+            {
+                "name": "scopes_pattern",
+                "description": "Scopes of the new capability set",
+                "type": "string",
+                "required": True,
+            },
+        ]
+        super().__init__()
+
+    def run(self: "NewCapabilitySet", api: "FerryAPI", args: Any) -> Any:  # type: ignore # pylint: disable=arguments-differ,too-many-branches,too-many-statements
+        """Run the workflow to add a new capability set to FERRY"""
+        if api.dryrun:
+            print(
+                "WARNING:  This workflow is being run with the --dryrun flag.  The exact steps shown here may differ since "
+                "some of the workflow steps depend on the output of API calls."
+            )
+
+        # Note - we don't have explicit dryrun checks here because the FerryAPI class handles that for us
+        # 1. Create new group in FERRY
+        try:
+            self.verify_output(
+                api,
+                api.call_endpoint(
+                    "createGroup",
+                    method="PUT",
+                    params={
+                        "groupname": args["groupname"],
+                        "gid": args["gid"],
+                        "grouptype": "UnixGroup",
+                    },
+                ),
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            if api.debug_level != DebugLevel.QUIET:
+                print("Failed to create group")
+            if "groupname already exists" in str(e):
+                print(
+                    f"Group {args['groupname']} already exists in FERRY.  Continuing with the workflow."
+                )
+            else:
+                raise
+
+        # Check
+        if not api.dryrun:
+            try:
+                response = self.verify_output(
+                    api,
+                    api.call_endpoint(
+                        "getGroupName",
+                        params={"gid": args["gid"]},
+                    ),
+                )
+                if response["groupname"] != args["groupname"]:
+                    print(
+                        f"Group name {response['groupname']} does not match expected group name {args['groupname']}"
+                    )
+                    raise ValueError("Group name mismatch")
+            except Exception:  # pylint: disable=broad-except
+                if api.debug_level != DebugLevel.QUIET:
+                    print("Failed to verify group creation")
+                raise
+
+        # 2. Add group to unit
+        try:
+            self.verify_output(
+                api,
+                api.call_endpoint(
+                    "addGroupToUnit",
+                    method="PUT",
+                    params={
+                        "groupname": args["groupname"],
+                        "unitname": args["unitname"],
+                        "grouptype": "UnixGroup",
+                    },
+                ),
+            )
+        except Exception:  # pylint: disable=broad-except
+            if api.debug_level != DebugLevel.QUIET:
+                print("Failed to add group to unit")
+            raise
+
+        # Check
+        if not api.dryrun:
+            try:
+                response = self.verify_output(
+                    api,
+                    api.call_endpoint(
+                        "getGroupUnits",
+                        params={"groupname": args["groupname"]},
+                    ),
+                )
+                units = (entry["unitname"] for entry in response)
+                for unit in units:
+                    if unit == args["unitname"]:
+                        break
+                else:
+                    print(
+                        f"Group {args['groupname']} does not belong to unit {args['unitname']}"
+                    )
+                    raise ValueError("Group does not belong to unit")
+            except Exception:  # pylint: disable=broad-except
+                if api.debug_level != DebugLevel.QUIET:
+                    print("Failed to verify group-unit association")
+                raise
+
+        # 3. Create new FQAN
+        try:
+            self.verify_output(
+                api,
+                api.call_endpoint(
+                    "createFQAN",
+                    method="PUT",
+                    params={
+                        "fqan": args["fqan"],
+                        "unitname": args["unitname"],
+                        "groupname": args["groupname"],
+                    },
+                ),
+            )
+        except Exception:  # pylint: disable=broad-except
+            if api.debug_level != DebugLevel.QUIET:
+                print("Failed to create FQAN")
+            raise
+
+        # No Check available for FQAN creation at this time
+
+        # 4. Create capability set
+        try:
+            self.verify_output(
+                api,
+                api.call_endpoint(
+                    "createCapabilitySet",
+                    method="PUT",
+                    params={
+                        "setname": args["setname"],
+                        "pattern": args["scopes_pattern"],
+                    },
+                ),
+            )
+        except Exception:  # pylint: disable=broad-except
+            if api.debug_level != DebugLevel.QUIET:
+                print("Failed to create capability set")
+            raise
+        # Check will be after next step
+
+        # 5. Associate capability set with FQAN
+        role = self._calculate_role(args["fqan"])
+        if not role:
+            print(f"Failed to calculate role from FQAN {args['fqan']}")
+            raise ValueError("Role calculation failed")
+        try:
+            self.verify_output(
+                api,
+                api.call_endpoint(
+                    "addCapabilitySetToFQAN",
+                    method="PUT",
+                    params={
+                        "setname": args["setname"],
+                        "unitname": args["unitname"],
+                        "role": role,
+                    },
+                ),
+            )
+        except Exception:  # pylint: disable=broad-except
+            if api.debug_level != DebugLevel.QUIET:
+                print("Failed to associate capability set with FQAN")
+            raise
+
+        # Check all capability set settings
+        # TODO something is still wrong here # pylint: disable=fixme
+
+        #     Testing this, we get the error:
+        #     Group jobsubadmin already exists in FERRY.  Continuing with the workflow.
+        # Failed to verify capability set creation
+        # An error occurred while using the FERRY CLI: list indices must be integers or slices, not str
+
+        #     This indicates that there's some kind of indexing issue in the verification code here
+        #     Test this in dev.
+
+        if not api.dryrun:
+            try:
+                response = self.verify_output(
+                    api,
+                    api.call_endpoint(
+                        "getCapabilitySet",
+                        params={"setname": args["setname"]},
+                    ),
+                )
+                # Verify that the capability set name matches the expected name
+                try:
+                    assert response["setname"] == args["setname"]
+                except AssertionError:
+                    raise ValueError(
+                        f"Capability set name {response['setname']} does not match expected name {args['setname']}"
+                    )
+
+                # Verify that the capability set pattern matches the expected pattern
+                try:
+                    assert self._check_lists_for_same_elts(
+                        response["patterns"],
+                        self.scopes_string_to_list(args["scopes_pattern"]),
+                    )
+                except AssertionError:
+                    raise ValueError(
+                        f"Capability set pattern {response['patterns']} does not match expected pattern {args['scopes_pattern']}"
+                    )
+
+                # Verify that the capability set FQAN and role matches the expected FQAN and role
+                role_entries = (entry for entry in response["roles"])
+                for entry in role_entries:
+                    if entry["role"] == role:
+                        try:
+                            assert entry["fqan"] == args["fqan"]
+                        except AssertionError:
+                            raise ValueError(
+                                f"Capability set role {entry['role']} does not match expected role {role}"
+                            )
+                        break  # Good case - role and fqan match
+                else:
+                    raise ValueError(
+                        f"Capability set role does not match expected role {role} or FQAN {args['fqan']} is not found in proper role entry"
+                    )
+            except Exception:  # pylint: disable=broad-except
+                if api.debug_level != DebugLevel.QUIET:
+                    print("Failed to verify capability set creation")
+                raise
+
+    @staticmethod
+    def scopes_string_to_list(
+        scopes_string: str, out_delimiter: str = ","
+    ) -> List[str]:
+        """Convert a scopes list to a string of scopes delimited by out_delimiter
+        e.g. "scope1,scope2" -> ["scope1", "scope2"]
+        """
+        if not scopes_string:
+            return []
+        return scopes_string.split(out_delimiter)
+
+    @staticmethod
+    def _check_lists_for_same_elts(list1: List[str], list2: List[str]) -> bool:
+        """Compare two lists for the same elements, regardless of order"""
+        return sorted(list1) == sorted(list2)
+
+    @staticmethod
+    def _calculate_role(fqan: str) -> str:
+        """Calculate the role from the FQAN
+        Something like /fermilab/Role=Rolename/Capability=NULL -> Rolename
+        """
+        parts = fqan.split("/")
+        for part in parts:
+            if part.startswith("Role="):
+                return part.split("=")[1]
+        return ""
