@@ -46,7 +46,9 @@ class FerryAPI:
     ) -> Any:
         # Create a session object to persist certain parameters across requests
         if self.dryrun:
-            print(f"\nWould call endpoint: {self.base_url}{endpoint}")
+            print(
+                f"\nWould call endpoint: {self.base_url}{endpoint} with params\n{params}"
+            )
             return None
 
         debug = self.debug_level == DebugLevel.DEBUG
