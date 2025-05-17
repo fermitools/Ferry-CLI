@@ -56,6 +56,12 @@ class NewCapabilitySet(Workflow):
                 "type": "string",
                 "required": True,
             },
+            {
+                "name": "mapped_user",
+                "description": "If the capability set needs to be mapped to a specific user, this is that mapped username",
+                "type": "string",
+                "required": False,
+            },
         ]
         super().__init__()
 
@@ -146,27 +152,73 @@ class NewCapabilitySet(Workflow):
                     if unit == args["unitname"]:
                         break
                 else:
-                    print(
+                    raise ValueError(
                         f"Group {args['groupname']} does not belong to unit {args['unitname']}"
                     )
-                    raise ValueError("Group does not belong to unit")
             except Exception:  # pylint: disable=broad-except
                 if api.debug_level != DebugLevel.QUIET:
                     print("Failed to verify group-unit association")
                 raise
 
+        # TODO Test this case # pylint: disable=fixme
+        # 2a. Optional - add mapped user to group
+        if args.get("mapped_user", ""):
+            try:
+                self.verify_output(
+                    api,
+                    api.call_endpoint(
+                        "addUserToGroup",
+                        method="PUT",
+                        params={
+                            "groupname": args["groupname"],
+                            "username": args["mapped_user"],
+                            "grouptype": "UnixGroup",
+                        },
+                    ),
+                )
+            except Exception:
+                if api.debug_level != DebugLevel.QUIET:
+                    print("Failed to add mapped user to group")
+                raise
+            # Check
+            if not api.dryrun:
+                try:
+                    response = self.verify_output(
+                        api,
+                        api.call_endpoint(
+                            "getGroupMembers",
+                            params={"groupname": args["groupname"]},
+                        ),
+                    )
+                    users = (entry["username"] for entry in response)
+                    for user in users:
+                        if user == args["mapped_user"]:
+                            break
+                    else:
+                        raise ValueError(
+                            f"Mapped user {args['mapped_user']} does not belong to group {args['groupname']}"
+                        )
+                except Exception:
+                    if api.debug_level != DebugLevel.QUIET:
+                        print("Failed to verify mapped user-group association")
+                    raise
+
         # 3. Create new FQAN
         try:
+            params = {
+                "fqan": args["fqan"],
+                "unitname": args["unitname"],
+                "groupname": args["groupname"],
+            }
+            if args.get("mapped_user"):
+                params["username"] = args["mapped_user"]
+
             self.verify_output(
                 api,
                 api.call_endpoint(
                     "createFQAN",
                     method="PUT",
-                    params={
-                        "fqan": args["fqan"],
-                        "unitname": args["unitname"],
-                        "groupname": args["groupname"],
-                    },
+                    params=params,
                 ),
             )
         except Exception:  # pylint: disable=broad-except
