@@ -327,7 +327,7 @@ class NewCapabilitySet(Workflow):
     def scopes_string_to_list(
         scopes_string: str, out_delimiter: str = ","
     ) -> List[str]:
-        """Convert a scopes list to a string of scopes delimited by out_delimiter
+        """Convert a scopes string to a list of scopes delimited by out_delimiter
         e.g. "scope1,scope2" -> ["scope1", "scope2"]
         """
         if not scopes_string:
