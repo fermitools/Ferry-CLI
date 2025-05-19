@@ -271,16 +271,6 @@ class NewCapabilitySet(Workflow):
             raise
 
         # Check all capability set settings
-        # TODO something is still wrong here # pylint: disable=fixme
-
-        #     Testing this, we get the error:
-        #     Group jobsubadmin already exists in FERRY.  Continuing with the workflow.
-        # Failed to verify capability set creation
-        # An error occurred while using the FERRY CLI: list indices must be integers or slices, not str
-
-        #     This indicates that there's some kind of indexing issue in the verification code here
-        #     Test this in dev.
-
         if not api.dryrun:
             try:
                 response = self.verify_output(
@@ -290,27 +280,30 @@ class NewCapabilitySet(Workflow):
                         params={"setname": args["setname"]},
                     ),
                 )
+                # For some reason, the getCapabilitySet API returns a list, so we need to extract the first element
+                set_info = response[0]
+
                 # Verify that the capability set name matches the expected name
                 try:
-                    assert response["setname"] == args["setname"]
+                    assert set_info["setname"] == args["setname"]
                 except AssertionError:
                     raise ValueError(
-                        f"Capability set name {response['setname']} does not match expected name {args['setname']}"
+                        f"Capability set name {set_info['setname']} does not match expected name {args['setname']}"
                     )
 
                 # Verify that the capability set pattern matches the expected pattern
                 try:
                     assert self._check_lists_for_same_elts(
-                        response["patterns"],
+                        set_info["patterns"],
                         self.scopes_string_to_list(args["scopes_pattern"]),
                     )
                 except AssertionError:
                     raise ValueError(
-                        f"Capability set pattern {response['patterns']} does not match expected pattern {args['scopes_pattern']}"
+                        f"Capability set pattern {set_info['patterns']} does not match expected pattern {args['scopes_pattern']}"
                     )
 
                 # Verify that the capability set FQAN and role matches the expected FQAN and role
-                role_entries = (entry for entry in response["roles"])
+                role_entries = (entry for entry in set_info["roles"])
                 for entry in role_entries:
                     if entry["role"] == role:
                         try:
@@ -328,6 +321,7 @@ class NewCapabilitySet(Workflow):
                 if api.debug_level != DebugLevel.QUIET:
                     print("Failed to verify capability set creation")
                 raise
+        print(f"Successfully created capability set {args['setname']}.")
 
     @staticmethod
     def scopes_string_to_list(

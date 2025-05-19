@@ -368,7 +368,7 @@ class FerryCLI:
                 workflow.init_parser()
                 workflow_params, _ = workflow.parser.parse_known_args(endpoint_args)
                 json_result = workflow.run(self.ferry_api, vars(workflow_params))  # type: ignore
-                if not dryrun:
+                if (not dryrun) and json_result:
                     self.handle_output(
                         json.dumps(json_result, indent=4), args.output, debug_level
                     )
