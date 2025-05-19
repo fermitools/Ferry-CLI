@@ -5,42 +5,82 @@ from ferry_cli.helpers.auth import Auth
 from ferry_cli.helpers.supported_workflows.NewCapabilitySet import NewCapabilitySet
 
 
+@pytest.mark.parametrize(
+    "args, expected",
+    [
+        (
+            {
+                "groupname": "testgroup",
+                "gid": 1234,
+                "unitname": "testunit",
+                "fqan": "/org/Role=myrole/Capability=NULL",
+                "setname": "testcapabilityset",
+                "scopes_pattern": "scope1,scope2",
+            },
+            [
+                (
+                    "Would call endpoint: https://example.com/createGroup with params\n"
+                    + "{'groupname': 'testgroup', 'gid': 1234, 'grouptype': 'UnixGroup'}"
+                ),
+                (
+                    "Would call endpoint: https://example.com/addGroupToUnit with params\n"
+                    + "{'groupname': 'testgroup', 'unitname': 'testunit', 'grouptype': 'UnixGroup'}"
+                ),
+                (
+                    f"Would call endpoint: https://example.com/createFQAN with params\n"
+                    + "{'fqan': '/org/Role=myrole/Capability=NULL', 'unitname': 'testunit', 'groupname': 'testgroup'}"
+                ),
+                (
+                    "Would call endpoint: https://example.com/createCapabilitySet with params\n"
+                    + "{'setname': 'testcapabilityset', 'pattern': 'scope1,scope2'}"
+                ),
+                (
+                    "Would call endpoint: https://example.com/addCapabilitySetToFQAN with params\n"
+                    + "{'setname': 'testcapabilityset', 'unitname': 'testunit', 'role': 'myrole'}"
+                ),
+            ],
+        ),
+        (
+            {
+                "groupname": "testgroup",
+                "mapped_user": "testuser",
+                "gid": 1234,
+                "unitname": "testunit",
+                "fqan": "/org/Role=myrole/Capability=NULL",
+                "setname": "testcapabilityset",
+                "scopes_pattern": "scope1,scope2",
+            },
+            [
+                (
+                    "Would call endpoint: https://example.com/createGroup with params\n"
+                    + "{'groupname': 'testgroup', 'gid': 1234, 'grouptype': 'UnixGroup'}"
+                ),
+                (
+                    "Would call endpoint: https://example.com/addGroupToUnit with params\n"
+                    + "{'groupname': 'testgroup', 'unitname': 'testunit', 'grouptype': 'UnixGroup'}"
+                ),
+                (
+                    "Would call endpoint: https://example.com/addUserToGroup with params\n"
+                    + "{'groupname': 'testgroup', 'username': 'testuser', 'grouptype': 'UnixGroup'}"
+                ),
+                (
+                    f"Would call endpoint: https://example.com/createFQAN with params\n"
+                    + "{'fqan': '/org/Role=myrole/Capability=NULL', 'unitname': 'testunit', 'groupname': 'testgroup', 'username': 'testuser'}"
+                ),
+                (
+                    "Would call endpoint: https://example.com/createCapabilitySet with params\n"
+                    + "{'setname': 'testcapabilityset', 'pattern': 'scope1,scope2'}"
+                ),
+                (
+                    "Would call endpoint: https://example.com/addCapabilitySetToFQAN with params\n"
+                    + "{'setname': 'testcapabilityset', 'unitname': 'testunit', 'role': 'myrole'}"
+                ),
+            ],
+        ),
+    ],
+)
 @pytest.mark.unit
-def test_NewCapabiilitySet_run(capsys):
-    endpoint = "https://example.com"
-    args = {
-        "groupname": "testgroup",
-        "gid": 1234,
-        "unitname": "testunit",
-        "fqan": "/org/Role=myrole/Capability=NULL",
-        "setname": "testcapabilityset",
-        "scopes_pattern": "scope1,scope2",
-    }
-    role = "myrole"
-
-    expected_output = [
-        (
-            f"Would call endpoint: {endpoint}/createGroup with params\n"
-            + f"{{'groupname': '{args['groupname']}', 'gid': {args['gid']}, 'grouptype': 'UnixGroup'}}"
-        ),
-        (
-            f"Would call endpoint: {endpoint}/addGroupToUnit with params\n"
-            + f"{{'groupname': '{args['groupname']}', 'unitname': '{args['unitname']}', 'grouptype': 'UnixGroup'}}"
-        ),
-        (
-            f"Would call endpoint: {endpoint}/createFQAN with params\n"
-            + f"{{'fqan': '{args['fqan']}', 'unitname': '{args['unitname']}', 'groupname': '{args['groupname']}'}}"
-        ),
-        (
-            f"Would call endpoint: {endpoint}/createCapabilitySet with params\n"
-            + f"{{'setname': '{args['setname']}', 'pattern': '{args['scopes_pattern']}'}}"
-        ),
-        (
-            f"Would call endpoint: {endpoint}/addCapabilitySetToFQAN with params\n"
-            + f"{{'setname': '{args['setname']}', 'unitname': '{args['unitname']}', 'role': '{role}'}}"
-        ),
-    ]
-
+def test_NewCapabiilitySet_run(args, expected, capsys):
     api = FerryAPI(
         base_url="https://example.com/",
         authorizer=Auth(),
@@ -53,7 +93,7 @@ def test_NewCapabiilitySet_run(capsys):
     )
 
     captured = capsys.readouterr()
-    for elt in expected_output:
+    for elt in expected:
         assert elt in captured.out
 
 
