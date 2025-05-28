@@ -43,6 +43,39 @@ from ferry_cli.helpers.supported_workflows.NewCapabilitySet import NewCapability
         (
             {
                 "groupname": "testgroup",
+                "gid": 1234,
+                "unitname": "testunit",
+                "fqan": "/org/Role=myrole/Capability=NULL",
+                "setname": "testcapabilityset",
+                "scopes_pattern": "scope1,scope2",
+                "token_subject": "none",
+            },
+            [
+                (
+                    "Would call endpoint: https://example.com/createGroup with params\n"
+                    + "{'groupname': 'testgroup', 'gid': 1234, 'grouptype': 'UnixGroup'}"
+                ),
+                (
+                    "Would call endpoint: https://example.com/addGroupToUnit with params\n"
+                    + "{'groupname': 'testgroup', 'unitname': 'testunit', 'grouptype': 'UnixGroup'}"
+                ),
+                (
+                    f"Would call endpoint: https://example.com/createFQAN with params\n"
+                    + "{'fqan': '/org/Role=myrole/Capability=NULL', 'unitname': 'testunit', 'groupname': 'testgroup'}"
+                ),
+                (
+                    "Would call endpoint: https://example.com/createCapabilitySet with params\n"
+                    + "{'setname': 'testcapabilityset', 'pattern': 'scope1,scope2', 'token_subject': 'none'}"
+                ),
+                (
+                    "Would call endpoint: https://example.com/addCapabilitySetToFQAN with params\n"
+                    + "{'setname': 'testcapabilityset', 'unitname': 'testunit', 'role': 'myrole'}"
+                ),
+            ],
+        ),
+        (
+            {
+                "groupname": "testgroup",
                 "mapped_user": "testuser",
                 "gid": 1234,
                 "unitname": "testunit",

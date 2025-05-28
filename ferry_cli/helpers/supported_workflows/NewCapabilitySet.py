@@ -62,6 +62,15 @@ class NewCapabilitySet(Workflow):
                 "type": "string",
                 "required": False,
             },
+            {
+                "name": "token_subject",
+                "description": (
+                    "The default will just be setname@fnal.gov, but if the resultant token should have the user UID from FERRY as the subject "
+                    + 'then set this to the string "none"'
+                ),
+                "type": "string",
+                "required": False,
+            },
         ]
         super().__init__()
 
@@ -230,15 +239,19 @@ class NewCapabilitySet(Workflow):
 
         # 4. Create capability set
         try:
+            new_cap_set_params = {
+                "setname": args["setname"],
+                "pattern": args["scopes_pattern"],
+            }
+            if args.get("token_subject", None) is not None:
+                new_cap_set_params["token_subject"] = args["token_subject"]
+
             self.verify_output(
                 api,
                 api.call_endpoint(
                     "createCapabilitySet",
                     method="PUT",
-                    params={
-                        "setname": args["setname"],
-                        "pattern": args["scopes_pattern"],
-                    },
+                    params=new_cap_set_params,
                 ),
             )
         except Exception:  # pylint: disable=broad-except
