@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import sys
 from typing import Any, Dict, List
 
 try:
@@ -41,9 +40,14 @@ class Workflow(ABC):
         if api.dryrun:
             return {}
         if not response:
-            print("Failed'")
-            sys.exit(1)
-        if "ferry_status" in response and response.get("ferry_status", "") != "success":
+            print("Failed to verify output")
+            raise RuntimeError("Empty response from FERRY")
+        if response.get("ferry_status", "") != "success":
+            print("Failed to verify output")
             print(f"{response}")
-            sys.exit(1)
+            if "ferry_error" in response:
+                raise RuntimeError(
+                    "FERRY returned error(s): " + ", ".join(response["ferry_error"])
+                )
+            raise RuntimeError("FERRY did not return a successful response")
         return response["ferry_output"]
