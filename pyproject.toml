@@ -1,0 +1,39 @@
+[project]
+name = "ferry_cli"
+version = "1.1.0"
+authors = [
+	{name = "Lucas Trestka", email = "ltrestka@fnal.gov"},
+	{name = "Shreyas Bhat", email = "sbhat@fnal.gov"},
+	{name = "Lydia Brynmoor", email ="brynmool@fnal.gov" },
+]
+description = "A command line interface for making FERRY API calls. Can be used to automate repetitive tasks, incorporate usage safeguards for users or groups, or create scripts for common sequences."
+dependencies = [
+        "requests>=2.31.0",
+        "validators>=0.22.0",
+        "urllib3>=2.1.0",
+
+]
+classifiers =[
+	"Programming Language :: Python :: 3.8+",
+	"Operating System :: OS Independent",
+]
+requires-python = ">= 3.8"
+dynamic = ["readme"]
+
+[project.urls]
+Homepage = "https://github.com/fermitools/Ferry-CLI"
+
+[project.scripts]
+ferry-cli = "ferry_cli.ferry_cli:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+readme = {file = "README.md", content-type = "text/markdown"}
+
+[tool.setuptools.package-data]
+"ferry_cli.config" = ["config.ini"]
+
+
