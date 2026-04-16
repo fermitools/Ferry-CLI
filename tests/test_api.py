@@ -10,7 +10,7 @@ from ferry_cli.helpers.auth import AuthToken
 
 TokenGetCommand = "htgettoken"
 tokenDestroyCommand = "htdestroytoken"
-tokenDecodeCommand = "httokendecode"
+tokenDecodeCommand = "htdecodetoken"
 
 tokenHost = "htvaultprod.fnal.gov"  # "-a arg"
 tokenUser = "fermilab"  # "-i arg"
@@ -58,9 +58,7 @@ def get_token(monkeypatch, tmp_path):
 
 @pytest.fixture
 def get_token_path():
-    uid = os.getuid()
-    token_path = f"/run/user/{uid}/bt_u{uid}"
-    return token_path
+    return os.getenv("BEARER_TOKEN_FILE", f"/run/user/{os.getuid()}/bt_u{os.getuid()}")
 
 
 @pytest.fixture
