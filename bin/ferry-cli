@@ -1,10 +1,1 @@
-#!/usr/bin/env python3
-# pylint: disable=invalid-name,wrong-import-position
-import os
-import sys
-
-PREFIX = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PREFIX)
-from ferry_cli import __main__
-
-__main__.main()
+../src/ferry_cli/ferry_cli.py

@@ -1,19 +1,82 @@
 from collections import namedtuple
 import io
 import os
+import pathlib
 import subprocess
 import sys
+
 import pytest
 
-from ferry_cli.__main__ import (
+from ferry_cli.ferry_cli import (
     FerryCLI,
     handle_show_configfile,
     get_config_info_from_user,
     help_called,
     normalize_endpoint,
 )
-import ferry_cli.__main__ as _main
+import ferry_cli.ferry_cli as _main
 import ferry_cli.config.config as _config
+
+
+@pytest.fixture
+def get_ferry_cli_path():
+    root = pathlib.Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    bindir = root / "src" / "ferry_cli"
+    return str((bindir / "ferry_cli.py").resolve())
+
+
+@pytest.fixture
+def install_mock_swagger_json_file(tmp_path):
+    import os
+    import shutil
+
+    root = pathlib.Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    configdir = root / "src" / "ferry_cli" / "config"
+    swagger_path = configdir / "swagger.json"
+    try:
+        old_file = shutil.move(swagger_path, tmp_path / "old_swagger.json")
+    except FileNotFoundError:
+        old_file = None
+    with open(swagger_path, "w") as f:
+        f.write(
+            """
+{
+    "swagger": "2.0",
+    "info": {},
+    "paths" : {
+        "/ping": {
+            "get": {
+                "description": "description",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "summary",
+                "parameters": [ ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.jsonOutput"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+                """
+        )
+
+    yield
+    os.unlink(swagger_path)
+    if old_file is not None:
+        shutil.move(old_file, swagger_path)
 
 
 @pytest.fixture
@@ -66,7 +129,7 @@ def test_sanitize_base_url():
 
 @pytest.mark.unit
 def test_handle_show_configfile_configfile_exists(
-    capsys, monkeypatch, write_and_set_fake_config_file
+    capsys, write_and_set_fake_config_file
 ):
     # If we have a config file, we should print out the path to the config file and return
     config_file = write_and_set_fake_config_file
@@ -110,7 +173,6 @@ def test_handle_show_configfile_configfile_does_not_exist(
 @pytest.mark.unit
 def test_handle_show_configfile_envs_not_found(
     capsys,
-    monkeypatch,
     configfile_doesnt_exist,
     mock_write_config_file_with_user_values,
 ):
@@ -148,13 +210,14 @@ def test_handle_show_configfile_envs_not_found(
 )
 @pytest.mark.unit
 def test_show_configfile_flag_with_other_args(
-    tmp_path, monkeypatch, write_and_set_fake_config_file, args, expected_out_substr
+    install_mock_swagger_json_file,
+    get_ferry_cli_path,
+    write_and_set_fake_config_file,
+    args,
+    expected_out_substr,
 ):
     # Since we have to handle --show-config-file outside of argparse, make sure we get the correct behavior given different combinations of args
-    bindir = f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/bin"
-    exe = f"{bindir}/ferry-cli"
-
-    exe_args = [sys.executable, exe]
+    exe_args = [sys.executable, get_ferry_cli_path]
     exe_args.extend(args)
 
     try:
@@ -230,8 +293,6 @@ def test_help_called():
 )
 @pytest.mark.unit
 def test_handle_no_args_configfile_exists(
-    monkeypatch,
-    tmp_path,
     mock_write_config_file_with_user_values,
     capsys,
     inject_fake_stdin,
@@ -285,8 +346,6 @@ def test_handle_no_args_configfile_exists(
 )
 @pytest.mark.unit
 def test_handle_no_args_configfile_does_not_exist(
-    monkeypatch,
-    tmp_path,
     configfile_doesnt_exist,
     capsys,
     inject_fake_stdin,
@@ -371,9 +430,15 @@ dev_url = https://example.com:12345/
     ],
 )
 @pytest.mark.test
-def test_server_flag_main(tmp_path, monkeypatch, args, expected_out_url):
+def test_server_flag_main(
+    tmp_path,
+    monkeypatch,
+    install_mock_swagger_json_file,
+    get_ferry_cli_path,
+    args,
+    expected_out_url,
+):
     # Run ferry-cli with overridden base_url in dryrun mode to endpoint ping. Then see if we see the correct server in output
-    override_url = "https://override_example.com:54321/"
     # Set up fake config
     fake_config_text = """
 [api]
@@ -389,10 +454,7 @@ dev_url = https://example.com:12345/
     config_file.write_text(fake_config_text)
     monkeypatch.setenv("XDG_CONFIG_HOME", str(p.absolute()))
 
-    bindir = f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/bin"
-    exe = f"{bindir}/ferry-cli"
-
-    exe_args = [sys.executable, exe]
+    exe_args = [sys.executable, get_ferry_cli_path]
     exe_args.extend(args + ["--dryrun", "-e", "ping"])
 
     proc = subprocess.run(exe_args, capture_output=True)
