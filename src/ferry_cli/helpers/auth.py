@@ -7,7 +7,6 @@ from typing import List, Optional, Tuple
 
 # pylint: disable=import-error,no-else-return
 import requests
-import requests.auth
 
 try:
     from ferry_cli.helpers.ferry_parser import FerryParser
