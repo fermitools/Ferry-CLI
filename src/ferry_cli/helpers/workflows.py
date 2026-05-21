@@ -3,10 +3,10 @@ from typing import Any, Dict, List
 
 try:
     from ferry_cli.helpers.api import FerryAPI  # pylint: disable=unused-import
-    from ferry_cli.helpers.customs import FerryParser
+    from ferry_cli.helpers.ferry_parser import FerryParser
 except ImportError:
     from helpers.api import FerryAPI  # type: ignore # pylint: disable=unused-import
-    from helpers.customs import FerryParser  # type: ignore
+    from helpers.ferry_parser import FerryParser  # type: ignore
 
 
 class Workflow(ABC):

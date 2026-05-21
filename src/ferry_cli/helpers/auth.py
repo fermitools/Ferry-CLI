@@ -10,10 +10,10 @@ import requests
 import requests.auth
 
 try:
-    from ferry_cli.helpers.customs import FerryParser
+    from ferry_cli.helpers.ferry_parser import FerryParser
     from ferry_cli.version import request_project_info
 except ImportError:
-    from helpers.customs import FerryParser  # type: ignore
+    from helpers.ferry_parser import FerryParser  # type: ignore
     from version import request_project_info  # type: ignore
 
 

@@ -22,7 +22,7 @@ try:
         set_auth_from_args,
         get_auth_parser,
     )
-    from ferry_cli.helpers.customs import FerryParser
+    from ferry_cli.helpers.ferry_parser import FerryParser
     from ferry_cli.helpers.supported_workflows import SUPPORTED_WORKFLOWS
     from ferry_cli.safeguards.dcs import SafeguardsDCS
     from ferry_cli.config import CONFIG_DIR, config
@@ -36,7 +36,7 @@ except ImportError:
         set_auth_from_args,
         get_auth_parser,
     )
-    from helpers.customs import FerryParser  # type: ignore
+    from helpers.ferry_parser import FerryParser  # type: ignore
     from helpers.supported_workflows import SUPPORTED_WORKFLOWS  # type: ignore
     from safeguards.dcs import SafeguardsDCS  # type: ignore
     from config import CONFIG_DIR, config  # type: ignore
