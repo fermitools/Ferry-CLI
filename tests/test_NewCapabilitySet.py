@@ -27,16 +27,12 @@ from ferry_cli.helpers.supported_workflows.NewCapabilitySet import NewCapability
                     + "{'groupname': 'testgroup', 'unitname': 'testunit', 'grouptype': 'UnixGroup'}"
                 ),
                 (
-                    f"Would call endpoint: https://example.com/createFQAN with params\n"
-                    + "{'fqan': '/org/Role=myrole/Capability=NULL', 'unitname': 'testunit', 'groupname': 'testgroup'}"
-                ),
-                (
                     "Would call endpoint: https://example.com/createCapabilitySet with params\n"
                     + "{'setname': 'testcapabilityset', 'pattern': 'scope1,scope2'}"
                 ),
                 (
-                    "Would call endpoint: https://example.com/addCapabilitySetToFQAN with params\n"
-                    + "{'setname': 'testcapabilityset', 'unitname': 'testunit', 'role': 'myrole'}"
+                    f"Would call endpoint: https://example.com/createFQAN with params\n"
+                    + "{'fqan': '/org/Role=myrole/Capability=NULL', 'unitname': 'testunit', 'groupname': 'testgroup', 'setname': 'testcapabilityset'}"
                 ),
             ],
         ),
@@ -60,16 +56,12 @@ from ferry_cli.helpers.supported_workflows.NewCapabilitySet import NewCapability
                     + "{'groupname': 'testgroup', 'unitname': 'testunit', 'grouptype': 'UnixGroup'}"
                 ),
                 (
-                    f"Would call endpoint: https://example.com/createFQAN with params\n"
-                    + "{'fqan': '/org/Role=myrole/Capability=NULL', 'unitname': 'testunit', 'groupname': 'testgroup'}"
-                ),
-                (
                     "Would call endpoint: https://example.com/createCapabilitySet with params\n"
                     + "{'setname': 'testcapabilityset', 'pattern': 'scope1,scope2', 'tokensubject': 'none'}"
                 ),
                 (
-                    "Would call endpoint: https://example.com/addCapabilitySetToFQAN with params\n"
-                    + "{'setname': 'testcapabilityset', 'unitname': 'testunit', 'role': 'myrole'}"
+                    f"Would call endpoint: https://example.com/createFQAN with params\n"
+                    + "{'fqan': '/org/Role=myrole/Capability=NULL', 'unitname': 'testunit', 'groupname': 'testgroup', 'setname': 'testcapabilityset'}"
                 ),
             ],
         ),
@@ -97,16 +89,12 @@ from ferry_cli.helpers.supported_workflows.NewCapabilitySet import NewCapability
                     + "{'groupname': 'testgroup', 'username': 'testuser', 'grouptype': 'UnixGroup'}"
                 ),
                 (
-                    f"Would call endpoint: https://example.com/createFQAN with params\n"
-                    + "{'fqan': '/org/Role=myrole/Capability=NULL', 'unitname': 'testunit', 'groupname': 'testgroup', 'username': 'testuser'}"
-                ),
-                (
                     "Would call endpoint: https://example.com/createCapabilitySet with params\n"
                     + "{'setname': 'testcapabilityset', 'pattern': 'scope1,scope2'}"
                 ),
                 (
-                    "Would call endpoint: https://example.com/addCapabilitySetToFQAN with params\n"
-                    + "{'setname': 'testcapabilityset', 'unitname': 'testunit', 'role': 'myrole'}"
+                    f"Would call endpoint: https://example.com/createFQAN with params\n"
+                    + "{'fqan': '/org/Role=myrole/Capability=NULL', 'unitname': 'testunit', 'groupname': 'testgroup', 'setname': 'testcapabilityset', 'username': 'testuser'}"
                 ),
             ],
         ),
