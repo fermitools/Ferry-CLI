@@ -80,7 +80,7 @@ class FerryAPI:
             else:
                 raise ValueError("Unsupported HTTP method.")
             if debug:
-                print(f"Called Endpoint: {response.request.url}")
+                print(f"\nCalled Endpoint: {response.request.url}")
             if not response.ok:
                 raise RuntimeError(
                     f" *** API Failure: Status code {response.status_code} returned from endpoint /{endpoint}"

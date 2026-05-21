@@ -118,7 +118,9 @@ class AuthToken(Auth):
         """Modify the passed in session to add token auth"""
         s.headers["Authorization"] = f"Bearer {self.token_string}"
         if self.debug:
-            print('\nAdding Authorization header: "Bearer XXXXXXXXXXX" to HTTP session')
+            print(
+                '\nAdding Authorization header: "Bearer XXXXXXXXXXX" to HTTP session\n'
+            )
             print("Actual Token string redacted\n")
         return s
 

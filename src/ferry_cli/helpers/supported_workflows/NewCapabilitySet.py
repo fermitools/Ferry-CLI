@@ -1,5 +1,4 @@
 # pylint: disable=invalid-name,arguments-differ,unused-import
-import sys
 from typing import Any, List
 
 try:
@@ -220,32 +219,7 @@ class NewCapabilitySet(Workflow):
                         print("Failed to verify mapped user-group association")
                     raise
 
-        # 3. Create new FQAN
-        try:
-            params = {
-                "fqan": args["fqan"],
-                "unitname": args["unitname"],
-                "groupname": args["groupname"],
-            }
-            if args.get("mapped_user"):
-                params["username"] = args["mapped_user"]
-
-            self.verify_output(
-                api,
-                api.call_endpoint(
-                    "createFQAN",
-                    method="PUT",
-                    params=params,
-                ),
-            )
-        except Exception:  # pylint: disable=broad-except
-            if api.debug_level != DebugLevel.QUIET:
-                print("Failed to create FQAN")
-            raise
-
-        # No Check available for FQAN creation at this time
-
-        # 4. Create capability set
+        # 3. Create capability set
         try:
             new_cap_set_params = {
                 "setname": args["setname"],
@@ -268,32 +242,38 @@ class NewCapabilitySet(Workflow):
             if api.debug_level != DebugLevel.QUIET:
                 print("Failed to create capability set")
             raise
-        # Check will be after next step
+        # Check will be after step 4
 
-        # 5. Associate capability set with FQAN
-        role = self._calculate_role(args["fqan"])
-        if not role:
-            print(f"Failed to calculate role from FQAN {args['fqan']}")
-            raise ValueError("Role calculation failed")
+        # 4. Create new FQAN
         try:
+            params = {
+                "fqan": args["fqan"],
+                "unitname": args["unitname"],
+                "groupname": args["groupname"],
+                "setname": args["setname"],
+            }
+            if args.get("mapped_user"):
+                params["username"] = args["mapped_user"]
+
             self.verify_output(
                 api,
                 api.call_endpoint(
-                    "addCapabilitySetToFQAN",
+                    "createFQAN",
                     method="PUT",
-                    params={
-                        "setname": args["setname"],
-                        "unitname": args["unitname"],
-                        "role": role,
-                    },
+                    params=params,
                 ),
             )
         except Exception:  # pylint: disable=broad-except
             if api.debug_level != DebugLevel.QUIET:
-                print("Failed to associate capability set with FQAN")
+                print("Failed to create FQAN")
             raise
 
         # Check all capability set settings
+        role = self._calculate_role(args["fqan"])
+        if not role:
+            print(f"Failed to calculate role from FQAN {args['fqan']}")
+            raise ValueError("Role calculation failed")
+
         if not api.dryrun:
             try:
                 response = self.verify_output(
