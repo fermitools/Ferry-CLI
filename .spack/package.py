@@ -51,7 +51,6 @@ class FerryCli(PythonPackage):
         "charset-normalizer",
         "idna",
         "requests",
-        "urllib3",
         "setuptools",
         "validators",
     ]

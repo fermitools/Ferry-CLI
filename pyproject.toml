@@ -10,8 +10,6 @@ description = "A command line interface for making FERRY API calls. Can be used 
 dependencies = [
         "requests>=2.31.0",
         "validators>=0.22.0",
-        "urllib3>=2.1.0",
-
 ]
 classifiers =[
 	"Programming Language :: Python :: 3.8+",

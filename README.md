@@ -5,17 +5,9 @@
 
 AND
 
-* Python 3.6  or higher + pip with the following libraries:
-	certifi>=2023.11.17
-	charset-normalizer>=3.3.2
-	idna>=3.4
-	requests>=2.31.0
-	urllib3>=2.1.0
-
-OR
-
-* [spack](https://github.com/FNALssi/fermi-spack-tools/wiki) package manager with the [scd_recipes](https://github.com/marcmengel/scd_recipes) repository
-  * See .spack/package.py for package information
+* Python 3.8  or higher + pip with the following libraries:
+	requests>=2.31.0,
+    validators>=0.22.0
 
 ## INSTALL
 Install is simple, and can be done via source, pip, or spack:
