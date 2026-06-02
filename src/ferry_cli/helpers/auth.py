@@ -7,13 +7,12 @@ from typing import List, Optional, Tuple
 
 # pylint: disable=import-error,no-else-return
 import requests
-import requests.auth
 
 try:
-    from ferry_cli.helpers.customs import FerryParser
+    from ferry_cli.helpers.ferry_parser import FerryParser
     from ferry_cli.version import request_project_info
 except ImportError:
-    from helpers.customs import FerryParser  # type: ignore
+    from helpers.ferry_parser import FerryParser  # type: ignore
     from version import request_project_info  # type: ignore
 
 
@@ -119,7 +118,9 @@ class AuthToken(Auth):
         """Modify the passed in session to add token auth"""
         s.headers["Authorization"] = f"Bearer {self.token_string}"
         if self.debug:
-            print('\nAdding Authorization header: "Bearer XXXXXXXXXXX" to HTTP session')
+            print(
+                '\nAdding Authorization header: "Bearer XXXXXXXXXXX" to HTTP session\n'
+            )
             print("Actual Token string redacted\n")
         return s
 
