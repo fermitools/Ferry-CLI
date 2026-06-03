@@ -7,7 +7,7 @@ try:
 except ImportError:
     from config import CONFIG_DIR  # type: ignore
 
-__config_path_post_basedir = pathlib.Path("ferry_cli/config.ini")
+__config_path_basename = pathlib.Path("config.ini")
 
 
 def get_configfile_path() -> Optional[pathlib.Path]:
@@ -24,32 +24,52 @@ def get_configfile_path() -> Optional[pathlib.Path]:
     That should be ascertained by checking the return value against None, and then
     using the pathlib.Path.exists() method
     """
+    configfile_dir = get_configfile_dir()
+    return (
+        configfile_dir / __config_path_basename if configfile_dir is not None else None
+    )
+
+
+def get_configfile_dir() -> Optional[pathlib.Path]:
+    """
+    Return the directory where config files should go. If $XDG_CONFIG_HOME is set,
+    its value is used as the root for the config file path.  Otherwise,
+    $HOME/.config is used.  If for some reason $HOME is not set,
+    this function will return None.
+
+    Equivalent to the shell call
+    echo ${XDG_CONFIG_HOME:-HOME/.config}/ferry_cli
+
+    Note that this call does NOT guarantee that the directory actually exists at the returned path.
+    That should be ascertained by checking the return value against None, and then
+    using the pathlib.Path.exists() method
+    """
 
     # TODO:  Once SL7 EOL has passed, change these into assignment expressions. # pylint: disable=fixme
     # e.g. if (xdg_path := _get_configfile_path_xdg_config_home()): return xdg_path
-    xdg_path = _get_configfile_path_xdg_config_home()
-    if xdg_path:
-        return xdg_path
+    xdg_dir = _get_configfile_dir_xdg_config_home()
+    if xdg_dir:
+        return xdg_dir / "ferry_cli"
 
-    home_path = _get_configfile_path_home()
-    if home_path:
-        return home_path
+    home_dir = _get_configfile_dir_home()
+    if home_dir:
+        return home_dir / "ferry_cli"
 
     return None
 
 
-def _get_configfile_path_xdg_config_home() -> Optional[pathlib.Path]:
-    xdg_config_home_val = os.getenv("XDG_CONFIG_HOME")
-    if not xdg_config_home_val:
-        return None
-    return pathlib.Path(xdg_config_home_val) / __config_path_post_basedir
+def _get_configfile_dir_xdg_config_home() -> Optional[pathlib.Path]:
+    _xdg_config_home_val = os.getenv("XDG_CONFIG_HOME")
+    xdg_config_home_val = _xdg_config_home_val.strip() if _xdg_config_home_val else None
+    return (
+        pathlib.Path(xdg_config_home_val) if xdg_config_home_val is not None else None
+    )
 
 
-def _get_configfile_path_home() -> Optional[pathlib.Path]:
-    home = os.getenv("HOME")
-    if not home:
-        return None
-    return pathlib.Path(home) / ".config" / __config_path_post_basedir
+def _get_configfile_dir_home() -> Optional[pathlib.Path]:
+    _home = os.getenv("HOME")
+    home = _home.strip() if _home else None
+    return pathlib.Path(home) / ".config" if home is not None else None
 
 
 def write_out_configfile(config_values: Dict[str, str]) -> pathlib.Path:

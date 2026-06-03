@@ -63,22 +63,20 @@ def get_write_out_configfile_test_params():
 
 
 @pytest.mark.unit
-def test_get_configfile_xdg_config_home_(
+def test_get_configfile_dir_xdg_config_home_(
     stash_xdg_config_home, create_config_file_dummy, tmp_path, monkeypatch
 ):
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
-    assert not config._get_configfile_path_xdg_config_home()
+    assert not config._get_configfile_dir_xdg_config_home()
     env_path = tmp_path
     monkeypatch.setenv("XDG_CONFIG_HOME", env_path)
     create_config_file_dummy(env_path, "ferry_cli")
 
-    assert config._get_configfile_path_xdg_config_home() == pathlib.Path(
-        f"{env_path}/ferry_cli/config.ini"
-    )
+    assert config._get_configfile_dir_xdg_config_home() == pathlib.Path(f"{env_path}")
 
 
 @pytest.mark.unit
-def test_get_configfile_home(
+def test_get_configfile_dir_home(
     stash_home, create_config_file_dummy, tmp_path, monkeypatch
 ):
     monkeypatch.delenv("HOME", raising=False)
@@ -86,9 +84,7 @@ def test_get_configfile_home(
     create_config_file_dummy(env_path, ".config", "ferry_cli")
     monkeypatch.setenv("HOME", env_path)
 
-    assert config._get_configfile_path_home() == pathlib.Path(
-        f"{env_path}/.config/ferry_cli/config.ini"
-    )
+    assert config._get_configfile_dir_home() == pathlib.Path(f"{env_path}/.config")
 
 
 class _expectedPathRoot(enum.Enum):
@@ -97,26 +93,71 @@ class _expectedPathRoot(enum.Enum):
     NOT_FOUND = 3
 
 
-configfile_test_param = namedtuple(
-    "configfile_test_param",
+configfile_dir_test_param = namedtuple(
+    "configfile_dir_test_param",
     [
-        "xdg_config_home_path",
-        "home_config_path",
+        "xdg_config_home_dir",
+        "home_config_dir",
         "expected",
     ],
 )
 
-get_configfile_params_for_test = [
-    configfile_test_param(True, True, _expectedPathRoot.XDG_CONFIG_HOME),
-    configfile_test_param(True, False, _expectedPathRoot.XDG_CONFIG_HOME),
-    configfile_test_param(False, True, _expectedPathRoot.HOME),
-    configfile_test_param(False, False, _expectedPathRoot.NOT_FOUND),
+get_configfile_params_for_dir_test = [
+    configfile_dir_test_param(True, True, _expectedPathRoot.XDG_CONFIG_HOME),
+    configfile_dir_test_param(True, False, _expectedPathRoot.XDG_CONFIG_HOME),
+    configfile_dir_test_param(False, True, _expectedPathRoot.HOME),
+    configfile_dir_test_param(False, False, _expectedPathRoot.NOT_FOUND),
 ]
 
 
 @pytest.mark.parametrize(
     "param_val",
-    get_configfile_params_for_test,
+    get_configfile_params_for_dir_test,
+)
+@pytest.mark.unit
+def test_get_configfile_dir(
+    stash_xdg_config_home,
+    stash_home,
+    tmp_path,
+    monkeypatch,
+    param_val,
+):
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    monkeypatch.delenv("HOME", raising=False)
+    xdg_path = tmp_path
+    home_path = tmp_path
+    if param_val.xdg_config_home_dir:
+        monkeypatch.setenv("XDG_CONFIG_HOME", xdg_path)
+    if param_val.home_config_dir:
+        monkeypatch.setenv("HOME", home_path)
+
+    if param_val.expected == _expectedPathRoot.XDG_CONFIG_HOME:
+        expectedPath = xdg_path / "ferry_cli"
+        assert config.get_configfile_dir() == expectedPath
+    elif param_val.expected == _expectedPathRoot.HOME:
+        expectedPath = home_path / ".config" / "ferry_cli"
+        assert config.get_configfile_dir() == expectedPath
+    else:
+        assert not config.get_configfile_dir()
+
+
+configfile_path_test_param = namedtuple(
+    "configfile_path_test_param",
+    [
+        "xdg_config_home_dir",
+        "expected",
+    ],
+)
+
+get_configfile_params_for_path_test = [
+    configfile_path_test_param(True, _expectedPathRoot.XDG_CONFIG_HOME),
+    configfile_path_test_param(False, _expectedPathRoot.NOT_FOUND),
+]
+
+
+@pytest.mark.parametrize(
+    "param_val",
+    get_configfile_params_for_path_test,
 )
 @pytest.mark.unit
 def test_get_configfile_path(
@@ -129,17 +170,11 @@ def test_get_configfile_path(
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
     monkeypatch.delenv("HOME", raising=False)
     xdg_path = tmp_path
-    home_path = tmp_path
-    if param_val.xdg_config_home_path:
+    if param_val.xdg_config_home_dir:
         monkeypatch.setenv("XDG_CONFIG_HOME", xdg_path)
-    if param_val.home_config_path:
-        monkeypatch.setenv("HOME", home_path)
 
     if param_val.expected == _expectedPathRoot.XDG_CONFIG_HOME:
         expectedPath = xdg_path / "ferry_cli" / "config.ini"
-        assert config.get_configfile_path() == expectedPath
-    elif param_val.expected == _expectedPathRoot.HOME:
-        expectedPath = home_path / ".config" / "ferry_cli" / "config.ini"
         assert config.get_configfile_path() == expectedPath
     else:
         assert not config.get_configfile_path()
