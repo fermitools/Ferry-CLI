@@ -293,11 +293,13 @@ class FerryCLI:
 
     def generate_endpoints(self: "FerryCLI") -> Dict[str, FerryParser]:
         endpoints = {}
+        # TODO: Use get_configfile_dir here
         with open(f"{CONFIG_DIR}/swagger.json", "r") as json_file:
 
             api_data = json.load(json_file)
             for path, data in api_data["paths"].items():
                 endpoint = path.replace("/", "")
+                # TODO: Get should be the default method
                 if "get" in data:
                     method = "get"
                 elif "post" in data:
