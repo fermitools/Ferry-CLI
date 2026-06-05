@@ -8,10 +8,12 @@ import tempfile
 import requests  # pylint: disable=import-error
 
 try:
-    from ferry_cli.helpers.auth import Auth, DebugLevel
+    from ferry_cli.helpers.auth import Auth
+    from ferry_cli.helpers.debug_level import DebugLevel
     from ferry_cli.config.config import get_configfile_dir
 except ImportError:
-    from helpers.auth import Auth, DebugLevel  # type: ignore
+    from helpers.auth import Auth  # type: ignore
+    from helpers.debug_level import DebugLevel  # type: ignore
     from config.config import get_configfile_dir  # type: ignore
 
 

@@ -17,11 +17,11 @@ try:
     from ferry_cli.helpers.api import FerryAPI
     from ferry_cli.helpers.auth import (
         Auth,
-        DebugLevel,
         get_auth_args,
         set_auth_from_args,
         get_auth_parser,
     )
+    from ferry_cli.helpers.debug_level import DebugLevel
     from ferry_cli.helpers.ferry_parser import FerryParser
     from ferry_cli.helpers.supported_workflows import SUPPORTED_WORKFLOWS
     from ferry_cli.safeguards.dcs import SafeguardsDCS
@@ -31,11 +31,11 @@ except ImportError:
     from helpers.api import FerryAPI  # type: ignore
     from helpers.auth import (  # type: ignore
         Auth,
-        DebugLevel,
         get_auth_args,
         set_auth_from_args,
         get_auth_parser,
     )
+    from helpers.debug_level import DebugLevel  # type: ignore
     from helpers.ferry_parser import FerryParser  # type: ignore
     from helpers.supported_workflows import SUPPORTED_WORKFLOWS  # type: ignore
     from safeguards.dcs import SafeguardsDCS  # type: ignore
