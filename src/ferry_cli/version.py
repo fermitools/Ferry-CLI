@@ -1,4 +1,5 @@
 import argparse
+import configparser
 from importlib.metadata import version
 import json
 import os
@@ -6,9 +7,13 @@ import sys
 from typing import Optional
 
 try:
-    from ferry_cli.config import CONFIG_DIR
+    from ferry_cli.config.config import get_configfile_path
+    from ferry_cli.helpers.api import FerryAPI
+    from ferry_cli.helpers.auth import Auth
 except ImportError:
-    from config import CONFIG_DIR  # type: ignore
+    from config.config import get_configfile_path  # type: ignore
+    from helpers.api import FerryAPI  # type: ignore
+    from helpers.auth import Auth  # type: ignore
 
 __title__ = "Ferry CLI"
 __swagger_file_title__ = "Ferry API"
@@ -25,16 +30,52 @@ def get_summary() -> str:
 
 
 def print_version(full: bool = False, short: bool = False) -> Optional[str]:
-    file_version = None
-    if os.path.exists(f"{CONFIG_DIR}/swagger.json"):
-        with open(f"{CONFIG_DIR}/swagger.json", "r") as file:
-            json_file = json.load(file)
-            file_version = json_file.get("info", {}).get("version", None)
     if short:
         return __version__
     print(f"{__title__} version {__version__}")
-    if file_version and full:
-        print(f"Interfacing with {__swagger_file_title__} version {file_version}")
+
+    class fakeAuth(Auth):
+        def __call__(self):
+            pass
+
+    try:
+        config_path = get_configfile_path()
+        assert config_path is not None
+
+        configs = configparser.ConfigParser()
+        with open(config_path, "r") as f:
+            configs.read_file(f)
+
+        _base_url = configs.get("api", "base_url", fallback=None)
+        if _base_url is None:
+            raise ValueError(
+                f"api.base_url must be specified in the config file at {config_path}. "
+                "Please set that value and try again."
+            )
+        base_url = _base_url.strip().strip('"')
+        _api = FerryAPI(
+            base_url=base_url,
+            authorizer=fakeAuth,
+            swagger_endpoint=configs.get(
+                "api", "swagger_file_endpoint", fallback=""
+            ).strip(' "')
+            or None,
+        )
+
+        with open(_api.swagger_file, "r") as file:
+            json_file = json.load(file)
+            file_version = json_file.get("info", {}).get("version", None)
+        if file_version and full:
+            print(f"Interfacing with {__swagger_file_title__} version {file_version}")
+
+    except Exception as e:
+        print(f"Error getting FERRY server version: {e}")
+        sys.exit(1)
+
+    sys.exit(0)
+
+    # TODO: Get config file, get base_url.  Feed that into FerryAPI to get swagger.json.  Use swagger json.  if any of this fails, just print error, return
+
     sys.exit()
 
 

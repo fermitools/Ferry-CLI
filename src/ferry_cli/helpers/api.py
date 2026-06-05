@@ -2,15 +2,16 @@ import json
 import pathlib
 import sys
 from typing import Any, Dict, Optional
+import tempfile
 
 import requests  # pylint: disable=import-error
 
 try:
     from ferry_cli.helpers.auth import Auth, DebugLevel
-    from ferry_cli.config import CONFIG_DIR
+    from ferry_cli.config.config import get_configfile_dir
 except ImportError:
     from helpers.auth import Auth, DebugLevel  # type: ignore
-    from config import CONFIG_DIR  # type: ignore
+    from config.config import get_configfile_dir  # type: ignore
 
 
 # pylint: disable=unused-argument,pointless-statement,too-many-arguments
@@ -40,6 +41,13 @@ class FerryAPI:
         self.swagger_endpoint = (
             swagger_endpoint if swagger_endpoint else self.SWAGGER_JSON_ENDPOINT_DEFAULT
         )
+        # TODO: Issue is if we use an integration test, or some bad server, it overwrites this swagger file. Maybe swagger file should contain some hash of server?
+        self.swagger_file: pathlib.Path = self._set_swagger_file()
+
+        # TODO: Issue is if we use an integration test, or some bad server, it overwrites this swagger file. Maybe swagger file should contain some hash of server?
+
+        if not self.swagger_file.exists():
+            self.get_latest_swagger_file()
 
     # pylint: disable=dangerous-default-value,too-many-arguments
     def call_endpoint(
@@ -114,13 +122,29 @@ class FerryAPI:
             print("Failed to fetch swagger.json file")
             sys.exit(1)
 
-        swagger_file = pathlib.Path(CONFIG_DIR) / "swagger.json"
+        self.swagger_file = self._set_swagger_file()
 
         try:
-            swagger_file.parent.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            print(f"Could not create dir {swagger_file.parent}: {e}")
-            raise
+            self.swagger_file.parent.mkdir(parents=True, exist_ok=True)
+        except BaseException as e:
+            print(f"Could not create dir {self.swagger_file.parent}")
+            raise e
 
-        with open(swagger_file, "w") as file:
+        with open(self.swagger_file, "w") as file:
             file.write(json.dumps(response, indent=4))
+
+        if self.debug_level != DebugLevel.QUIET:
+            print("Successfully stored latest swagger file.\n")
+
+        return
+
+    # TODO: Unit test
+    def _set_swagger_file(self: "FerryAPI") -> pathlib.Path:
+        _config_dir = get_configfile_dir()
+        config_dir = (
+            _config_dir
+            if _config_dir is not None
+            else pathlib.Path(tempfile.gettempdir())
+        )
+        self.swagger_file = config_dir / "swagger.json"
+        return self.swagger_file
