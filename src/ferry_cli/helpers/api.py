@@ -44,8 +44,6 @@ class FerryAPI:
         # TODO: Issue is if we use an integration test, or some bad server, it overwrites this swagger file. Maybe swagger file should contain some hash of server?
         self.swagger_file: pathlib.Path = self._set_swagger_file()
 
-        # TODO: Issue is if we use an integration test, or some bad server, it overwrites this swagger file. Maybe swagger file should contain some hash of server?
-
         if not self.swagger_file.exists():
             self.get_latest_swagger_file()
 
@@ -126,15 +124,12 @@ class FerryAPI:
 
         try:
             self.swagger_file.parent.mkdir(parents=True, exist_ok=True)
-        except BaseException as e:
+        except Exception as e:
             print(f"Could not create dir {self.swagger_file.parent}")
             raise e
 
         with open(self.swagger_file, "w") as file:
             file.write(json.dumps(response, indent=4))
-
-        if self.debug_level != DebugLevel.QUIET:
-            print("Successfully stored latest swagger file.\n")
 
         return
 

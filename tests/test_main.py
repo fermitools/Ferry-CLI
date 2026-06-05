@@ -14,6 +14,7 @@ from ferry_cli.ferry_cli import (
     help_called,
     normalize_endpoint,
 )
+
 import ferry_cli.ferry_cli as _main
 import ferry_cli.config.config as _config
 
@@ -429,7 +430,7 @@ dev_url = https://example.com:12345/
         ),  # Get base_url from override
     ],
 )
-@pytest.mark.test
+@pytest.mark.integration
 def test_server_flag_main(
     tmp_path,
     monkeypatch,
