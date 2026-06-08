@@ -356,6 +356,10 @@ class FerryCLI:
                 authorizer=self.authorizer,
                 debug_level=debug_level,
                 dryrun=dryrun,
+                swagger_endpoint=self.configs.get(
+                    "api", "swagger_file_endpoint", fallback=""
+                ).strip(' "')
+                or None,
             )
 
         if args.endpoint:
@@ -662,9 +666,13 @@ def main() -> None:
             if auth_args.debug_level != DebugLevel.QUIET:
                 print("Fetching latest swagger file...")
             ferry_cli.ferry_api = FerryAPI(
-                ferry_cli.base_url,
-                ferry_cli.authorizer,
-                auth_args.debug_level,
+                base_url=ferry_cli.base_url,
+                authorizer=ferry_cli.authorizer,
+                debug_level=auth_args.debug_level,
+                swagger_endpoint=ferry_cli.configs.get(
+                    "api", "swagger_file_endpoint", fallback=""
+                ).strip(' "')
+                or None,
             )
             ferry_cli.ferry_api.get_latest_swagger_file()
             if auth_args.debug_level != DebugLevel.QUIET:
