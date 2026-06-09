@@ -1,6 +1,7 @@
 import json
+import pathlib
 import sys
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import requests  # pylint: disable=import-error
 
@@ -14,6 +15,7 @@ except ImportError:
 
 # pylint: disable=unused-argument,pointless-statement,too-many-arguments
 class FerryAPI:
+    SWAGGER_JSON_ENDPOINT_DEFAULT = "docs/swagger.json"
     # pylint: disable=too-many-arguments
     def __init__(
         self: "FerryAPI",
@@ -21,6 +23,7 @@ class FerryAPI:
         authorizer: Auth = Auth(),
         debug_level: DebugLevel = DebugLevel.NORMAL,
         dryrun: bool = False,
+        swagger_endpoint: Optional[str] = None,
     ):
         """
         Parameters:
@@ -28,11 +31,15 @@ class FerryAPI:
             authorizer (Callable[[requests.Session, requests.Session]): A function that prepares the requests session by adding any necessary auth data
             debug_level (DebugLevel): Level of debugging.  Can be DebugLevel.QUIET, DebugLevel.NORMAL, or DebugLevel.DEBUG
             dryrun (bool): Whether or not this is a test run.  If True, the intended URL will be printed, but the HTTP request will not be made
+            swagger_endpoint (Optional[str]): The API endpoint (after base_url) to obtain the swagger.json file from the FERRY server.  If set to None, will use the default self.SWAGGER_JSON_ENDPOINT_DEFAULT.
         """
         self.base_url = base_url
         self.authorizer = authorizer
         self.debug_level = debug_level
         self.dryrun = dryrun
+        self.swagger_endpoint = (
+            swagger_endpoint if swagger_endpoint else self.SWAGGER_JSON_ENDPOINT_DEFAULT
+        )
 
     # pylint: disable=dangerous-default-value,too-many-arguments
     def call_endpoint(
@@ -89,16 +96,31 @@ class FerryAPI:
 
             output["request_url"] = response.request.url
             return output
-        except BaseException as e:
+        except Exception as e:
             # How do we want to handle errors?
             raise e
 
+    # TODO: integration test  # pylint: disable=fixme
     def get_latest_swagger_file(self: "FerryAPI") -> None:
+        """
+        Gets the latest swagger file from FERRY and save it in config.CONFIG_DIR/swagger.json
+        """
+        if self.dryrun:
+            print("Dryrun: skipping swagger.json fetching")
+            return
 
-        response = self.call_endpoint("docs/swagger.json")
-        if response:
-            with open(f"{CONFIG_DIR}/swagger.json", "w") as file:
-                file.write(json.dumps(response, indent=4))
-        else:
+        response = self.call_endpoint(self.swagger_endpoint)
+        if not response:
             print("Failed to fetch swagger.json file")
             sys.exit(1)
+
+        swagger_file = pathlib.Path(CONFIG_DIR) / "swagger.json"
+
+        try:
+            swagger_file.parent.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(f"Could not create dir {swagger_file.parent}: {e}")
+            raise
+
+        with open(swagger_file, "w") as file:
+            file.write(json.dumps(response, indent=4))
