@@ -15,7 +15,7 @@ except ImportError:
 
 # pylint: disable=unused-argument,pointless-statement,too-many-arguments
 class FerryAPI:
-    SWAGGER_JSON_ENDPOINT_DEFAULT = "docs/swagger.json"
+    SWAGGER_JSON_ENDPOINT_DEFAULT = "swagger/swagger.json"
     # pylint: disable=too-many-arguments
     def __init__(
         self: "FerryAPI",
@@ -103,7 +103,7 @@ class FerryAPI:
     # TODO: integration test  # pylint: disable=fixme
     def get_latest_swagger_file(self: "FerryAPI") -> None:
         """
-        Gets the latest swagger file from FERRY and save it in config.CONFIG_DIR/swagger.json
+        Gets the latest swagger file from FERRY and saves it in config.CONFIG_DIR/swagger.json
         """
         if self.dryrun:
             print("Dryrun: skipping swagger.json fetching")
