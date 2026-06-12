@@ -164,6 +164,8 @@ class FerryCLI:
         )
         if update:
             self.ferry_api.get_latest_swagger_file()
+        if dryrun:
+            return
         self.endpoints = self.generate_endpoints()
 
     def list_available_endpoints_action(self: "FerryCLI"):  # type: ignore
@@ -292,10 +294,17 @@ class FerryCLI:
             print(subparser.format_help())
             print()
 
-    def execute_endpoint(self: "FerryCLI", endpoint: str, params: List[str]) -> Any:
+    def execute_endpoint(
+        self: "FerryCLI", endpoint: str, params: List[str], dryrun: bool = False
+    ) -> Any:
         try:
             subparser = self.endpoints[endpoint]
         except KeyError:
+            if dryrun:
+                print(
+                    f"Could not find endpoint '{endpoint}' for FERRY server {self.base_url}."
+                )
+                return self.ferry_api.call_endpoint(endpoint)  # type: ignore
             raise ValueError(  # pylint: disable=raise-missing-from
                 f"Error: '{endpoint}' is not a valid endpoint. Run 'ferry -l' for a full list of available endpoints."
             )
@@ -388,7 +397,7 @@ class FerryCLI:
             ep = normalize_endpoint(self.endpoints, args.endpoint)
             self.safeguards.verify(ep)
             try:
-                json_result = self.execute_endpoint(ep, endpoint_args)
+                json_result = self.execute_endpoint(ep, endpoint_args, dryrun)
             except Exception as e:
                 raise Exception(f"{e}")
             if not dryrun:
@@ -744,8 +753,6 @@ def main() -> None:
             ferry_cli.get_arg_parser().print_help()
             sys.exit(1)
 
-            # TODO: This should be done before we do anything!
-        # ferry_cli.endpoints = ferry_cli.generate_endpoints()
         ferry_cli.run(
             auth_args.debug_level,
             auth_args.dryrun,

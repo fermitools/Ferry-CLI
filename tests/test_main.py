@@ -6,6 +6,7 @@ import subprocess
 import sys
 
 import pytest
+import requests
 
 from ferry_cli.ferry_cli import (
     FerryCLI,
@@ -17,6 +18,9 @@ from ferry_cli.ferry_cli import (
 
 import ferry_cli.ferry_cli as _main
 import ferry_cli.config.config as _config
+import ferry_cli.helpers.api as api
+import ferry_cli.helpers.auth as auth
+from tests.conftest import fakeAuth
 
 
 @pytest.fixture
@@ -27,18 +31,23 @@ def get_ferry_cli_path():
 
 
 @pytest.fixture
-def install_mock_swagger_json_file(tmp_path):
+def install_mock_swagger_json_file(tmp_path, request):
+    # Note: Pass base_url in as parameter
     import os
     import shutil
 
-    root = pathlib.Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    configdir = root / "src" / "ferry_cli" / "config"
-    swagger_path = configdir / "swagger.json"
     try:
-        old_file = shutil.move(swagger_path, tmp_path / "old_swagger.json")
+        base_url = request.param
+    except AttributeError:
+        base_url = "https://example.com"
+
+    _api = api.FerryAPI(base_url=base_url, authorizer=fakeAuth(), dryrun=True)
+
+    try:
+        old_file = shutil.move(_api.swagger_file, tmp_path / "old_swagger.json")
     except FileNotFoundError:
         old_file = None
-    with open(swagger_path, "w") as f:
+    with open(_api.swagger_file, "w") as f:
         f.write(
             """
 {
@@ -75,9 +84,9 @@ def install_mock_swagger_json_file(tmp_path):
         )
 
     yield
-    os.unlink(swagger_path)
+    os.unlink(_api.swagger_file)
     if old_file is not None:
-        shutil.move(old_file, swagger_path)
+        shutil.move(old_file, _api.swagger_file)
 
 
 @pytest.fixture
@@ -198,7 +207,7 @@ def test_handle_show_configfile_envs_not_found(
         (
             ["-h", "--show-config-file", "-e", "getAllGroups"],
             "--show-config-file",
-        ),  # If we pass -h and --show-config-file, -h should win
+        ),  # If we pass -h and --show-config-file, -h should wi
         (
             ["--show-config-file"],
             "Configuration file",
@@ -421,10 +430,11 @@ dev_url = https://example.com:12345/
 
 
 @pytest.mark.parametrize(
-    "args, expected_out_url",
+    "install_mock_swagger_json_file, args, expected_out_url",
     [
-        ([], "https://example.com:12345/"),  # Get base_url from config
+        ("", [], "https://example.com:12345/"),  # Get base_url from config
         (
+            "https://override_example.com:54321/",
             ["--server", "https://override_example.com:54321/"],
             "https://override_example.com:54321/",
         ),  # Get base_url from override
