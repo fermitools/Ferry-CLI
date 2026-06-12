@@ -1,3 +1,4 @@
+import hashlib
 import json
 import pathlib
 import sys
@@ -41,7 +42,6 @@ class FerryAPI:
         self.swagger_endpoint = (
             swagger_endpoint if swagger_endpoint else self.SWAGGER_JSON_ENDPOINT_DEFAULT
         )
-        # TODO: Issue is if we use an integration test, or some bad server, it overwrites this swagger file. Maybe swagger file should contain some hash of server?
         self.swagger_file: pathlib.Path = self._set_swagger_file()
 
         if not self.swagger_file.exists():
@@ -77,6 +77,7 @@ class FerryAPI:
                 if attribute_name not in params:
                     params[attribute_name] = attribute_value
         # I believe they are all actually "GET" calls
+        # TODO: Just pass this to session.request, rather than this if/elif mess
         try:
             if method.lower() == "get":
                 response = session.get(
@@ -106,10 +107,13 @@ class FerryAPI:
             # How do we want to handle errors?
             raise e
 
-    # TODO: integration test  # pylint: disable=fixme
     def get_latest_swagger_file(self: "FerryAPI") -> None:
         """
-        Gets the latest swagger file from FERRY and saves it in config.CONFIG_DIR/swagger.json
+        Gets the latest swagger file from FERRY and saves it in either:
+        1. Directory returned by config.get_configfile_dir()
+        2. Directory returned by tempfile.gettempdir()
+
+        The filename is computed using the base_url and swagger_endpoint of the FerryAPI instance.
         """
         if self.dryrun:
             print("Dryrun: skipping swagger.json fetching")
@@ -133,13 +137,30 @@ class FerryAPI:
 
         return
 
-    # TODO: Unit test
     def _set_swagger_file(self: "FerryAPI") -> pathlib.Path:
+        """
+        Returns a pathlib.Path where the swagger.json file should be saved.  In
+        order of precedence, will return a pathlib.Path whose parent is:
+        1. Directory returned by config.get_configfile_dir()
+        2. Directory returned by tempfile.gettempdir()
+
+        The filename within that directory is the value returned by FerryAPI._swagger_filename
+        """
         _config_dir = get_configfile_dir()
         config_dir = (
             _config_dir
             if _config_dir is not None
             else pathlib.Path(tempfile.gettempdir())
         )
-        self.swagger_file = config_dir / "swagger.json"
+
+        self.swagger_file = config_dir / self._swagger_filename()
         return self.swagger_file
+
+    def _swagger_filename(self: "FerryAPI") -> str:
+        """
+        Generate hash of endpoint including base_url
+        """
+        hasher = hashlib.sha256()
+        hasher.update(f"{self.base_url}/{self.swagger_endpoint}".encode("utf-8"))
+        suffix = hasher.hexdigest()[:16]
+        return f"swagger_{suffix}.json"
