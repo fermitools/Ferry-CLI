@@ -325,14 +325,20 @@ class FerryCLI:
         with open(self.ferry_api.swagger_file, "r") as json_file:
             api_data = json.load(json_file)
             for path, data in api_data["paths"].items():
+                # pylint: disable=fixme
+                # TODO: Note:  This is one thing we may want to fix in the future
+                # Right now, ferry-cli assumes that each endpoint supports only one
+                # HTTP verb. Changing that would probably require a major refactor
+                # isn't necessary at this point.
                 endpoint = path.replace("/", "")
-                # TODO: Get should be the default method
                 if "get" in data:
-                    method = "get"
+                    method = "get"  # default method
                 elif "post" in data:
                     method = "post"
                 elif "put" in data:
                     method = "put"
+                else:  # Default
+                    method = "get"
 
                 endpoint_parser = FerryParser.create_subparser(
                     endpoint,
