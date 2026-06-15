@@ -9,7 +9,7 @@ on:
 
 
 jobs:
-  build:
+  pre_commit:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,22 +18,30 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: 3.9
-    - name: Install dependencies
+    - name: Upgrade pip and install dependencies
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install pre-commit
         python3 -m pip install pytest
-        python3 -m pip install flake8
         pre-commit install
-    #- name: lint python with flake8;
-      # can adjust flake8 parameters see: https://flake8.pycqa.org/en/latest/user/error-codes.html
-      #run: |
-        #flake8 . --count --show-source --statistics
-    - name: run pre-commit
+    - name: Run pre-commit
       run: pre-commit run --all-files
-    - name: editable install
+  test_editable_install:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.9
+    - name: Upgrade pip
+      run: python3 -m pip install --upgrade pip
+    - name: Install pytest
+      run: python3 -m pip install pytest
+    - name: Editable install
       run: python3 -m pip install -e .
-    - name: run unit tests only
+    - name: Run unit tests only
       run: |
         pytest -m unit
     # upon some condition we can run unit and integration tests

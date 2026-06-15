@@ -10,6 +10,8 @@ repos:
     hooks:
       - id: pylint
         args: [--rcfile=.pylintrc]
+        additional_dependencies:
+        - validators
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.931
     hooks:

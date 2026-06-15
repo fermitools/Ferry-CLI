@@ -47,6 +47,8 @@ def install_mock_swagger_json_file(tmp_path, request):
         old_file = shutil.move(_api.swagger_file, tmp_path / "old_swagger.json")
     except FileNotFoundError:
         old_file = None
+        _api.swagger_file.parent.mkdir(parents=True, exist_ok=True)
+
     with open(_api.swagger_file, "w") as f:
         f.write(
             """
