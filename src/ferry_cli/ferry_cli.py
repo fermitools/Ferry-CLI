@@ -11,7 +11,6 @@ from urllib.parse import urlsplit, urlunsplit, SplitResult
 
 import validators
 
-# TODO: CLean up these imports
 # pylint: disable=unused-import
 try:
     # Try package import
@@ -26,7 +25,7 @@ try:
     from ferry_cli.helpers.ferry_parser import FerryParser
     from ferry_cli.helpers.supported_workflows import SUPPORTED_WORKFLOWS
     from ferry_cli.safeguards.dcs import SafeguardsDCS
-    from ferry_cli.config import CONFIG_DIR, config
+    from ferry_cli.config import config
 except ImportError:
     # Fallback to direct import
     from helpers.api import FerryAPI  # type: ignore
@@ -40,7 +39,7 @@ except ImportError:
     from helpers.ferry_parser import FerryParser  # type: ignore
     from helpers.supported_workflows import SUPPORTED_WORKFLOWS  # type: ignore
     from safeguards.dcs import SafeguardsDCS  # type: ignore
-    from config import CONFIG_DIR, config  # type: ignore
+    from config import config  # type: ignore
 
 
 class FerryCLI:
@@ -652,9 +651,6 @@ def normalize_endpoint(endpoints: Dict[str, Any], raw: str) -> str:
     return next((ep for ep in endpoints if ep.lower() == normalized.lower()), raw)
 
 
-# TODO: FerryAPI should be the one place that knows about the swagger file. Anything that needs that swagger file should call on the FerryAPI class to either provide or generate the file.
-# The two places that use it are 1) below, when the --update flag is used, and 2) in FerryCLI.generate_endpoints.  The latter should look to see if the FerryAPI class has been instantiated and stored locally, and if not, do that.  Then use FerryAPI.get_latest_swagger_file to get the swagger file.  Perhaps the latter should return a Path to the file.
-
 # pylint: disable=too-many-branches
 def main() -> None:
     _config_path = config.get_configfile_path()
@@ -695,59 +691,11 @@ def main() -> None:
             authorizer=set_auth_from_args(auth_args),
             base_url=auth_args.server,
         )
-        if auth_args.update or not os.path.exists(f"{CONFIG_DIR}/swagger.json"):
-            if auth_args.debug_level != DebugLevel.QUIET:
-                print("Fetching latest swagger file...")
-            ferry_cli.ferry_api = FerryAPI(
-                base_url=ferry_cli.base_url,
-                authorizer=ferry_cli.authorizer,
-                debug_level=auth_args.debug_level,
-                swagger_endpoint=ferry_cli.configs.get(
-                    "api", "swagger_file_endpoint", fallback=""
-                ).strip(' "')
-                or None,
-            )
-            ferry_cli.ferry_api.get_latest_swagger_file()
-            if auth_args.debug_level != DebugLevel.QUIET:
-                print("Successfully stored latest swagger file.\n")
-            if not other_args:
-                if auth_args.debug_level != DebugLevel.QUIET:
-                    print("No more arguments provided. Exiting.")
-                sys.exit(0)
         ferry_cli.setup_FerryAPI(
             debug_level=auth_args.debug_level,
             dryrun=auth_args.dryrun,
             update=auth_args.update,
         )
-
-        # TODO: Order of operations now:
-        # 1. Make sure we have swagger file
-        # 1a. If we don't have any other args, we know it's a malformed call. Exit.  I don't like this.
-        # 2. Generate endpoints
-        # 3. Run call.
-
-        # TODO: Should be:
-        # 1. Instantiate API -- DONE
-        # . Maybe instantiating API should include update or not - to force update or not. -- DONE
-        # . Make sure we have swagger file inside this instantiation (ferry_cli.setup_api() or something like that?). Generate endpoints should be here too. -- DONE
-        # 3. Check for other args. -- DONE
-        # 4. Run call -- DONE
-
-        # if auth_args.update or not os.path.exists(f"{CONFIG_DIR}/swagger.json"):
-        #     if auth_args.debug_level != DebugLevel.QUIET:
-        #         print("Fetching latest swagger file...")
-        #     ferry_cli.ferry_api = FerryAPI(
-        #         ferry_cli.base_url,
-        #         ferry_cli.authorizer,
-        #         auth_args.debug_level,
-        #     )
-        #     ferry_cli.ferry_api.get_latest_swagger_file()
-        #     if auth_args.debug_level != DebugLevel.QUIET:
-        #         print("Successfully stored latest swagger file.\n")
-        #     if not other_args:
-        #         if auth_args.debug_level != DebugLevel.QUIET:
-        #             print("No more arguments provided. Exiting.")
-        #         sys.exit(0)
 
         if not other_args:
             ferry_cli.get_arg_parser().print_help()
