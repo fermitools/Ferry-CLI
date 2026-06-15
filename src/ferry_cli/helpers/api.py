@@ -18,6 +18,8 @@ except ImportError:
 # pylint: disable=unused-argument,pointless-statement,too-many-arguments
 class FerryAPI:
     SWAGGER_JSON_ENDPOINT_DEFAULT = "swagger/swagger.json"
+    SUPPORTED_METHODS = set(("get", "post", "put"))
+
     # pylint: disable=too-many-arguments
     def __init__(
         self: "FerryAPI",
@@ -76,36 +78,28 @@ class FerryAPI:
             for attribute_name, attribute_value in extra:
                 if attribute_name not in params:
                     params[attribute_name] = attribute_value
-        # I believe they are all actually "GET" calls
-        # TODO: Just pass this to session.request, rather than this if/elif mess
-        try:
-            if method.lower() == "get":
-                response = session.get(
-                    f"{self.base_url}{endpoint}", headers=headers, params=params
-                )
-            elif method.lower() == "post":
-                response = session.post(
-                    f"{self.base_url}{endpoint}", params=params, headers=headers
-                )
-            elif method.lower() == "put":
-                response = session.put(
-                    f"{self.base_url}{endpoint}", params=params, headers=headers
-                )
-            else:
-                raise ValueError("Unsupported HTTP method.")
-            if debug:
-                print(f"\nCalled Endpoint: {response.request.url}")
-            if not response.ok:
-                raise RuntimeError(
-                    f" *** API Failure: Status code {response.status_code} returned from endpoint /{endpoint}"
-                )
-            output = response.json()
 
-            output["request_url"] = response.request.url
-            return output
-        except Exception as e:
-            # How do we want to handle errors?
-            raise e
+        if method.lower() not in self.SUPPORTED_METHODS:
+            raise ValueError(f"Unsupported HTTP method {method.lower()}.")
+
+        # Send our request
+        response = session.request(
+            method=method.upper(),
+            url=f"{self.base_url}{endpoint}",
+            headers=headers,
+            params=params,
+        )
+
+        if debug:
+            print(f"\nCalled Endpoint: {response.request.url}")
+        if not response.ok:
+            raise RuntimeError(
+                f" *** API Failure: Status code {response.status_code} returned from endpoint /{endpoint}"
+            )
+        output = response.json()
+
+        output["request_url"] = response.request.url
+        return output
 
     def get_latest_swagger_file(self: "FerryAPI") -> None:
         """
