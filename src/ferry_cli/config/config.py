@@ -1,3 +1,4 @@
+import hashlib
 import os
 import pathlib
 from typing import Optional, Dict
@@ -105,3 +106,15 @@ def _write_out_configfile_with_template(
 
 def _get_template_path() -> pathlib.Path:
     return pathlib.Path(CONFIG_DIR) / "config.ini"
+
+
+def swagger_filename(
+    base_url: str, swagger_endpoint: str = "swagger/swagger.json"
+) -> str:
+    """
+    Generate hash of endpoint including base_url
+    """
+    hasher = hashlib.sha256()
+    hasher.update(f"{base_url}/{swagger_endpoint}".encode("utf-8"))
+    suffix = hasher.hexdigest()[:16]
+    return f"swagger_{suffix}.json"

@@ -1,4 +1,3 @@
-import hashlib
 import json
 import pathlib
 import sys
@@ -10,11 +9,11 @@ import requests  # pylint: disable=import-error
 try:
     from ferry_cli.helpers.auth import Auth
     from ferry_cli.helpers.debug_level import DebugLevel
-    from ferry_cli.config.config import get_configfile_dir
+    from ferry_cli.config.config import get_configfile_dir, swagger_filename
 except ImportError:
     from helpers.auth import Auth  # type: ignore
     from helpers.debug_level import DebugLevel  # type: ignore
-    from config.config import get_configfile_dir  # type: ignore
+    from config.config import get_configfile_dir, swagger_filename  # type: ignore
 
 
 # pylint: disable=unused-argument,pointless-statement,too-many-arguments
@@ -156,7 +155,4 @@ class FerryAPI:
         """
         Generate hash of endpoint including base_url
         """
-        hasher = hashlib.sha256()
-        hasher.update(f"{self.base_url}/{self.swagger_endpoint}".encode("utf-8"))
-        suffix = hasher.hexdigest()[:16]
-        return f"swagger_{suffix}.json"
+        return swagger_filename(self.base_url, self.swagger_endpoint)
