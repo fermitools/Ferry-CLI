@@ -6,7 +6,6 @@ import subprocess
 import sys
 
 import pytest
-import requests
 
 from ferry_cli.ferry_cli import (
     FerryCLI,
@@ -18,9 +17,6 @@ from ferry_cli.ferry_cli import (
 
 import ferry_cli.ferry_cli as _main
 import ferry_cli.config.config as _config
-import ferry_cli.helpers.api as api
-import ferry_cli.helpers.auth as auth
-from tests.conftest import fakeAuth
 
 
 @pytest.fixture
@@ -31,25 +27,24 @@ def get_ferry_cli_path():
 
 
 @pytest.fixture
-def install_mock_swagger_json_file(tmp_path, request):
+def install_mock_configs(monkeypatch, tmp_path, request):
     # Note: Pass base_url in as parameter
-    import os
-    import shutil
+
+    _fake_config_dir = tmp_path
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(_fake_config_dir.absolute()))
 
     try:
         base_url = request.param
     except AttributeError:
         base_url = "https://example.com"
 
-    _api = api.FerryAPI(base_url=base_url, authorizer=fakeAuth(), dryrun=True)
+    config_dir = _config.get_configfile_dir()
+    assert config_dir is not None
+    config_dir.mkdir(parents=True, exist_ok=True)
 
-    try:
-        old_file = shutil.move(_api.swagger_file, tmp_path / "old_swagger.json")
-    except FileNotFoundError:
-        old_file = None
-        _api.swagger_file.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(_api.swagger_file, "w") as f:
+    # Fake swagger.json file
+    swagger_path = config_dir / _config.swagger_filename(base_url)
+    with open(swagger_path, "w") as f:
         f.write(
             """
 {
@@ -85,10 +80,16 @@ def install_mock_swagger_json_file(tmp_path, request):
                 """
         )
 
+        # fake config file
+    fake_config_text = """[api]
+base_url = https://example.com:12345/
+dev_url = https://example.com:12345/
+
+"""
+    # Fake config file
+    config_file = config_dir / "config.ini"
+    config_file.write_text(fake_config_text)
     yield
-    os.unlink(_api.swagger_file)
-    if old_file is not None:
-        shutil.move(old_file, _api.swagger_file)
 
 
 @pytest.fixture
@@ -115,11 +116,11 @@ def mock_write_config_file_with_user_values(monkeypatch):
 def write_and_set_fake_config_file(monkeypatch, tmp_path):
     # Fake config file
     p = tmp_path
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(p.absolute()))
     config_dir = p / "ferry_cli"
-    config_dir.mkdir()
+    config_dir.mkdir(parents=True, exist_ok=True)
     config_file = config_dir / "config.ini"
     config_file.write_text("This is a fake config file")
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(p.absolute()))
     return config_file
 
 
@@ -209,7 +210,7 @@ def test_handle_show_configfile_envs_not_found(
         (
             ["-h", "--show-config-file", "-e", "getAllGroups"],
             "--show-config-file",
-        ),  # If we pass -h and --show-config-file, -h should wi
+        ),  # If we pass -h and --show-config-file, -h should win
         (
             ["--show-config-file"],
             "Configuration file",
@@ -222,7 +223,7 @@ def test_handle_show_configfile_envs_not_found(
 )
 @pytest.mark.unit
 def test_show_configfile_flag_with_other_args(
-    install_mock_swagger_json_file,
+    install_mock_configs,
     get_ferry_cli_path,
     write_and_set_fake_config_file,
     args,
@@ -432,7 +433,7 @@ dev_url = https://example.com:12345/
 
 
 @pytest.mark.parametrize(
-    "install_mock_swagger_json_file, args, expected_out_url",
+    "install_mock_configs, args, expected_out_url",
     [
         ("", [], "https://example.com:12345/"),  # Get base_url from config
         (
@@ -441,36 +442,21 @@ dev_url = https://example.com:12345/
             "https://override_example.com:54321/",
         ),  # Get base_url from override
     ],
+    indirect=["install_mock_configs"],
 )
 @pytest.mark.integration
 def test_server_flag_main(
-    tmp_path,
-    monkeypatch,
-    install_mock_swagger_json_file,
+    install_mock_configs,
     get_ferry_cli_path,
     args,
     expected_out_url,
 ):
     # Run ferry-cli with overridden base_url in dryrun mode to endpoint ping. Then see if we see the correct server in output
-    # Set up fake config
-    fake_config_text = """
-[api]
-base_url = https://example.com:12345/
-dev_url = https://example.com:12345/
-
-"""
-    # Fake config file
-    p = tmp_path
-    config_dir = p / "ferry_cli"
-    config_dir.mkdir()
-    config_file = config_dir / "config.ini"
-    config_file.write_text(fake_config_text)
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(p.absolute()))
 
     exe_args = [sys.executable, get_ferry_cli_path]
     exe_args.extend(args + ["--dryrun", "-e", "ping"])
 
-    proc = subprocess.run(exe_args, capture_output=True)
+    proc = subprocess.run(exe_args, capture_output=True, env=os.environ)
     assert f"Would call endpoint: {expected_out_url}ping with params" in str(
         proc.stdout
     )

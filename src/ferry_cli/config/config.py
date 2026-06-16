@@ -62,15 +62,13 @@ def get_configfile_dir() -> Optional[pathlib.Path]:
 def _get_configfile_dir_xdg_config_home() -> Optional[pathlib.Path]:
     _xdg_config_home_val = os.getenv("XDG_CONFIG_HOME")
     xdg_config_home_val = _xdg_config_home_val.strip() if _xdg_config_home_val else None
-    return (
-        pathlib.Path(xdg_config_home_val) if xdg_config_home_val is not None else None
-    )
+    return pathlib.Path(xdg_config_home_val) if xdg_config_home_val else None
 
 
 def _get_configfile_dir_home() -> Optional[pathlib.Path]:
     _home = os.getenv("HOME")
     home = _home.strip() if _home else None
-    return pathlib.Path(home) / ".config" if home is not None else None
+    return pathlib.Path(home) / ".config" if home else None
 
 
 def write_out_configfile(config_values: Dict[str, str]) -> pathlib.Path:
@@ -115,6 +113,8 @@ def swagger_filename(
     Generate hash of endpoint including base_url
     """
     hasher = hashlib.sha256()
-    hasher.update(f"{base_url}/{swagger_endpoint}".encode("utf-8"))
+    hasher.update(
+        f"{base_url.strip('/')}/{swagger_endpoint.strip('/')}".encode("utf-8")
+    )
     suffix = hasher.hexdigest()[:16]
     return f"swagger_{suffix}.json"

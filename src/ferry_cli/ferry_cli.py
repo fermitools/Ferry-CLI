@@ -160,6 +160,10 @@ class FerryCLI:
             authorizer=self.authorizer,
             debug_level=debug_level,
             dryrun=dryrun,
+            swagger_endpoint=self.configs.get(
+                "api", "swagger_file_endpoint", fallback=""
+            ).strip(' "')
+            or None,
         )
         if update:
             self.ferry_api.get_latest_swagger_file()
@@ -338,7 +342,10 @@ class FerryCLI:
                 elif "put" in data:
                     method = "put"
                 else:  # Default
-                    method = "get"
+                    print(
+                        f"Warning: Unsupported HTTP method(s): {data.keys()}. Skipping endpoint"
+                    )
+                    continue  # Skip unsupported method
 
                 endpoint_parser = FerryParser.create_subparser(
                     endpoint,

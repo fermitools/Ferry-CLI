@@ -1,10 +1,10 @@
-from functools import partial
-import pytest
+import json
+import os
 import subprocess
 import time
 from typing import Dict, Any
-import json
-import os
+
+import pytest
 
 from ferry_cli.helpers.api import FerryAPI, tempfile
 from ferry_cli.helpers.auth import AuthToken

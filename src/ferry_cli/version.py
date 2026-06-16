@@ -57,7 +57,7 @@ def print_version(full: bool = False, short: bool = False) -> Optional[str]:
         _swagger_filename_kwargs = {"base_url": base_url}
         if swagger_endpoint:
             _swagger_filename_kwargs.update({"swagger_endpoint": swagger_endpoint})
-        swagger_file = swagger_filename(**_swagger_filename_kwargs)
+        swagger_file = config_dir / swagger_filename(**_swagger_filename_kwargs)
 
         with open(swagger_file, "r") as file:
             json_file = json.load(file)
@@ -67,7 +67,6 @@ def print_version(full: bool = False, short: bool = False) -> Optional[str]:
 
     except Exception as e:  # pylint: disable=broad-except
         print(f"Error getting FERRY server version: {e}")
-        sys.exit(1)
 
     sys.exit(0)
 

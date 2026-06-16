@@ -1,6 +1,5 @@
 import json
 import pathlib
-import sys
 from typing import Any, Dict, Optional
 import tempfile
 
@@ -75,10 +74,7 @@ class FerryAPI:
         _session = requests.Session()
         session = self.authorizer(_session)  # Handles auth for session
 
-        if extra:
-            for attribute_name, attribute_value in extra:
-                if attribute_name not in params:
-                    params[attribute_name] = attribute_value
+        merged_params = {**extra, **params}
 
         if method.lower() not in self.SUPPORTED_METHODS:
             raise ValueError(f"Unsupported HTTP method {method.lower()}.")
@@ -88,7 +84,7 @@ class FerryAPI:
             method=method.upper(),
             url=f"{self.base_url}{endpoint}",
             headers=headers,
-            params=params,
+            params=merged_params,
         )
 
         if debug:
@@ -116,16 +112,15 @@ class FerryAPI:
 
         response = self.call_endpoint(self.swagger_endpoint)
         if not response:
-            print("Failed to fetch swagger.json file")
-            sys.exit(1)
+            raise RuntimeError("Failed to fetch swagger.json file")
 
         self.swagger_file = self._set_swagger_file()
 
         try:
             self.swagger_file.parent.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
+        except Exception:
             print(f"Could not create dir {self.swagger_file.parent}")
-            raise e
+            raise
 
         with open(self.swagger_file, "w") as file:
             file.write(json.dumps(response, indent=4))
