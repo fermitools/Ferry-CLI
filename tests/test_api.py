@@ -1,12 +1,14 @@
-import pytest
+import json
+import os
 import subprocess
 import time
 from typing import Dict, Any
-import json
-import os
 
-from ferry_cli.helpers.api import FerryAPI
+import pytest
+
+from ferry_cli.helpers.api import FerryAPI, tempfile
 from ferry_cli.helpers.auth import AuthToken
+from tests.conftest import fakeAuth
 
 TokenGetCommand = "htgettoken"
 tokenDestroyCommand = "htdestroytoken"
@@ -96,6 +98,15 @@ def sendToEndpoint(get_token):
     return _sendToEndpoint
 
 
+@pytest.fixture
+def reload_import_tempfile(monkeypatch):
+    from importlib import reload
+
+    yield
+    monkeypatch.undo()
+    reload(tempfile)
+
+
 # --- tests below ----
 
 
@@ -115,6 +126,78 @@ def test_getAllGroups(getEncodedToken, sendToEndpoint):
     result = sendToEndpoint(getEncodedToken, "getAllGroups")
     assert (result["ferry_status"]) == "success"
     assert result["ferry_output"]  # Make sure we got non-empty result
+
+
+class TestGetLatestSwaggerFile:
+    @classmethod
+    def setup_class(cls):
+        cls.auth = fakeAuth()
+        cls.base_url = "https://test.example.com"
+
+    @pytest.mark.unit
+    def test_dryrun(self, monkeypatch, tmp_path, capsys):
+        tmp = tmp_path
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp))
+        api = FerryAPI(base_url=self.base_url, authorizer=self.auth, dryrun=True)
+        api.get_latest_swagger_file()
+        captured = capsys.readouterr()
+        assert "Dryrun: skipping swagger.json fetching" in captured.out
+        assert not api.swagger_file.exists()
+
+    @pytest.mark.integration
+    def test_regular(self, monkeypatch, tmp_path, capsys, get_token):
+        tmp = tmp_path
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp))
+        api = FerryAPI(
+            base_url=f"{FERRY_DEV_SERVER}:{FERRY_DEV_PORT}/", authorizer=AuthToken()
+        )
+        api.get_latest_swagger_file()
+        captured = capsys.readouterr()
+        assert api.swagger_file.exists()
+
+
+class TestSetSwaggerFile:
+    @classmethod
+    def setup_class(cls):
+        _auth = fakeAuth()
+        cls.api = FerryAPI(
+            base_url="https://test.example.com", authorizer=_auth, dryrun=True
+        )
+
+    @pytest.mark.unit
+    def test_set_swagger_file_configdir(self, monkeypatch, tmp_path):
+        tmp = tmp_path
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+        filename = self.api._swagger_filename()
+        assert (
+            self.api._set_swagger_file().resolve()
+            == (tmp / "ferry_cli" / filename).resolve()
+        )
+
+    @pytest.mark.unit
+    def test_set_swagger_file_tmpdir(
+        self, monkeypatch, tmp_path, reload_import_tempfile
+    ):
+        from importlib import reload
+
+        tmp = tmp_path
+        monkeypatch.setenv("TMPDIR", str(tmp))
+        monkeypatch.delenv("HOME")
+        monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+
+        reload(tempfile)
+
+        filename = self.api._swagger_filename()
+        assert self.api._set_swagger_file().resolve() == tmp / filename
+
+
+@pytest.mark.unit
+def test_swagger_filename():
+    _auth = fakeAuth()
+    api = FerryAPI(base_url="https://test.example.com", authorizer=_auth, dryrun=True)
+    # Hash should be created from "https://test.example.com/swagger/swagger.json"
+    assert api._swagger_filename() == f"swagger_9da5f7c34792d7ef.json"
 
 
 # --- test helper functions

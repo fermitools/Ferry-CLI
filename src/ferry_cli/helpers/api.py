@@ -1,21 +1,25 @@
 import json
 import pathlib
-import sys
 from typing import Any, Dict, Optional
+import tempfile
 
 import requests  # pylint: disable=import-error
 
 try:
-    from ferry_cli.helpers.auth import Auth, DebugLevel
-    from ferry_cli.config import CONFIG_DIR
+    from ferry_cli.helpers.auth import Auth
+    from ferry_cli.helpers.debug_level import DebugLevel
+    from ferry_cli.config.config import get_configfile_dir, swagger_filename
 except ImportError:
-    from helpers.auth import Auth, DebugLevel  # type: ignore
-    from config import CONFIG_DIR  # type: ignore
+    from helpers.auth import Auth  # type: ignore
+    from helpers.debug_level import DebugLevel  # type: ignore
+    from config.config import get_configfile_dir, swagger_filename  # type: ignore
 
 
 # pylint: disable=unused-argument,pointless-statement,too-many-arguments
 class FerryAPI:
     SWAGGER_JSON_ENDPOINT_DEFAULT = "swagger/swagger.json"
+    SUPPORTED_METHODS = set(("get", "post", "put"))
+
     # pylint: disable=too-many-arguments
     def __init__(
         self: "FerryAPI",
@@ -40,6 +44,10 @@ class FerryAPI:
         self.swagger_endpoint = (
             swagger_endpoint if swagger_endpoint else self.SWAGGER_JSON_ENDPOINT_DEFAULT
         )
+        self.swagger_file: pathlib.Path = self._set_swagger_file()
+
+        if not self.swagger_file.exists():
+            self.get_latest_swagger_file()
 
     # pylint: disable=dangerous-default-value,too-many-arguments
     def call_endpoint(
@@ -66,44 +74,37 @@ class FerryAPI:
         _session = requests.Session()
         session = self.authorizer(_session)  # Handles auth for session
 
-        if extra:
-            for attribute_name, attribute_value in extra:
-                if attribute_name not in params:
-                    params[attribute_name] = attribute_value
-        # I believe they are all actually "GET" calls
-        try:
-            if method.lower() == "get":
-                response = session.get(
-                    f"{self.base_url}{endpoint}", headers=headers, params=params
-                )
-            elif method.lower() == "post":
-                response = session.post(
-                    f"{self.base_url}{endpoint}", params=params, headers=headers
-                )
-            elif method.lower() == "put":
-                response = session.put(
-                    f"{self.base_url}{endpoint}", params=params, headers=headers
-                )
-            else:
-                raise ValueError("Unsupported HTTP method.")
-            if debug:
-                print(f"\nCalled Endpoint: {response.request.url}")
-            if not response.ok:
-                raise RuntimeError(
-                    f" *** API Failure: Status code {response.status_code} returned from endpoint /{endpoint}"
-                )
-            output = response.json()
+        merged_params = {**extra, **params}
 
-            output["request_url"] = response.request.url
-            return output
-        except Exception as e:
-            # How do we want to handle errors?
-            raise e
+        if method.lower() not in self.SUPPORTED_METHODS:
+            raise ValueError(f"Unsupported HTTP method {method.lower()}.")
 
-    # TODO: integration test  # pylint: disable=fixme
+        # Send our request
+        response = session.request(
+            method=method.upper(),
+            url=f"{self.base_url}{endpoint}",
+            headers=headers,
+            params=merged_params,
+        )
+
+        if debug:
+            print(f"\nCalled Endpoint: {response.request.url}")
+        if not response.ok:
+            raise RuntimeError(
+                f" *** API Failure: Status code {response.status_code} returned from endpoint /{endpoint}"
+            )
+        output = response.json()
+
+        output["request_url"] = response.request.url
+        return output
+
     def get_latest_swagger_file(self: "FerryAPI") -> None:
         """
-        Gets the latest swagger file from FERRY and saves it in config.CONFIG_DIR/swagger.json
+        Gets the latest swagger file from FERRY and saves it in either:
+        1. Directory returned by config.get_configfile_dir()
+        2. Directory returned by tempfile.gettempdir()
+
+        The filename is computed using the base_url and swagger_endpoint of the FerryAPI instance.
         """
         if self.dryrun:
             print("Dryrun: skipping swagger.json fetching")
@@ -111,16 +112,42 @@ class FerryAPI:
 
         response = self.call_endpoint(self.swagger_endpoint)
         if not response:
-            print("Failed to fetch swagger.json file")
-            sys.exit(1)
+            raise RuntimeError("Failed to fetch swagger.json file")
 
-        swagger_file = pathlib.Path(CONFIG_DIR) / "swagger.json"
+        self.swagger_file = self._set_swagger_file()
 
         try:
-            swagger_file.parent.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            print(f"Could not create dir {swagger_file.parent}: {e}")
+            self.swagger_file.parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            print(f"Could not create dir {self.swagger_file.parent}")
             raise
 
-        with open(swagger_file, "w") as file:
+        with open(self.swagger_file, "w") as file:
             file.write(json.dumps(response, indent=4))
+
+        return
+
+    def _set_swagger_file(self: "FerryAPI") -> pathlib.Path:
+        """
+        Returns a pathlib.Path where the swagger.json file should be saved.  In
+        order of precedence, will return a pathlib.Path whose parent is:
+        1. Directory returned by config.get_configfile_dir()
+        2. Directory returned by tempfile.gettempdir()
+
+        The filename within that directory is the value returned by FerryAPI._swagger_filename
+        """
+        _config_dir = get_configfile_dir()
+        config_dir = (
+            _config_dir
+            if _config_dir is not None
+            else pathlib.Path(tempfile.gettempdir())
+        )
+
+        self.swagger_file = config_dir / self._swagger_filename()
+        return self.swagger_file
+
+    def _swagger_filename(self: "FerryAPI") -> str:
+        """
+        Generate hash of endpoint including base_url
+        """
+        return swagger_filename(self.base_url, self.swagger_endpoint)

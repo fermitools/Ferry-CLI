@@ -1,6 +1,5 @@
 from abc import ABC
 from argparse import Namespace
-import enum
 from os import geteuid
 import os.path
 from typing import List, Optional, Tuple
@@ -9,9 +8,11 @@ from typing import List, Optional, Tuple
 import requests
 
 try:
+    from ferry_cli.helpers.debug_level import DebugLevel
     from ferry_cli.helpers.ferry_parser import FerryParser
     from ferry_cli.version import request_project_info
 except ImportError:
+    from helpers.debug_level import DebugLevel  # type: ignore
     from helpers.ferry_parser import FerryParser  # type: ignore
     from version import request_project_info  # type: ignore
 
@@ -89,7 +90,7 @@ def get_default_cert_path(debug: bool = False) -> str:
 class Auth(ABC):
     """This is the base class on which all Auth classes should build"""
 
-    def __call__(self: "Auth", s: requests.Session) -> requests.Session:
+    def __call__(self: "Auth", _: requests.Session) -> requests.Session:
         raise NotImplementedError(
             "Must use a subclass of Auth with __call__ method defined"
         )
@@ -249,9 +250,3 @@ def get_auth_args() -> Tuple[Namespace, List[str]]:
     parser = get_auth_parser()
     auth_args, other_args = parser.parse_known_args()
     return auth_args, other_args
-
-
-class DebugLevel(enum.Enum):
-    QUIET = 0
-    NORMAL = 1
-    DEBUG = 2

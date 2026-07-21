@@ -3,11 +3,11 @@ from typing import Any, List
 
 try:
     from ferry_cli.helpers.api import FerryAPI
-    from ferry_cli.helpers.auth import DebugLevel
+    from ferry_cli.helpers.debug_level import DebugLevel
     from ferry_cli.helpers.workflows import Workflow
 except ImportError:
     from helpers.api import FerryAPI  # type: ignore
-    from helpers.auth import DebugLevel  # type: ignore
+    from helpers.debug_level import DebugLevel  # type: ignore
     from helpers.workflows import Workflow  # type: ignore
 
 

@@ -1,6 +1,17 @@
 import os
 
+from requests import Session
 import pytest
+
+from ferry_cli.helpers.auth import Auth
+
+
+class fakeAuth(Auth):
+    def __init__(self):
+        pass
+
+    def __call__(self, s: Session) -> Session:
+        return s
 
 
 @pytest.fixture

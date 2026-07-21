@@ -9,7 +9,7 @@ import textwrap
 from typing import Any, Dict, Optional, List, Type
 from urllib.parse import urlsplit, urlunsplit, SplitResult
 
-import validators  # pylint: disable=import-error
+import validators
 
 # pylint: disable=unused-import
 try:
@@ -17,29 +17,29 @@ try:
     from ferry_cli.helpers.api import FerryAPI
     from ferry_cli.helpers.auth import (
         Auth,
-        DebugLevel,
         get_auth_args,
         set_auth_from_args,
         get_auth_parser,
     )
+    from ferry_cli.helpers.debug_level import DebugLevel
     from ferry_cli.helpers.ferry_parser import FerryParser
     from ferry_cli.helpers.supported_workflows import SUPPORTED_WORKFLOWS
     from ferry_cli.safeguards.dcs import SafeguardsDCS
-    from ferry_cli.config import CONFIG_DIR, config
+    from ferry_cli.config import config
 except ImportError:
     # Fallback to direct import
     from helpers.api import FerryAPI  # type: ignore
     from helpers.auth import (  # type: ignore
         Auth,
-        DebugLevel,
         get_auth_args,
         set_auth_from_args,
         get_auth_parser,
     )
+    from helpers.debug_level import DebugLevel  # type: ignore
     from helpers.ferry_parser import FerryParser  # type: ignore
     from helpers.supported_workflows import SUPPORTED_WORKFLOWS  # type: ignore
     from safeguards.dcs import SafeguardsDCS  # type: ignore
-    from config import CONFIG_DIR, config  # type: ignore
+    from config import config  # type: ignore
 
 
 class FerryCLI:
@@ -153,6 +153,23 @@ class FerryCLI:
         )
 
         return parser
+
+    def setup_FerryAPI(self: "FerryCLI", debug_level: DebugLevel = DebugLevel.NORMAL, dryrun=False, update=False) -> None:  # type: ignore # pylint: disable=invalid-name
+        self.ferry_api = FerryAPI(
+            base_url=self.base_url,
+            authorizer=self.authorizer,
+            debug_level=debug_level,
+            dryrun=dryrun,
+            swagger_endpoint=self.configs.get(
+                "api", "swagger_file_endpoint", fallback=""
+            ).strip(' "')
+            or None,
+        )
+        if update:
+            self.ferry_api.get_latest_swagger_file()
+        if dryrun:
+            return
+        self.endpoints = self.generate_endpoints()
 
     def list_available_endpoints_action(self: "FerryCLI"):  # type: ignore
         endpoints = self.endpoints
@@ -280,10 +297,17 @@ class FerryCLI:
             print(subparser.format_help())
             print()
 
-    def execute_endpoint(self: "FerryCLI", endpoint: str, params: List[str]) -> Any:
+    def execute_endpoint(
+        self: "FerryCLI", endpoint: str, params: List[str], dryrun: bool = False
+    ) -> Any:
         try:
             subparser = self.endpoints[endpoint]
         except KeyError:
+            if dryrun:
+                print(
+                    f"Could not find endpoint '{endpoint}' for FERRY server {self.base_url}."
+                )
+                return self.ferry_api.call_endpoint(endpoint)  # type: ignore
             raise ValueError(  # pylint: disable=raise-missing-from
                 f"Error: '{endpoint}' is not a valid endpoint. Run 'ferry -l' for a full list of available endpoints."
             )
@@ -291,19 +315,37 @@ class FerryCLI:
             params_args, _ = subparser.parse_known_args(params)
             return self.ferry_api.call_endpoint(endpoint, params=vars(params_args))  # type: ignore
 
-    def generate_endpoints(self: "FerryCLI") -> Dict[str, FerryParser]:
+    def generate_endpoints(
+        self: "FerryCLI", debug_level: DebugLevel = DebugLevel.NORMAL
+    ) -> Dict[str, FerryParser]:
         endpoints = {}
-        with open(f"{CONFIG_DIR}/swagger.json", "r") as json_file:
+        if not self.ferry_api:
+            self.ferry_api = FerryAPI(
+                base_url=self.base_url,
+                authorizer=self.authorizer,
+                debug_level=debug_level,
+            )
 
+        with open(self.ferry_api.swagger_file, "r") as json_file:
             api_data = json.load(json_file)
             for path, data in api_data["paths"].items():
+                # pylint: disable=fixme
+                # TODO: Note:  This is one thing we may want to fix in the future
+                # Right now, ferry-cli assumes that each endpoint supports only one
+                # HTTP verb. Changing that would probably require a major refactor
+                # isn't necessary at this point.
                 endpoint = path.replace("/", "")
                 if "get" in data:
-                    method = "get"
+                    method = "get"  # default method
                 elif "post" in data:
                     method = "post"
                 elif "put" in data:
                     method = "put"
+                else:  # Default
+                    print(
+                        f"Warning: Unsupported HTTP method(s): {data.keys()}. Skipping endpoint"
+                    )
+                    continue  # Skip unsupported method
 
                 endpoint_parser = FerryParser.create_subparser(
                     endpoint,
@@ -367,7 +409,7 @@ class FerryCLI:
             ep = normalize_endpoint(self.endpoints, args.endpoint)
             self.safeguards.verify(ep)
             try:
-                json_result = self.execute_endpoint(ep, endpoint_args)
+                json_result = self.execute_endpoint(ep, endpoint_args, dryrun)
             except Exception as e:
                 raise Exception(f"{e}")
             if not dryrun:
@@ -662,31 +704,16 @@ def main() -> None:
             authorizer=set_auth_from_args(auth_args),
             base_url=auth_args.server,
         )
-        if auth_args.update or not os.path.exists(f"{CONFIG_DIR}/swagger.json"):
-            if auth_args.debug_level != DebugLevel.QUIET:
-                print("Fetching latest swagger file...")
-            ferry_cli.ferry_api = FerryAPI(
-                base_url=ferry_cli.base_url,
-                authorizer=ferry_cli.authorizer,
-                debug_level=auth_args.debug_level,
-                swagger_endpoint=ferry_cli.configs.get(
-                    "api", "swagger_file_endpoint", fallback=""
-                ).strip(' "')
-                or None,
-            )
-            ferry_cli.ferry_api.get_latest_swagger_file()
-            if auth_args.debug_level != DebugLevel.QUIET:
-                print("Successfully stored latest swagger file.\n")
-            if not other_args:
-                if auth_args.debug_level != DebugLevel.QUIET:
-                    print("No more arguments provided. Exiting.")
-                sys.exit(0)
+        ferry_cli.setup_FerryAPI(
+            debug_level=auth_args.debug_level,
+            dryrun=auth_args.dryrun,
+            update=auth_args.update,
+        )
 
         if not other_args:
             ferry_cli.get_arg_parser().print_help()
             sys.exit(1)
 
-        ferry_cli.endpoints = ferry_cli.generate_endpoints()
         ferry_cli.run(
             auth_args.debug_level,
             auth_args.dryrun,
