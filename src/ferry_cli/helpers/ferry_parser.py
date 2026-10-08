@@ -62,7 +62,7 @@ class FerryParser(argparse.ArgumentParser):
         name: str = "Endpoint", method: str = "", description: str = ""
     ) -> str:
         description_lines = textwrap.wrap(description, width=60)
-        first_line = description_lines[0]
+        first_line = description_lines[0] if description_lines else ""
         rest_lines = description_lines[1:]
         endpoint_description = name.replace("/", "")
 
